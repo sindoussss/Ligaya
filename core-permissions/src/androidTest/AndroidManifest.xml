@@ -1,0 +1,6 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- POST_NOTIFICATIONS is this module's representative "test permission" (as the roadmap
+         suggests) — declared only in the test manifest since core-permissions itself isn't
+         tied to any specific permission. -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+</manifest>

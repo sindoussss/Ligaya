@@ -1,0 +1,38 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- Fixes a pre-existing gap found while building Step 15: EmergencyForegroundService
+         (Step 11, core-data) has always checked ACCESS_FINE_LOCATION via
+         ContextCompat.checkSelfPermission to decide its foreground-service type, but this
+         permission was never declared anywhere the real app manifest actually merges from —
+         so that check was structurally guaranteed to always see "denied," regardless of what a
+         user actually granted. :app does not yet depend on :core-location (Step 15 is scoped to
+         that module only), so its own manifest declaration doesn't reach here yet either;
+         declaring it directly here is the immediate fix for the app that ships today. -->
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+
+    <!-- The Emergency Companion's real voice capture (Step 21's AndroidSpeechTranscriber, wired
+         at the composition root in MainActivity) needs this to ever succeed —
+         VoiceCaptureCoordinator degrades gracefully to a PERMISSION_DENIED failure without it,
+         but was previously unable to succeed at all since :app never declared it. -->
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+
+    <application
+        android:allowBackup="true"
+        android:label="Ligaya"
+        android:theme="@android:style/Theme.Material.Light.NoActionBar">
+
+        <!-- Navigation shell only (Step 7) — no visual design yet, hence the bare platform
+             theme rather than a custom one. The emergency foreground service is Step 11. -->
+        <activity
+            android:name=".MainActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+    </application>
+
+</manifest>

@@ -1,0 +1,122 @@
+rules_version = '2';
+
+// Firestore security rules for the Ligaya backend.
+//
+// Implements LIGAYA_ARCHITECTURE_FINAL_VOICE.md section 27: "the backend is the source of
+// truth" and "client UI is never trusted as the sole authorization mechanism" — every entity
+// is deny-by-default, and only the owning user (or, for HOUSEHOLD members, the member
+// themselves) may read/write their own records.
+//
+// Scope note (Step 2 of the implementation roadmap): this started as the deny-by-default STUB
+// called for by that step. Step 8 (household/Safety Circle membership) extended it: household
+// members (not just the owner) can now read the household doc and their own membership record,
+// and member-doc creation is now owner-only — see the members/{memberUserId} rule below for why.
+// Visibility into another member's EMERGENCY_EVENT, LOCATION_EVENT, and NOTIFICATION_EVENT
+// documents (sections 6, 17, 18) is still intentionally NOT implemented — it's owned by the
+// "family emergency data contract" step once permission flags exist to check against.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Deny-by-default baseline.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isHouseholdOwner(householdId) {
+      return isSignedIn() &&
+        get(/databases/$(database)/documents/households/$(householdId)).data.owner_id == request.auth.uid;
+    }
+
+    // True once the owner has created a membership record for this user (PENDING invite or
+    // ACTIVE member) — never true for an uninvited outsider, since only the owner can create
+    // that record in the first place (see members/{memberUserId} below).
+    function isHouseholdMember(householdId) {
+      return isSignedIn() &&
+        exists(/databases/$(database)/documents/households/$(householdId)/members/$(request.auth.uid));
+    }
+
+    // USER (section 24: profile, emergency_profile, permissions)
+    match /users/{userId} {
+      allow read, write: if isSignedIn() && request.auth.uid == userId;
+    }
+
+    // HOUSEHOLD (section 24: owner_id, subscription_state)
+    match /households/{householdId} {
+      // Step 8: members (invited or active) can now read the household they belong to —
+      // previously only the owner could, which meant an invited member couldn't even see what
+      // household they'd been invited into. Only the owner may change or delete it.
+      allow read: if isHouseholdOwner(householdId) || isHouseholdMember(householdId);
+      allow update, delete: if isHouseholdOwner(householdId);
+      allow create: if isSignedIn() && request.resource.data.owner_id == request.auth.uid;
+
+      // FAMILY_MEMBER (subcollection): status is "PENDING" (invited, not yet accepted) or
+      // "ACTIVE" (accepted). Deliberately split from a single read/write rule (Step 2's
+      // original version): that version let ANY signed-in user create a member doc for
+      // themselves in ANY household — a self-invitation gap, since the only check was
+      // uid == memberUserId, never whether the owner actually extended an invite. Now:
+      //   - create (issuing an invite): owner only.
+      //   - update (accepting: PENDING -> ACTIVE) / delete (removing or leaving): owner or the
+      //     member themselves.
+      //   - read: owner or the member themselves — not open to the rest of the household yet
+      //     (full roster visibility for ordinary members is a deliberately separate, later
+      //     decision, not required by this step and not assumed here).
+      match /members/{memberUserId} {
+        allow read: if isHouseholdOwner(householdId) ||
+          (isSignedIn() && request.auth.uid == memberUserId);
+        allow create: if isHouseholdOwner(householdId);
+        allow update, delete: if isHouseholdOwner(householdId) ||
+          (isSignedIn() && request.auth.uid == memberUserId);
+      }
+    }
+
+    // EMERGENCY_EVENT (section 24: user_id, incident_type, status, created_at, resolved_at).
+    // Creator-only for this step.
+    match /emergencyEvents/{eventId} {
+      allow read, update: if isSignedIn() && resource.data.user_id == request.auth.uid;
+      allow create: if isSignedIn() && request.resource.data.user_id == request.auth.uid;
+      allow delete: if false;
+
+      // LOCATION_EVENT (subcollection). Creator-only; never updatable/deletable
+      // once written (an immutable location trail, matching "never invent
+      // coordinates" / never retroactively alter a recorded fix — section 14).
+      match /locationEvents/{locationEventId} {
+        allow read, create: if isSignedIn() &&
+          get(/databases/$(database)/documents/emergencyEvents/$(eventId)).data.user_id == request.auth.uid;
+        allow update, delete: if false;
+      }
+
+      // NOTIFICATION_EVENT (subcollection). Creator-only for this step; state
+      // transitions (PENDING -> SENT -> CONFIRMED/FAILED, section 17) are written
+      // by trusted backend logic in later steps, not directly by an arbitrary client.
+      match /notificationEvents/{notificationEventId} {
+        allow read, create: if isSignedIn() &&
+          get(/databases/$(database)/documents/emergencyEvents/$(eventId)).data.user_id == request.auth.uid;
+        allow update, delete: if false;
+      }
+
+      // AUDIT_LOG (subcollection, Step 31, section 27's "audit events" requirement). Same
+      // creator-only-and-immutable shape as locationEvents/notificationEvents above — an audit
+      // trail that could be edited or deleted after the fact would defeat its own purpose.
+      // Whether a client should be trusted to write this at all (vs. trusted backend logic only)
+      // is Step 32's own question, not this rule's — this step only establishes immutability.
+      match /auditLog/{auditEventId} {
+        allow read, create: if isSignedIn() &&
+          get(/databases/$(database)/documents/emergencyEvents/$(eventId)).data.user_id == request.auth.uid;
+        allow update, delete: if false;
+      }
+    }
+
+    // SUBSCRIPTION (section 2: "RevenueCat is never the family database... it confirms
+    // entitlement; the backend decides what that entitlement unlocks"). No client, not even
+    // the household owner, may write this directly — only trusted backend logic (Cloud
+    // Functions via the Admin SDK, which bypasses these rules) may write it.
+    match /subscriptions/{householdId} {
+      allow read: if isHouseholdOwner(householdId);
+      allow write: if false;
+    }
+  }
+}

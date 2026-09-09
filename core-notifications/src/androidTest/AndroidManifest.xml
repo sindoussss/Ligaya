@@ -1,0 +1,12 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Fixes a real, previously-undetected bug found while running this step's tests: Android
+         blocks cleartext (plaintext HTTP) traffic by default since API 28, and the Firebase Auth
+         SDK's REST calls to the LOCAL emulator at 10.0.2.2 are cleartext — so every
+         emulator-backed Firebase Auth/Firestore instrumented test in this codebase was
+         structurally guaranteed to fail with "Cleartext HTTP traffic to 10.0.2.2 not permitted",
+         regardless of what it actually tested. This was never caught earlier because no prior
+         step's regression pass happened to include a Firebase-emulator-backed test module. Test
+         APK only — the real shipped app's manifest (src/main) is untouched, so production
+         networking policy is unaffected. -->
+    <application android:usesCleartextTraffic="true" />
+</manifest>

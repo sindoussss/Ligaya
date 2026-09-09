@@ -1,0 +1,16 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Package-visibility filtering (Android 11+ / API 30+, and this app's targetSdk is 35):
+         PackageManager query methods like Intent.resolveActivity() return null for another
+         app's components unless this <queries> declaration is present — even though
+         Context.startActivity() with the same implicit intent would still succeed without it.
+         IntentUnified911DialAction.dial() deliberately checks resolveActivity() first (to treat
+         "no dialer" as a clean CallFailed instead of an ActivityNotFoundException), so without
+         this element that check would always see the real system dialer as invisible and report
+         a false CallFailed. -->
+    <queries>
+        <intent>
+            <action android:name="android.intent.action.DIAL" />
+            <data android:scheme="tel" />
+        </intent>
+    </queries>
+</manifest>

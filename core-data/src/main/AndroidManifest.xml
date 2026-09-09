@@ -1,0 +1,27 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- Step 11: EmergencyForegroundService's permissions. FOREGROUND_SERVICE_LOCATION and
+         FOREGROUND_SERVICE_SPECIAL_USE are normal/install-time permissions (Android 14+ requires
+         them alongside the matching foregroundServiceType below); ACCESS_FINE_LOCATION and
+         POST_NOTIFICATIONS are runtime permissions whose request UI is built in later steps
+         (15's location flow, and wherever notification permission is first requested) — this
+         manifest declaration alone grants nothing at runtime. -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
+    <application>
+        <service
+            android:name="com.ligaya.core.data.engine.EmergencyForegroundService"
+            android:exported="false"
+            android:foregroundServiceType="location|specialUse">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="Active personal-safety emergency assistance in progress" />
+        </service>
+    </application>
+
+</manifest>

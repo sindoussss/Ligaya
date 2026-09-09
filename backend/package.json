@@ -1,0 +1,16 @@
+{
+  "name": "ligaya-backend",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Firestore schema, security rules, and rules-unit tests for the Ligaya backend (LIGAYA_ARCHITECTURE_FINAL_VOICE.md section 24 data model, section 27 authorization). This is the source-of-truth backend consumed by the Android app's core-backend module.",
+  "type": "module",
+  "scripts": {
+    "test": "firebase emulators:exec --only firestore --project demo-ligaya-test \"node --test --test-concurrency=1 test/firestore.rules.test.mjs\"",
+    "test:functions": "firebase emulators:exec --only firestore --project demo-ligaya-test \"node --test --test-concurrency=1 functions/test/family-alerts.test.mjs functions/test/twilio-sms-gateway.test.mjs functions/test/family-emergency-view.test.mjs\""
+  },
+  "devDependencies": {
+    "@firebase/rules-unit-testing": "^3.0.4",
+    "firebase": "^10.14.1",
+    "firebase-tools": "^13.23.1"
+  }
+}

@@ -1,0 +1,18 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+
+    <!-- Package-visibility filtering (Android 11+ / API 30+, same reasoning as core-telephony's
+         identical declaration, Step 16): without this, resolving/binding to an on-device speech
+         recognition service can silently fail to find one, even when the device genuinely has
+         one available. -->
+    <queries>
+        <intent>
+            <action android:name="android.speech.RecognitionService" />
+        </intent>
+        <!-- Step 24: same package-visibility reasoning, for TextToSpeech resolving an on-device
+             TTS engine. -->
+        <intent>
+            <action android:name="android.intent.action.TTS_SERVICE" />
+        </intent>
+    </queries>
+</manifest>
