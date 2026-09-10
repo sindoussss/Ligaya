@@ -23,16 +23,26 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import com.ligaya.core.emergencyengine.ConcurrentSubsystemStates
+import com.ligaya.core.emergencyengine.EmergencyServiceFlowState
+import com.ligaya.core.emergencyengine.LocationFlowState
+import com.ligaya.core.emergencyengine.Unified911FlowState
 import com.ligaya.core.uistate.EmergencyController
+import com.ligaya.core.voice.VoicePipelinePhase
 import com.ligaya.core.uistate.PresentationTone
 import com.ligaya.core.uistate.toPresentation
 import com.ligaya.designsystem.LigayaColors
+import com.ligaya.designsystem.LigayaDeliveryState
 import com.ligaya.designsystem.LigayaSpacing
 import com.ligaya.designsystem.LigayaTypography
+import com.ligaya.designsystem.components.CallFailedCard
+import com.ligaya.designsystem.components.DegradedReason
+import com.ligaya.designsystem.components.DeliveryFailedCard
 import com.ligaya.designsystem.components.DeliveryStateBadge
+import com.ligaya.designsystem.components.LookupFailedCard
+import com.ligaya.designsystem.components.LookupFailureReason
+import com.ligaya.designsystem.components.OfflineDegradedBanner
 import com.ligaya.designsystem.components.StatusCard
 import com.ligaya.designsystem.components.VoiceStateIndicator
-import com.ligaya.feature.companion.VoicePipelinePhase
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
@@ -58,6 +68,22 @@ import kotlinx.coroutines.launch
  * placeholder (the real transcript UI is a later step's job, same as Step 37 left it), but the
  * voice indicator next to it is real — bound to feature-companion's actual
  * EmergencyCompanionCoordinator.phase, not a static value, via [VoicePipelinePhase.toLigayaVoiceState].
+ *
+ * Step 41: three of Step 28's checklist failure states are directly observable from
+ * [ConcurrentSubsystemStates] this screen already reads, so those three now render their own
+ * named treatment ([CallFailedCard]/[LookupFailedCard]/[OfflineDegradedBanner]) instead of a
+ * generic [StatusCard], and a per-channel [DeliveryFailedCard] replaces the compact badge for a
+ * FAILED Safety Circle channel. [onRetryCall] is a real action, not a placeholder — see
+ * [EmergencyController.retryCall] and LigayaNavHost's own wiring of it — defaulting to a no-op
+ * only for callers (previews, tests) that have no real controller action to give it. GEMINI_FAILED
+ * and "phone number missing" (the checklist's other two rows) still have no live signal reaching
+ * this screen at all — [com.ligaya.core.emergencyengine.EmergencyCompanionState] has no failure
+ * sub-state (see its own doc comment) and phone-number availability is a core-places PlaceDetails
+ * property never threaded into [ConcurrentSubsystemStates] — so both stay design-system-only
+ * components, proven directly by FailureStateComponentsTest rather than live here. Unlike the
+ * retry gap, fixing this would mean changing what core-emergency-engine itself tracks (a settled,
+ * already-tested Step 9/13 data shape used everywhere), not just connecting existing pieces — a
+ * design decision, not a wiring bug.
  */
 @Composable
 fun EmergencyActiveScreen(
@@ -65,6 +91,7 @@ fun EmergencyActiveScreen(
     safetyCircleDeliveryStatus: List<MemberDeliveryStatus>,
     voicePipelinePhase: StateFlow<VoicePipelinePhase>,
     onMarkedSafe: () -> Unit,
+    onRetryCall: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     val snapshot by emergencyController.observeSnapshot().collectAsState(initial = null)
@@ -85,23 +112,35 @@ fun EmergencyActiveScreen(
             StatusBanner(presentationLabel = state?.toPresentation()?.label ?: "Loading…", tone = state?.toPresentation()?.tone)
             ActivityLine(subsystems)
 
-            StatusCard(
-                title = "911",
-                message = subsystems.unified911.toPresentation().label,
-                tone = subsystems.unified911.toPresentation().tone.toStatusTone(),
-            )
-            StatusCard(
-                title = "Location",
-                message = subsystems.location.toPresentation().label,
-                tone = subsystems.location.toPresentation().tone.toStatusTone(),
-            )
-            // "Optional, clearly secondary to 911" — same StatusCard, deliberately last among the
-            // subsystem cards and given no special emphasis of its own.
-            StatusCard(
-                title = "Nearby Emergency Service",
-                message = subsystems.emergencyService.toPresentation().label,
-                tone = subsystems.emergencyService.toPresentation().tone.toStatusTone(),
-            )
+            if (subsystems.unified911 == Unified911FlowState.CallFailed) {
+                CallFailedCard(onRetry = onRetryCall)
+            } else {
+                StatusCard(
+                    title = "911",
+                    message = subsystems.unified911.toPresentation().label,
+                    tone = subsystems.unified911.toPresentation().tone.toStatusTone(),
+                )
+            }
+            if (subsystems.location == LocationFlowState.Unavailable) {
+                OfflineDegradedBanner(reason = DegradedReason.LOCATION_UNAVAILABLE)
+            } else {
+                StatusCard(
+                    title = "Location",
+                    message = subsystems.location.toPresentation().label,
+                    tone = subsystems.location.toPresentation().tone.toStatusTone(),
+                )
+            }
+            // "Optional, clearly secondary to 911" — same precedence as before, deliberately last
+            // among the subsystem cards and given no special emphasis of its own.
+            if (subsystems.emergencyService == EmergencyServiceFlowState.LookupFailed) {
+                LookupFailedCard(reason = LookupFailureReason.SERVICE_NOT_FOUND)
+            } else {
+                StatusCard(
+                    title = "Nearby Emergency Service",
+                    message = subsystems.emergencyService.toPresentation().label,
+                    tone = subsystems.emergencyService.toPresentation().tone.toStatusTone(),
+                )
+            }
 
             SafetyCircleSection(safetyCircleDeliveryStatus)
 
@@ -173,9 +212,14 @@ private fun SafetyCircleSection(members: List<MemberDeliveryStatus>) {
             members.forEach { member ->
                 Column(modifier = Modifier.padding(vertical = LigayaSpacing.xs)) {
                     Text(text = member.memberName, style = LigayaTypography.label, color = LigayaColors.onSurface)
-                    Row(horizontalArrangement = Arrangement.spacedBy(LigayaSpacing.xs)) {
-                        member.channelStatuses.forEach { channel ->
-                            DeliveryStateBadge(state = channel.state)
+                    Column(verticalArrangement = Arrangement.spacedBy(LigayaSpacing.xs)) {
+                        member.channelStatuses.filter { it.state == LigayaDeliveryState.FAILED }.forEach { channel ->
+                            DeliveryFailedCard(channelLabel = channel.channelLabel)
+                        }
+                        Row(horizontalArrangement = Arrangement.spacedBy(LigayaSpacing.xs)) {
+                            member.channelStatuses.filter { it.state != LigayaDeliveryState.FAILED }.forEach { channel ->
+                                DeliveryStateBadge(state = channel.state)
+                            }
                         }
                     }
                 }

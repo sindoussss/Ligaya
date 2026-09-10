@@ -1,10 +1,11 @@
 package com.ligaya.feature.emergencyactive
 
+import com.ligaya.core.voice.VoicePipelinePhase
 import com.ligaya.designsystem.LigayaVoiceState
-import com.ligaya.feature.companion.VoicePipelinePhase
 
 /**
- * Step 38's own resolution of feature-companion's framework-agnostic [VoicePipelinePhase] onto
+ * Step 38's own resolution of the framework-agnostic [VoicePipelinePhase] (core-voice, moved
+ * there from feature-companion by Step 53's audit follow-up — see its own doc comment) onto
  * design-system's [LigayaVoiceState] — the same deferred-mapping pattern this module already
  * applies to [com.ligaya.core.uistate.PresentationTone] (see PresentationToneMapping.kt).
  */

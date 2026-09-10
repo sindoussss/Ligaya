@@ -19,7 +19,9 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 
 /**
  * The real Android lifecycle vehicle for EMERGENCY_ACTIVE (LIGAYA_ARCHITECTURE_FINAL_VOICE.md
@@ -90,8 +92,21 @@ class EmergencyForegroundService : Service() {
 
     override fun onBind(intent: Intent?): IBinder? = null
 
+    /**
+     * Blocks (briefly — cancellation only needs to reach the observation coroutine's next
+     * suspension point, typically sub-millisecond) until [observationJob] has actually finished
+     * cancelling before flipping [isRunning] to false. A plain `cancel()` only *requests*
+     * cooperative cancellation — it does not wait for it — so a caller that treats `isRunning`
+     * as "safe to close the database now" (every instrumented test in this module does exactly
+     * that, since it is the only signal that doesn't depend on guessed timing) could otherwise
+     * still race an already-in-flight query from this coroutine, which crashes with "Cannot
+     * perform this operation because the connection pool has been closed." Found via a real,
+     * intermittent crash under `EmergencyForegroundServiceTest`/`DefaultEmergencyControllerTest`
+     * and fixed at the actual source — a lying flag — rather than by adding settle delays on
+     * every caller that relies on it.
+     */
     override fun onDestroy() {
-        observationJob?.cancel()
+        runBlocking { observationJob?.cancelAndJoin() }
         isRunning = false
         super.onDestroy()
     }

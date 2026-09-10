@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  The few brand colours the platform itself needs, outside Compose: the launcher icon's adaptive
+  background and the system splash-screen window background. These duplicate LigayaColors' own
+  `blush`/`canvas` values because the OS resolves them before any Kotlin runs — there is no way to
+  hand it a Compose token. Change one, change the other.
+-->
+<resources>
+    <!-- LigayaColors.blush -->
+    <color name="ligaya_blush">#F7EBE8</color>
+    <!-- LigayaColors.canvas -->
+    <color name="ligaya_canvas">#FAF7F6</color>
+</resources>

@@ -17,15 +17,29 @@
          but was previously unable to succeed at all since :app never declared it. -->
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
 
+    <!-- Step 52's own finding: the Room database this app ships (LigayaDatabase, core-data)
+         stores location history, household/family-member contacts, and emergency event/state
+         records — exactly the personal-safety data a Play Store compliance review most scrutinizes
+         under Android's default Auto Backup. Beyond privacy, restoring a stale emergency_events/
+         emergency_state_snapshot row onto a new or wiped device is a genuine correctness risk for
+         a safety-critical app (DefaultEmergencyController treats this database as its own source
+         of truth for resuming state) — not just a data-exposure one. Disabled outright rather than
+         scoped with dataExtractionRules/fullBackupContent: there's no subset of this database that
+         is both non-sensitive and safe to silently reintroduce onto another device. -->
     <application
-        android:allowBackup="true"
+        android:allowBackup="false"
+        android:icon="@mipmap/ic_launcher"
+        android:roundIcon="@mipmap/ic_launcher_round"
         android:label="Ligaya"
-        android:theme="@android:style/Theme.Material.Light.NoActionBar">
+        android:theme="@style/Theme.Ligaya">
 
-        <!-- Navigation shell only (Step 7) — no visual design yet, hence the bare platform
-             theme rather than a custom one. The emergency foreground service is Step 11. -->
+        <!-- Visual design, screen 1: the launcher entry point carries the splash theme rather than
+             the app theme, which is how the system knows what to draw during process start.
+             installSplashScreen() in MainActivity.onCreate swaps it to Theme.Ligaya (declared as
+             postSplashScreenTheme) once the first frame is ready. -->
         <activity
             android:name=".MainActivity"
+            android:theme="@style/Theme.Ligaya.Splash"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

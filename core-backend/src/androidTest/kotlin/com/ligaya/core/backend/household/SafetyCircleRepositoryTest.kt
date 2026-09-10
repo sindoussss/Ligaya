@@ -101,6 +101,38 @@ class SafetyCircleRepositoryTest {
         assertTrue("expected the member-record read to be rejected", memberReadRejected)
     }
 
+    /** Step 43's own addition, real end to end: the owner sees the full roster with mixed
+     *  PENDING/ACTIVE states (the UI test's own scenario), a non-owner member gets a real
+     *  rejection, not an empty list — see [SafetyCircleRepository.getMembers]'s own doc comment
+     *  on why those two cases must never be conflated. */
+    @Test
+    fun getMembersReturnsTheFullRosterForTheOwnerButRejectsANonOwnerMember() = runTest {
+        val owner = signIn("safetyCircleGetMembersOwner")
+        val acceptedMember = signIn("safetyCircleGetMembersAccepted")
+        val pendingMember = signIn("safetyCircleGetMembersPending")
+
+        val ownerRepo: SafetyCircleRepository = FirestoreSafetyCircleRepository(owner.firestore)
+        val acceptedRepo: SafetyCircleRepository = FirestoreSafetyCircleRepository(acceptedMember.firestore)
+
+        val householdId = ownerRepo.createHousehold(owner.uid)
+        ownerRepo.inviteMember(householdId, acceptedMember.uid, "sibling")
+        ownerRepo.inviteMember(householdId, pendingMember.uid, "friend")
+        acceptedRepo.acceptInvite(householdId, acceptedMember.uid)
+
+        val roster = ownerRepo.getMembers(householdId)
+        assertEquals(2, roster.size)
+        assertEquals(FamilyMemberStatus.ACTIVE, roster.find { it.userId == acceptedMember.uid }?.status)
+        assertEquals(FamilyMemberStatus.PENDING, roster.find { it.userId == pendingMember.uid }?.status)
+
+        var rosterReadRejected = false
+        try {
+            acceptedRepo.getMembers(householdId)
+        } catch (_: Exception) {
+            rosterReadRejected = true
+        }
+        assertTrue("expected a non-owner member's roster read to be rejected, not an empty list", rosterReadRejected)
+    }
+
     @Test
     fun aUserCannotSelfInviteIntoSomeoneElsesHousehold() = runTest {
         val owner = signIn("safetyCircleSelfInviteOwner")

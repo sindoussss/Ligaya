@@ -15,7 +15,7 @@ import com.ligaya.core.emergencyengine.LocationFlowState
 import com.ligaya.core.emergencyengine.Unified911FlowState
 import com.ligaya.core.uistate.EmergencyController
 import com.ligaya.core.uistate.SosResult
-import com.ligaya.feature.companion.VoicePipelinePhase
+import com.ligaya.core.voice.VoicePipelinePhase
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import org.junit.Assert.assertEquals
@@ -50,6 +50,8 @@ class EmergencyActiveScreenTest {
             markSafeCallCount++
             return Result.success(EmergencyState.USER_MARKED_SAFE)
         }
+
+        override suspend fun retryCall(): Result<EmergencyState> = Result.success(EmergencyState.EMERGENCY_ACTIVE)
 
         override fun observeSnapshot(): Flow<EmergencySnapshot?> = snapshotFlow
     }

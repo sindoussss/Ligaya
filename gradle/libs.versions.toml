@@ -9,15 +9,23 @@ room = "2.6.1"
 coroutines = "1.8.1"
 androidxTestJunit = "1.2.1"
 androidxTestRunner = "1.6.2"
+androidxTestRules = "1.6.1"
+androidxTestUiautomator = "2.3.0"
 firebaseBom = "33.6.0"
 kotlinxSerializationJson = "1.7.1"
 junit = "4.13.2"
 androidxCoreKtx = "1.13.1"
+# Visual design screen 1: backports the Android 12 splash-screen API down to this project's
+# minSdk 26, so the system's pre-Compose launch window is brand-themed on every supported device
+# rather than only on API 31+.
+androidxCoreSplashscreen = "1.0.1"
 androidxActivityKtx = "1.9.3"
-composeBom = "2024.10.01"
+composeBom = "2025.09.00" # Step 45: bumped from 2024.10.01 specifically to get ui-test-junit4-accessibility (real Google Accessibility Test Framework integration, needs Compose UI 1.8.0+). Verified this exact version still compiles clean against this project's existing AGP 8.7.2/compileSdk 35 — the newest BOM (2026.08.00) requires AGP 9.1+/compileSdk 37, a much bigger jump, so this is the newest one that doesn't force that.
 androidxActivityCompose = "1.9.3"
+androidxLifecycleRuntimeKtx = "2.8.7"
 androidxNavigationCompose = "2.8.3"
 playServicesLocation = "21.3.0"
+revenueCatPurchases = "10.15.1"
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
@@ -37,6 +45,8 @@ kotlinx-coroutines-android = { group = "org.jetbrains.kotlinx", name = "kotlinx-
 kotlinx-coroutines-test = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-test", version.ref = "coroutines" }
 androidx-test-junit = { group = "androidx.test.ext", name = "junit", version.ref = "androidxTestJunit" }
 androidx-test-runner = { group = "androidx.test", name = "runner", version.ref = "androidxTestRunner" }
+androidx-test-rules = { group = "androidx.test", name = "rules", version.ref = "androidxTestRules" }
+androidx-test-uiautomator = { group = "androidx.test.uiautomator", name = "uiautomator", version.ref = "androidxTestUiautomator" }
 firebase-bom = { group = "com.google.firebase", name = "firebase-bom", version.ref = "firebaseBom" }
 firebase-auth-ktx = { group = "com.google.firebase", name = "firebase-auth-ktx" }
 kotlinx-coroutines-play-services = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-play-services", version.ref = "coroutines" }
@@ -46,6 +56,7 @@ firebase-messaging-ktx = { group = "com.google.firebase", name = "firebase-messa
 firebase-functions-ktx = { group = "com.google.firebase", name = "firebase-functions-ktx" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "androidxCoreKtx" }
+androidx-core-splashscreen = { group = "androidx.core", name = "core-splashscreen", version.ref = "androidxCoreSplashscreen" }
 androidx-activity-ktx = { group = "androidx.activity", name = "activity-ktx", version.ref = "androidxActivityKtx" }
 androidx-compose-bom = { group = "androidx.compose", name = "compose-bom", version.ref = "composeBom" }
 androidx-compose-ui = { group = "androidx.compose.ui", name = "ui" }
@@ -53,8 +64,11 @@ androidx-compose-ui-tooling = { group = "androidx.compose.ui", name = "ui-toolin
 androidx-compose-ui-tooling-preview = { group = "androidx.compose.ui", name = "ui-tooling-preview" }
 androidx-compose-material3 = { group = "androidx.compose.material3", name = "material3" }
 androidx-compose-ui-test-junit4 = { group = "androidx.compose.ui", name = "ui-test-junit4" }
+androidx-compose-ui-test-junit4-accessibility = { group = "androidx.compose.ui", name = "ui-test-junit4-accessibility" }
 androidx-compose-ui-test-manifest = { group = "androidx.compose.ui", name = "ui-test-manifest" }
 androidx-activity-compose = { group = "androidx.activity", name = "activity-compose", version.ref = "androidxActivityCompose" }
+androidx-lifecycle-runtime-ktx = { group = "androidx.lifecycle", name = "lifecycle-runtime-ktx", version.ref = "androidxLifecycleRuntimeKtx" }
 androidx-navigation-compose = { group = "androidx.navigation", name = "navigation-compose", version.ref = "androidxNavigationCompose" }
 play-services-location = { group = "com.google.android.gms", name = "play-services-location", version.ref = "playServicesLocation" }
 androidx-compose-material-icons-extended = { group = "androidx.compose.material", name = "material-icons-extended" }
+revenuecat-purchases = { group = "com.revenuecat.purchases", name = "purchases", version.ref = "revenueCatPurchases" }

@@ -29,6 +29,42 @@ import androidx.compose.ui.graphics.Color
  */
 object LigayaColors {
 
+    // --- Brand palette (the four swatches on the brand sheet) -------------------------------
+    //
+    // The visual-design pass's own foundation: a warm, desaturated dusty-rose family, chosen so
+    // normal mode reads calm and cared-for rather than clinical. Deliberately split into
+    // decorative tones and text-bearing tones, because the soft end of this palette cannot carry
+    // text at WCAG AA (4.5:1) no matter how good it looks:
+    //   - [blush]/[blushDeep]/[rose] are surface/ornament only — never a text or icon color.
+    //   - [roseDeep] is the one rose dark enough to carry white text (4.95:1, ContrastRatioTest).
+    // Keeping that split explicit here is what stops a later screen from reaching for `rose` as a
+    // button fill and quietly failing the contrast bar this codebase already holds itself to.
+
+    /** Softest wash — splash/gradient backgrounds, selected-row tints. Ornament only. */
+    val blush = Color(0xFFF7EBE8)
+
+    /** A step deeper than [blush], for gradient ends and card tints. Ornament only. */
+    val blushDeep = Color(0xFFF0DAD6)
+
+    /** The signature dusty rose: the logo mark, decorative strokes. Ornament only. */
+    val rose = Color(0xFFC48B8B)
+
+    /** The one rose deep enough for white text on top — primary buttons, brand accents. */
+    val roseDeep = Color(0xFF9C5F66)
+    val onRoseDeep = Color(0xFFFFFFFF)
+
+    /** Warm off-white page background — the app's default canvas, warmer than [idleBackground]. */
+    val canvas = Color(0xFFFAF7F6)
+
+    /** Cards and sheets sitting on [canvas]. */
+    val surface = Color(0xFFFFFFFF)
+
+    /** Warm near-black for primary text — softer than pure black, still ~14:1 on [canvas]. */
+    val ink = Color(0xFF2E2A2B)
+
+    /** Warm gray for secondary/supporting text. Tuned to clear 4.5:1 on [canvas], not by eye. */
+    val inkSoft = Color(0xFF756A6C)
+
     // --- Shared neutral ---
     val onSurface = Color(0xFF1B1F24)
 

@@ -164,8 +164,10 @@ class EmergencyForegroundServiceTest {
         // of close(), Room threw "Cannot perform this operation because the connection pool has
         // been closed" from a background thread, which crashes this self-instrumenting test's
         // whole process (killing every other queued test, not just this one) rather than merely
-        // failing this test. Low system load made the race narrow enough to rarely hit; it is
-        // not narrow enough to rely on.
+        // failing this test. Fixed at the source in EmergencyForegroundService.onDestroy() (see
+        // its own doc comment): isRunning now only flips false once the observation coroutine has
+        // actually finished cancelling, not merely been asked to — so waiting for it here is a
+        // genuine guarantee, not a timing bet.
         context.stopService(Intent(context, EmergencyForegroundService::class.java))
         waitUntil { !EmergencyForegroundService.isRunning }
         secondDb.close()

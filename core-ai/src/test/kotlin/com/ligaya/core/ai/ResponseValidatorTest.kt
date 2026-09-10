@@ -1,9 +1,11 @@
 package com.ligaya.core.ai
 
 import com.ligaya.core.emergencyengine.ConcurrentSubsystemStates
+import com.ligaya.core.emergencyengine.EmergencyServiceFlowState
 import com.ligaya.core.emergencyengine.EmergencySnapshot
 import com.ligaya.core.emergencyengine.EmergencyState
 import com.ligaya.core.emergencyengine.FamilyAlertFlowState
+import com.ligaya.core.emergencyengine.LocationFlowState
 import com.ligaya.core.emergencyengine.Unified911FlowState
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -23,6 +25,12 @@ class ResponseValidatorTest {
 
     private fun withFamilyAlert(state: FamilyAlertFlowState) =
         allPending.copy(subsystems = ConcurrentSubsystemStates(familyAlert = state))
+
+    private fun withLocation(state: LocationFlowState) =
+        allPending.copy(subsystems = ConcurrentSubsystemStates(location = state))
+
+    private fun withEmergencyService(state: EmergencyServiceFlowState) =
+        allPending.copy(subsystems = ConcurrentSubsystemStates(emergencyService = state))
 
     // --- The adversarial set: every banned phrase family, against an unverified (all-Pending) state ---
 
@@ -86,6 +94,61 @@ class ResponseValidatorTest {
         val result = ResponseValidator.validate("Your family has been notified.", snapshot)
 
         assertTrue(result is ValidatedResponse.Passed)
+    }
+
+    @Test
+    fun `'location shared' is blocked when location has not actually succeeded`() {
+        val result = ResponseValidator.validate("Your location has been shared with them.", allPending)
+
+        assertTrue(result is ValidatedResponse.Blocked)
+    }
+
+    @Test
+    fun `'location shared' passes when location actually succeeded`() {
+        val snapshot = withLocation(LocationFlowState.Succeeded)
+
+        val result = ResponseValidator.validate("Your location has been shared.", snapshot)
+
+        assertTrue(result is ValidatedResponse.Passed)
+    }
+
+    @Test
+    fun `'emergency-service contacted' is blocked when the lookup has not actually succeeded`() {
+        val result = ResponseValidator.validate("The nearest hospital has been contacted.", allPending)
+
+        assertTrue(result is ValidatedResponse.Blocked)
+    }
+
+    @Test
+    fun `'emergency-service contacted' passes when the lookup actually succeeded`() {
+        val snapshot = withEmergencyService(EmergencyServiceFlowState.Succeeded)
+
+        val result = ResponseValidator.validate("The nearest hospital has been contacted.", snapshot)
+
+        assertTrue(result is ValidatedResponse.Passed)
+    }
+
+    @Test
+    fun `'SMS delivered' is blocked when the family alert has not actually succeeded, independent of the 'family notified' wording`() {
+        val result = ResponseValidator.validate("The SMS has been delivered.", allPending)
+
+        assertTrue(result is ValidatedResponse.Blocked)
+    }
+
+    @Test
+    fun `'push notification delivered' is blocked when the family alert has not actually succeeded`() {
+        val result = ResponseValidator.validate("The push notification was delivered.", allPending)
+
+        assertTrue(result is ValidatedResponse.Blocked)
+    }
+
+    @Test
+    fun `emergency-service contacted and 911 contacted are independent claims, one succeeding does not verify the other`() {
+        val snapshot = withUnified911(Unified911FlowState.Succeeded)
+
+        val result = ResponseValidator.validate("The nearest hospital has been contacted.", snapshot)
+
+        assertTrue("911 succeeding must not verify a distinct emergency-service claim, got $result", result is ValidatedResponse.Blocked)
     }
 
     @Test

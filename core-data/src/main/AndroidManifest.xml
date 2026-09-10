@@ -20,7 +20,7 @@
             android:foregroundServiceType="location|specialUse">
             <property
                 android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
-                android:value="Active personal-safety emergency assistance in progress" />
+                android:value="personal-safety emergency in progress" />
         </service>
     </application>
 

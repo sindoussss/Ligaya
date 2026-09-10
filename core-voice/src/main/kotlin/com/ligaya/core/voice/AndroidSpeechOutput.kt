@@ -6,6 +6,7 @@ import android.speech.tts.UtteranceProgressListener
 import com.ligaya.core.ai.ValidatedSpeech
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.withTimeoutOrNull
 import java.util.Locale
 import java.util.UUID
 import kotlin.coroutines.resume
@@ -34,8 +35,31 @@ class AndroidSpeechOutput(context: Context) : SpeechOutput {
 
     override suspend fun speak(speech: ValidatedSpeech) = speakText(speech.text)
 
+    /**
+     * Step 51's own finding, from building its field-testing latency instrumentation: neither
+     * wait here originally had a timeout at all. [TextToSpeech]'s own init callback is not
+     * guaranteed to fire promptly — confirmed directly, it never fired within several real
+     * seconds on one specific emulator system image (no voice data / a non-functional engine on
+     * that image) — and without a bound, `ready.await()` suspends forever, silently hanging the
+     * *entire* companion conversation on whichever turn first tries to speak. For a safety-
+     * critical app whose own roadmap explicitly calls out testing "a lower-tier device
+     * representative of the Philippine market" — real hardware where a broken or absent TTS voice
+     * pack is a genuine, not hypothetical, possibility — that silent hang is exactly the kind of
+     * failure mode this app's own established pattern (never let a subsystem outage become a
+     * silent failure, e.g. GeminiCompanionResponseProvider's own SAFE_FALLBACK_RESPONSE) already
+     * exists to prevent elsewhere. [ENGINE_READY_TIMEOUT_MILLIS] bounds the wait for the engine to
+     * report ready; [UTTERANCE_TIMEOUT_MILLIS] separately bounds actually finishing an utterance
+     * (generous — long enough for any realistic single reply this app ever speaks, per
+     * EmergencyStatusMessage/ValidatedSpeech's own "deliberately small and conservative" design —
+     * but still a real bound rather than none at all). Either timing out degrades to simply
+     * returning, exactly like the already-existing "engine failed to initialize" branch just
+     * below — the caller was already written to treat a failed/absent TTS response as a
+     * non-fatal, silent-from-the-engine's-perspective outcome; a timeout is the same outcome via
+     * a different cause, not a new contract.
+     */
     private suspend fun speakText(text: String) {
-        if (!ready.await()) return
+        val ready = withTimeoutOrNull(ENGINE_READY_TIMEOUT_MILLIS) { ready.await() }
+        if (ready != true) return
 
         val locale = Locale.forLanguageTag("fil-PH")
         if (tts.isLanguageAvailable(locale) >= TextToSpeech.LANG_AVAILABLE) {
@@ -45,24 +69,31 @@ class AndroidSpeechOutput(context: Context) : SpeechOutput {
         // doc comment — there is no better on-device fallback for Tagalog specifically.
 
         val utteranceId = UUID.randomUUID().toString()
-        suspendCancellableCoroutine<Unit> { continuation ->
-            tts.setOnUtteranceProgressListener(object : UtteranceProgressListener() {
-                override fun onStart(utteranceId: String?) = Unit
-                override fun onDone(utteranceId: String?) {
-                    if (continuation.isActive) continuation.resume(Unit)
-                }
+        withTimeoutOrNull(UTTERANCE_TIMEOUT_MILLIS) {
+            suspendCancellableCoroutine<Unit> { continuation ->
+                tts.setOnUtteranceProgressListener(object : UtteranceProgressListener() {
+                    override fun onStart(utteranceId: String?) = Unit
+                    override fun onDone(utteranceId: String?) {
+                        if (continuation.isActive) continuation.resume(Unit)
+                    }
 
-                @Deprecated("Deprecated in Java")
-                override fun onError(utteranceId: String?) {
-                    if (continuation.isActive) continuation.resume(Unit)
-                }
+                    @Deprecated("Deprecated in Java")
+                    override fun onError(utteranceId: String?) {
+                        if (continuation.isActive) continuation.resume(Unit)
+                    }
 
-                override fun onError(utteranceId: String?, errorCode: Int) {
-                    if (continuation.isActive) continuation.resume(Unit)
-                }
-            })
-            tts.speak(text, TextToSpeech.QUEUE_ADD, null, utteranceId)
+                    override fun onError(utteranceId: String?, errorCode: Int) {
+                        if (continuation.isActive) continuation.resume(Unit)
+                    }
+                })
+                tts.speak(text, TextToSpeech.QUEUE_ADD, null, utteranceId)
+            }
         }
+    }
+
+    private companion object {
+        const val ENGINE_READY_TIMEOUT_MILLIS = 10_000L
+        const val UTTERANCE_TIMEOUT_MILLIS = 30_000L
     }
 
     /** Releases the underlying engine. Not tied to any lifecycle here — whoever constructs this

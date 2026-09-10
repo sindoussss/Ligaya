@@ -45,4 +45,7 @@ dependencies {
     androidTestImplementation(libs.androidx.test.junit)
     androidTestImplementation(libs.androidx.test.runner)
     androidTestImplementation(libs.kotlinx.coroutines.test)
+    // GrantPermissionRule — Step 50's real-instrumented "RECORD_AUDIO granted" test needs the
+    // permission granted before the real SpeechRecognizer is ever reached.
+    androidTestImplementation(libs.androidx.test.rules)
 }

@@ -134,6 +134,61 @@ class VoiceActivationCoordinatorTest {
         assertTrue(results.isEmpty())
     }
 
+    // --- Step 53 audit follow-up: `phase`, driving Home's own always-visible voice indicator ---
+
+    @Test
+    fun `phase starts IDLE, reaches PROCESSING before interpret is called, and settles back to IDLE once collection completes`() = runTest {
+        lateinit var coordinator: VoiceActivationCoordinator
+        var phaseWhenInterpretWasCalled: VoicePipelinePhase? = null
+        val fireIntent = StructuredEmergencyIntent(true, IncidentType.FIRE, 0.9f, "May sunog.", true)
+        coordinator = coordinatorFor(
+            events = flowOf(TranscriptionEvent.Success("Ligaya, tulong. May sunog.", isFinal = true)),
+            intentProvider = object : IntentProvider {
+                override suspend fun interpret(transcript: String): VoiceInterpretationOutcome {
+                    phaseWhenInterpretWasCalled = coordinator.phase.value
+                    return VoiceInterpretationOutcome.Interpreted(fireIntent)
+                }
+            },
+            reporter = RecordingReporter(),
+        )
+
+        assertEquals(VoicePipelinePhase.IDLE, coordinator.phase.value)
+        coordinator.listenForWakePhrase().toList()
+
+        assertEquals(VoicePipelinePhase.PROCESSING, phaseWhenInterpretWasCalled)
+        assertEquals(VoicePipelinePhase.IDLE, coordinator.phase.value)
+    }
+
+    @Test
+    fun `phase never reaches PROCESSING when no transcript ever contains the wake phrase`() = runTest {
+        val intentProvider = RecordingIntentProvider(
+            VoiceInterpretationOutcome.Interpreted(StructuredEmergencyIntent(false, null, 0f, "", false)),
+        )
+        val coordinator = coordinatorFor(
+            events = flowOf(TranscriptionEvent.Success("Kumusta ka?", isFinal = true)),
+            intentProvider = intentProvider,
+            reporter = RecordingReporter(),
+        )
+
+        coordinator.listenForWakePhrase().toList()
+
+        assertTrue(intentProvider.transcriptsSeen.isEmpty())
+        assertEquals(VoicePipelinePhase.IDLE, coordinator.phase.value)
+    }
+
+    @Test
+    fun `phase settles back to IDLE after a failure event with no matching transcript at all`() = runTest {
+        val coordinator = coordinatorFor(
+            events = flowOf(TranscriptionEvent.Failure(TranscriptionFailureReason.NO_SPEECH_DETECTED)),
+            intentProvider = RecordingIntentProvider(VoiceInterpretationOutcome.Unavailable),
+            reporter = RecordingReporter(),
+        )
+
+        coordinator.listenForWakePhrase().toList()
+
+        assertEquals(VoicePipelinePhase.IDLE, coordinator.phase.value)
+    }
+
     @Test
     fun `a failure event is never interpreted or reported`() = runTest {
         val intentProvider = RecordingIntentProvider(

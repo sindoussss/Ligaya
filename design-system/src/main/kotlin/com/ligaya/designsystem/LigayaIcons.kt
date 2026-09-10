@@ -1,6 +1,7 @@
 package com.ligaya.designsystem
 
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.HelpOutline
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.automirrored.filled.VolumeUp
@@ -9,6 +10,7 @@ import androidx.compose.material.icons.filled.Emergency
 import androidx.compose.material.icons.filled.ErrorOutline
 import androidx.compose.material.icons.filled.LocalFireDepartment
 import androidx.compose.material.icons.filled.LocalPolice
+import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.MedicalServices
 import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material.icons.filled.MicNone
@@ -36,6 +38,21 @@ enum class LigayaDeliveryState { PENDING, SENT, CONFIRMED, FAILED }
 enum class LigayaVoiceState { IDLE, LISTENING, PROCESSING, SPEAKING }
 
 object LigayaIcons {
+    /**
+     * Standalone slots — concepts that appear on one screen each rather than varying across a
+     * state enum, but which still belong here so no screen reaches into Material's catalogue for
+     * its own idea of what, say, "location" looks like.
+     */
+    val location: ImageVector = Icons.Filled.LocationOn
+
+    /**
+     * Back navigation. Auto-mirrored so it points the other way under a right-to-left locale —
+     * the reason this is a real icon rather than the '‹' character the first screens used: a
+     * glyph never mirrors, renders at whatever weight the font decides, and doesn't scale with
+     * icon sizing.
+     */
+    val back: ImageVector = Icons.AutoMirrored.Filled.ArrowBack
+
     val incidentType: Map<LigayaIncidentType, ImageVector> = mapOf(
         LigayaIncidentType.FIRE to Icons.Filled.LocalFireDepartment,
         LigayaIncidentType.POLICE to Icons.Filled.LocalPolice,

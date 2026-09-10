@@ -17,6 +17,17 @@ class ContrastRatioTest {
     private val wcagAaBodyTextMinimum = 4.5
 
     private val pairs: List<Triple<String, Color, Color>> = listOf(
+        // Brand palette (visual-design pass). Only the text-bearing pairs appear here — blush/
+        // blushDeep/rose are ornament-only by definition (see LigayaColors' own doc comment), so
+        // asserting a text ratio on them would be asserting something the palette never claims.
+        Triple("ink on canvas", LigayaColors.ink, LigayaColors.canvas),
+        Triple("ink on surface", LigayaColors.ink, LigayaColors.surface),
+        Triple("inkSoft on canvas", LigayaColors.inkSoft, LigayaColors.canvas),
+        Triple("inkSoft on surface", LigayaColors.inkSoft, LigayaColors.surface),
+        Triple("onRoseDeep on roseDeep", LigayaColors.onRoseDeep, LigayaColors.roseDeep),
+        Triple("ink on blush", LigayaColors.ink, LigayaColors.blush),
+        Triple("ink on blushDeep", LigayaColors.ink, LigayaColors.blushDeep),
+
         Triple("onSurface on idleBackground", LigayaColors.onSurface, LigayaColors.idleBackground),
         Triple("onIdlePrimary on idlePrimary", LigayaColors.onIdlePrimary, LigayaColors.idlePrimary),
         Triple("onEmergencyActive on colorEmergencyActive", LigayaColors.onEmergencyActive, LigayaColors.colorEmergencyActive),

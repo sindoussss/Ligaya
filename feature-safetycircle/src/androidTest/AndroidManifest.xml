@@ -1,0 +1,7 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Same fix as core-backend's own androidTest manifest (Step 18): Android blocks cleartext
+         (plaintext HTTP) traffic by default since API 28, and the Firebase Auth/Firestore SDKs'
+         REST calls to the local emulator at 10.0.2.2 are cleartext — SafetyCircleScreenTest's
+         real emulator-backed round trip needs this to run at all. Test APK only. -->
+    <application android:usesCleartextTraffic="true" />
+</manifest>

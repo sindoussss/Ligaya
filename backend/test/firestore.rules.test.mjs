@@ -215,6 +215,54 @@ test('FAMILY_MEMBER: a member can leave (delete their own membership record)', a
   await assertSucceeds(deleteDoc(doc(bobDb, 'households/house-leave/members/bob')));
 });
 
+// --- Step 53: section 7's "up to 5 invited members - limit enforced by Ligaya backend" -------
+
+test('FAMILY_MEMBER: a 6th invite is rejected once member_count has already reached 5', async () => {
+  await testEnv.withSecurityRulesDisabled(async (ctx) => {
+    await setDoc(doc(ctx.firestore(), 'households/house-at-cap'), { owner_id: 'alice', member_count: 5 });
+  });
+
+  await assertFails(
+    setDoc(doc(aliceDb, 'households/house-at-cap/members/dave'), {
+      relationship: 'friend',
+      permissions: {},
+      notification_channel: 'push',
+      status: 'PENDING',
+    }),
+  );
+});
+
+test('FAMILY_MEMBER: a 5th invite still succeeds when member_count is 4 (below, not at, the cap)', async () => {
+  await testEnv.withSecurityRulesDisabled(async (ctx) => {
+    await setDoc(doc(ctx.firestore(), 'households/house-below-cap'), { owner_id: 'alice', member_count: 4 });
+  });
+
+  await assertSucceeds(
+    setDoc(doc(aliceDb, 'households/house-below-cap/members/eve'), {
+      relationship: 'friend',
+      permissions: {},
+      notification_channel: 'push',
+      status: 'PENDING',
+    }),
+  );
+});
+
+test('FAMILY_MEMBER: a household created before member_count existed defaults to 0, not a rule error', async () => {
+  await testEnv.withSecurityRulesDisabled(async (ctx) => {
+    // No member_count field at all — simulates a household written before this counter existed.
+    await setDoc(doc(ctx.firestore(), 'households/house-legacy-no-counter'), { owner_id: 'alice' });
+  });
+
+  await assertSucceeds(
+    setDoc(doc(aliceDb, 'households/house-legacy-no-counter/members/frank'), {
+      relationship: 'friend',
+      permissions: {},
+      notification_channel: 'push',
+      status: 'PENDING',
+    }),
+  );
+});
+
 test('FAMILY_MEMBER: a non-member cannot read another member\'s record', async () => {
   await testEnv.withSecurityRulesDisabled(async (ctx) => {
     await setDoc(doc(ctx.firestore(), 'households/house-privacy'), { owner_id: 'alice' });

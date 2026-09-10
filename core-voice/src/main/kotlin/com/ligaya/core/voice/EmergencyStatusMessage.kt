@@ -19,4 +19,13 @@ enum class EmergencyStatusMessage(val spokenText: String) {
     EMERGENCY_ACTIVATED("Emergency activated."),
     USER_MARKED_SAFE("You have been marked as safe."),
     EMERGENCY_RESOLVED("Emergency resolved."),
+
+    // Step 49's own acceptance criteria ("AI-dependent parts show explicit unavailable states,
+    // no silent hang"): VoiceActivationCoordinator already distinguishes AiUnavailable from a
+    // real Decision (Step 27) specifically so a caller could eventually surface it — until now,
+    // no caller did, so a spoken wake phrase with the AI stack unreachable produced no feedback
+    // at all. This is still a closed, conservative, pre-approved status about the voice
+    // subsystem's own availability, not a claim about any emergency action's outcome, so it fits
+    // this enum's own stated restriction rather than working around it.
+    VOICE_AI_UNAVAILABLE("Voice assistant is unavailable right now. Please use the SOS button instead."),
 }

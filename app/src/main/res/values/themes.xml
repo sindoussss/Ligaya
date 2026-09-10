@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Visual design, screen 1.
+
+  Before this, the app declared a bare platform theme and no launcher icon, so a cold start showed
+  the system's default splash — a stock blue Android robot on white — for the whole process-start
+  window, immediately before Ligaya's own blush splash faded in. Confirmed directly on the
+  emulator, not assumed: a screenshot taken 450ms after launch caught exactly that.
+
+  Theme.SplashScreen (core-splashscreen) replaces it with the brand's own mark on the brand's own
+  background, so the launch window and the Compose splash that follows share one appearance and
+  the handoff between them reads as a single screen rather than two.
+-->
+<resources>
+
+    <!-- The window the OS itself draws, before any of this app's code runs. -->
+    <style name="Theme.Ligaya.Splash" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">@color/ligaya_blush</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/ic_ligaya_mark</item>
+        <!-- Handed to the Activity by installSplashScreen() once the first frame is ready. -->
+        <item name="postSplashScreenTheme">@style/Theme.Ligaya</item>
+    </style>
+
+    <!-- The real Activity theme. Window background is the splash's own canvas colour so the
+         very first Compose frame never flashes the platform's default white behind it. -->
+    <style name="Theme.Ligaya" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:windowBackground">@color/ligaya_canvas</item>
+    </style>
+</resources>

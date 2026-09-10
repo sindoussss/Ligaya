@@ -51,6 +51,22 @@ rootProject.name = "Ligaya"
 //   and components); no core-ui-state and no core-emergency-engine, direct or otherwise — this
 //   screen renders exactly the fields the backend already decided to send, nothing derived from
 //   live engine state.
+// - feature-onboarding: Step 42's Onboarding UI — added now, deliberately, not silently, same
+//   pattern again. Depends on core-backend (Step 4's AuthRepository) and core-data (Step 5's
+//   EmergencyProfileRepository/EmergencyProfile) for the already-built domain logic this screen
+//   only presents, plus design-system (Steps 33/34). No core-ui-state, no core-emergency-engine —
+//   onboarding is account/profile setup, entirely outside the emergency state machine.
+// - feature-safetycircle: Step 43's Safety Circle management UI — same pattern again. Depends on
+//   core-backend (Step 8's SafetyCircleRepository, extended this step with getMembers) and
+//   core-data (HouseholdEntity/FamilyMemberEntity), plus design-system. No core-ui-state, no
+//   core-emergency-engine — household membership is entirely outside the emergency state machine.
+// - feature-paywall: Step 44's Ligaya+ paywall UI. Depends on core-billing (this step's own
+//   EntitlementRepository/RevenueCat wrapper) and design-system only — deliberately NOT
+//   core-emergency-engine, core-ui-state, or any of the core emergency modules, so there is no
+//   dependency edge this screen could even use to read or gate emergency state through, matching
+//   this step's own acceptance criterion ("clear separation from core safety features") at the
+//   module-graph level, not just by convention. checkNoBillingInCoreScreens (root build.gradle.kts)
+//   enforces the mirror-image rule: no core emergency screen module may depend on :core-billing.
 include(
     ":app",
     ":core-emergency-engine",
@@ -70,4 +86,7 @@ include(
     ":feature-home",
     ":feature-emergency-active",
     ":feature-family",
+    ":feature-onboarding",
+    ":feature-safetycircle",
+    ":feature-paywall",
 )

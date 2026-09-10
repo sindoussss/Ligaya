@@ -13,6 +13,7 @@ import com.ligaya.core.voice.SpeechTranscriber
 import com.ligaya.core.voice.TranscriptionEvent
 import com.ligaya.core.voice.TranscriptionFailureReason
 import com.ligaya.core.voice.VoiceCaptureCoordinator
+import com.ligaya.core.voice.VoicePipelinePhase
 import com.ligaya.core.ai.ValidatedSpeech
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.flowOf

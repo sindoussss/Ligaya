@@ -26,8 +26,10 @@ import com.ligaya.core.emergencyengine.EmergencySnapshot
 import com.ligaya.core.emergencyengine.EmergencyState
 import com.ligaya.core.uistate.EmergencyController
 import com.ligaya.core.uistate.SosResult
+import com.ligaya.core.voice.VoicePipelinePhase
 import com.ligaya.designsystem.LigayaSpacing
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flowOf
 import org.junit.Assert.assertTrue
 import org.junit.Rule
@@ -52,6 +54,7 @@ class HomeScreenScreenshotTest {
     private class NoOpEmergencyController : EmergencyController {
         override suspend fun triggerSos(): SosResult = SosResult.Activated(EmergencyState.EMERGENCY_ACTIVE)
         override suspend fun markSafe(): Result<EmergencyState> = Result.success(EmergencyState.USER_MARKED_SAFE)
+        override suspend fun retryCall(): Result<EmergencyState> = Result.success(EmergencyState.EMERGENCY_ACTIVE)
         override fun observeSnapshot(): Flow<EmergencySnapshot?> = flowOf(null)
     }
 
@@ -85,6 +88,8 @@ class HomeScreenScreenshotTest {
                             onNavigateToSafetyCircle = {},
                             onNavigateToCompanion = {},
                             onNavigateToRoute = {},
+                            voicePhase = MutableStateFlow(VoicePipelinePhase.LISTENING),
+                            voiceAiUnavailable = MutableStateFlow(false),
                         )
                     }
                 }

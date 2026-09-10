@@ -6,7 +6,7 @@
   "type": "module",
   "scripts": {
     "test": "firebase emulators:exec --only firestore --project demo-ligaya-test \"node --test --test-concurrency=1 test/firestore.rules.test.mjs\"",
-    "test:functions": "firebase emulators:exec --only firestore --project demo-ligaya-test \"node --test --test-concurrency=1 functions/test/family-alerts.test.mjs functions/test/twilio-sms-gateway.test.mjs functions/test/family-emergency-view.test.mjs\""
+    "test:functions": "firebase emulators:exec --only firestore --project demo-ligaya-test \"node --test --test-concurrency=1 functions/test/family-alerts.test.mjs functions/test/twilio-sms-gateway.test.mjs functions/test/family-emergency-view.test.mjs functions/test/household-membership.test.mjs\""
   },
   "devDependencies": {
     "@firebase/rules-unit-testing": "^3.0.4",

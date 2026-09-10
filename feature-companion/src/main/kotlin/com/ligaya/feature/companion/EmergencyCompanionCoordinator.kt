@@ -7,10 +7,12 @@ import com.ligaya.core.ai.toValidatedSpeechOrNull
 import com.ligaya.core.voice.SpeechOutput
 import com.ligaya.core.voice.TranscriptionEvent
 import com.ligaya.core.voice.VoiceCaptureCoordinator
+import com.ligaya.core.voice.VoicePipelinePhase
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.withTimeoutOrNull
 
 /**
  * Section 19's full companion loop: capture (Step 21) -> Gemini (Step 22's pipeline, but the
@@ -52,12 +54,27 @@ class EmergencyCompanionCoordinator(
      *  and a genuinely unexpected exception, not just the successful Spoken path. */
     val phase: StateFlow<VoicePipelinePhase> = _phase.asStateFlow()
 
+    /**
+     * Step 51's own finding, from field-testing this pipeline's real responsiveness: this wait
+     * used to have no timeout at all. A real on-device SpeechRecognizer session normally ends
+     * itself — a final result, an error, or its own internal silence timeout — but a genuinely
+     * broken/absent recognizer (confirmed directly: zero callbacks of any kind, ever, on one real
+     * emulator system image) delivers none of those, and `firstOrNull` on a Flow that never
+     * completes and never emits a match suspends forever. Unlike a permission denial (an
+     * immediate, synchronous PERMISSION_DENIED from VoiceCaptureCoordinator itself), this is the
+     * one STT failure mode nothing downstream was already guarding against — during a real active
+     * emergency, that would silently stall the whole companion turn indefinitely, exactly the
+     * kind of failure this app's own established pattern (never let a subsystem outage become a
+     * silent hang, e.g. AndroidSpeechOutput's own matching Step 51 fix) already exists to prevent
+     * elsewhere. [LISTENING_TIMEOUT_MILLIS] is generous enough to never cut off a real listening
+     * session early — it only ever matters when nothing would otherwise end the wait at all.
+     */
     suspend fun runOneTurn(): CompanionTurnResult {
         try {
             _phase.value = VoicePipelinePhase.LISTENING
-            val transcriptEvent = captureCoordinator.startListening()
-                .firstOrNull { it is TranscriptionEvent.Success && it.isFinal }
-                as? TranscriptionEvent.Success
+            val transcriptEvent = withTimeoutOrNull(LISTENING_TIMEOUT_MILLIS) {
+                captureCoordinator.startListening().firstOrNull { it is TranscriptionEvent.Success && it.isFinal }
+            } as? TranscriptionEvent.Success
                 ?: return CompanionTurnResult.NoSpeechCaptured
 
             return respondTo(transcriptEvent.text)
@@ -104,5 +121,9 @@ class EmergencyCompanionCoordinator(
         speechOutput.speak(speech)
 
         return CompanionTurnResult.Spoken(speech.text)
+    }
+
+    private companion object {
+        const val LISTENING_TIMEOUT_MILLIS = 20_000L
     }
 }

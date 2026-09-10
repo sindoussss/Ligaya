@@ -41,6 +41,8 @@ class SosScreenTest {
 
         override suspend fun markSafe(): Result<EmergencyState> = Result.success(EmergencyState.USER_MARKED_SAFE)
 
+        override suspend fun retryCall(): Result<EmergencyState> = Result.success(EmergencyState.EMERGENCY_ACTIVE)
+
         override fun observeSnapshot(): Flow<EmergencySnapshot?> = flowOf(null)
     }
 

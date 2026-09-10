@@ -34,6 +34,11 @@ android {
 dependencies {
     implementation(project(":core-ui-state"))
     implementation(project(":design-system"))
+    // Step 53 audit follow-up: VoicePipelinePhase, the always-on wake-word loop's own live phase
+    // signal, for this screen's own voice indicator — the same kind of edge feature-emergency-
+    // active already has to core-voice (this module still never touches core-emergency-engine
+    // directly, so :checkModuleBoundaries is unaffected).
+    implementation(project(":core-voice"))
 
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.compose.ui)
@@ -46,6 +51,9 @@ dependencies {
 
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
+    // Step 45's real Accessibility Test Framework integration (Compose BOM bumped to 2025.09.00
+    // specifically to make this available — see gradle/libs.versions.toml's own comment).
+    androidTestImplementation(libs.androidx.compose.ui.test.junit4.accessibility)
     androidTestImplementation(libs.androidx.test.junit)
     androidTestImplementation(libs.androidx.test.runner)
     androidTestImplementation(libs.kotlinx.coroutines.test)

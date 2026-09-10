@@ -1,0 +1,58 @@
+<!--
+  The Ligaya mark as a platform vector drawable — the same four-leaf geometry LigayaLogo draws in
+  Compose (design-system/LigayaLogo.kt), re-expressed here because the launcher icon and the
+  system splash screen are rendered by the OS before any Compose code runs and cannot call it.
+
+  Kept structurally identical on purpose: one <group> per leaf, rotated about the shared base
+  point, exactly mirroring how LigayaLogo rotates each leaf path about that same pivot. If the
+  mark's geometry is ever retuned, the two are meant to be changed together.
+
+  Base point (54, 95) and each leaf's length/width/rotation are LigayaLogo's own values scaled to
+  this 108x108 viewport; the per-leaf fills are its rose -> roseDeep tone blend, resolved.
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!-- Outer left leaf -->
+    <group
+        android:pivotX="54"
+        android:pivotY="95"
+        android:rotation="-52">
+        <path
+            android:fillColor="#C08787"
+            android:pathData="M54,95 Q42.66,72.64 54,45.32 Q65.34,72.64 54,95 Z" />
+    </group>
+
+    <!-- Outer right leaf -->
+    <group
+        android:pivotX="54"
+        android:pivotY="95"
+        android:rotation="52">
+        <path
+            android:fillColor="#B97F81"
+            android:pathData="M54,95 Q43.2,73.62 54,47.48 Q64.8,73.62 54,95 Z" />
+    </group>
+
+    <!-- Inner left leaf (tall) -->
+    <group
+        android:pivotX="54"
+        android:pivotY="95"
+        android:rotation="-18">
+        <path
+            android:fillColor="#AE7377"
+            android:pathData="M54,95 Q40.5,60.01 54,17.24 Q67.5,60.01 54,95 Z" />
+    </group>
+
+    <!-- Inner right leaf (tall, deepest tone) -->
+    <group
+        android:pivotX="54"
+        android:pivotY="95"
+        android:rotation="18">
+        <path
+            android:fillColor="#A1646A"
+            android:pathData="M54,95 Q41.04,61.95 54,21.56 Q66.96,61.95 54,95 Z" />
+    </group>
+</vector>

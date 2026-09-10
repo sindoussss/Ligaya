@@ -43,6 +43,11 @@ dependencies {
     // cycle: core-ui-state never depends back on core-data.
     implementation(project(":core-ui-state"))
 
+    // Step 41's fix: DefaultEmergencyController.retryCall() wires a real Unified911FlowCoordinator
+    // to the persisted machine (see that method's own doc comment on why this specific core-*
+    // dependency doesn't violate this class's "touches nothing else" principle).
+    implementation(project(":core-telephony"))
+
     // Step 11: EmergencyForegroundService needs NotificationCompat + ServiceCompat.startForeground
     // (the typed-FGS-aware overload that degrades correctly on pre-Android-14 too).
     implementation(libs.androidx.core.ktx)

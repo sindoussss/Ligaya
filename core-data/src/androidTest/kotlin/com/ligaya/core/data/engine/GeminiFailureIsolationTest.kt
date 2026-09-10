@@ -1,8 +1,11 @@
 package com.ligaya.core.data.engine
 
+import android.app.Instrumentation
 import android.app.NotificationManager
 import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
+import android.os.PatternMatcher
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -36,22 +39,38 @@ import org.junit.runner.RunWith
  * core-ai at all (see DefaultEmergencyController's own doc comment), so there is no code path
  * through which a Gemini failure could even reach this class. This test proves that structural
  * guarantee holds at runtime too, not just on paper.
+ *
+ * Step 48/49: like every other test in this module that calls triggerSos(), this one now also
+ * needs [dialMonitor] (the automatic 911 dial fires for real here too) and a wait for it to
+ * land before closing the database — see DefaultEmergencyControllerTest's own doc comment for
+ * the full diagnosis. Found here specifically while verifying Step 49: running this test without
+ * the fix let the real system Dialer app actually launch (confirmed via `dumpsys activity
+ * activities`), the same class of bug already fixed in the other two files.
  */
 @RunWith(AndroidJUnit4::class)
 class GeminiFailureIsolationTest {
 
     private val context: Context = ApplicationProvider.getApplicationContext()
     private val dbName = "gemini-failure-isolation-test.db"
-    private val uiAutomation = InstrumentationRegistry.getInstrumentation().uiAutomation
+    private val instrumentation: Instrumentation = InstrumentationRegistry.getInstrumentation()
+    private val uiAutomation = instrumentation.uiAutomation
+    private lateinit var dialMonitor: Instrumentation.ActivityMonitor
 
     @Before
     fun setUp() {
         context.deleteDatabase(dbName)
         uiAutomation.grantRuntimePermission(context.packageName, "android.permission.POST_NOTIFICATIONS")
+
+        val dialFilter = IntentFilter(Intent.ACTION_DIAL).apply {
+            addDataScheme("tel")
+            addDataSchemeSpecificPart("911", PatternMatcher.PATTERN_LITERAL)
+        }
+        dialMonitor = instrumentation.addMonitor(dialFilter, null, true)
     }
 
     @After
     fun tearDown() {
+        instrumentation.removeMonitor(dialMonitor)
         context.stopService(Intent(context, EmergencyForegroundService::class.java))
         LigayaDatabase.setInstanceForTesting(null)
         context.deleteDatabase(dbName)
@@ -95,6 +114,8 @@ class GeminiFailureIsolationTest {
         assertEquals(EmergencyState.EMERGENCY_ACTIVE, (result as SosResult.Activated).state)
         waitUntil { hasActiveNotification() }
         assertTrue("expected the foreground service's persistent notification to be showing", hasActiveNotification())
+        // See this class's own doc comment for why this wait is needed before db.close() below.
+        waitUntil { dialMonitor.hits >= 1 }
         assertEquals(
             EmergencyState.EMERGENCY_ACTIVE,
             repository.getCurrent()?.mainState?.let { EmergencyState.valueOf(it) },

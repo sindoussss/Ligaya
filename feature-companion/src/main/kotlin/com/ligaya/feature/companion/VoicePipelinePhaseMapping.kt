@@ -1,5 +1,6 @@
 package com.ligaya.feature.companion
 
+import com.ligaya.core.voice.VoicePipelinePhase
 import com.ligaya.designsystem.LigayaVoiceState
 
 /**
@@ -7,7 +8,8 @@ import com.ligaya.designsystem.LigayaVoiceState
  * feature-emergency-active already has an identical mapping (VoicePipelinePhaseMapping.kt there),
  * but this module can't depend on feature-emergency-active, so this is the same deferred-mapping
  * pattern applied a second time rather than a shared dependency introduced just to avoid four
- * lines of duplication.
+ * lines of duplication. [VoicePipelinePhase] itself moved to core-voice (Step 53's audit
+ * follow-up) — see its own doc comment — this mapping's own duplication rationale is unaffected.
  */
 fun VoicePipelinePhase.toLigayaVoiceState(): LigayaVoiceState = when (this) {
     VoicePipelinePhase.IDLE -> LigayaVoiceState.IDLE

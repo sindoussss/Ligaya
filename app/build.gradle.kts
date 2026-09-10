@@ -27,14 +27,23 @@ plugins {
     alias(libs.plugins.kotlin.compose)
 }
 
-val geminiApiKey: String = run {
-    val properties = Properties()
+private fun localOrEnvProperty(properties: Properties, name: String): String =
+    properties.getProperty(name) ?: System.getenv(name) ?: ""
+
+val localProperties: Properties = Properties().also {
     val localPropertiesFile = rootProject.file("local.properties")
     if (localPropertiesFile.exists()) {
-        localPropertiesFile.inputStream().use { properties.load(it) }
+        localPropertiesFile.inputStream().use(it::load)
     }
-    properties.getProperty("GEMINI_API_KEY") ?: System.getenv("GEMINI_API_KEY") ?: ""
 }
+
+val geminiApiKey: String = localOrEnvProperty(localProperties, "GEMINI_API_KEY")
+
+// Step 48: same never-hardcoded, never-required-to-build pattern as geminiApiKey above — see
+// ACCOUNT_ACTIONS_NEEDED.md for what setting this up actually requires (a Google Cloud project
+// with Places API (New) enabled and billing on). Absent, MainActivity skips the emergency-service
+// (Places) flow entirely rather than firing a request guaranteed to fail on an empty key.
+val placesApiKey: String = localOrEnvProperty(localProperties, "PLACES_API_KEY")
 
 android {
     namespace = "com.ligaya.app"
@@ -48,6 +57,7 @@ android {
         versionName = "0.1.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         buildConfigField("String", "GEMINI_API_KEY", "\"$geminiApiKey\"")
+        buildConfigField("String", "PLACES_API_KEY", "\"$placesApiKey\"")
     }
 
     buildFeatures {
@@ -73,10 +83,22 @@ dependencies {
     // Now also constructs the real EmergencyCompanionCoordinator (see the header comment above
     // and MainActivity), not just VoicePipelinePhase.
     implementation(project(":feature-companion"))
+    // Visual design screen 2: the Onboarding route rendered a PlaceholderScreen until now —
+    // feature-onboarding existed (Step 42) but was never wired into the app at all.
+    implementation(project(":feature-onboarding"))
+    // Visual design screen 3: AuthRepository, so the composition root can choose which
+    // implementation backs account creation (see MainActivity).
+    implementation(project(":core-backend"))
     // Real STT/TTS/Gemini/permission wiring for the coordinator MainActivity now assembles.
     implementation(project(":core-ai"))
     implementation(project(":core-voice"))
     implementation(project(":core-permissions"))
+    // Step 48: MainActivity now orchestrates the real Location and Emergency-Service (Places)
+    // flows too, automatically, once EMERGENCY_ACTIVE is reached — see MainActivity's own doc
+    // comment and DefaultEmergencyController's reportLocationFlow/reportEmergencyServiceFlow.
+    implementation(project(":core-location"))
+    implementation(project(":core-places"))
+    implementation(libs.play.services.location)
 
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.compose.ui)
@@ -84,11 +106,27 @@ dependencies {
     implementation(libs.androidx.compose.material3)
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.navigation.compose)
+    // Visual design screen 1: brand-themed system launch window (see res/values/themes.xml for
+    // what it replaces — the stock blue-robot splash a cold start showed before this).
+    implementation(libs.androidx.core.splashscreen)
+    // lifecycleScope/repeatOnLifecycle — for the foreground-only wake-word listening loop and the
+    // EMERGENCY_ACTIVE snapshot observer, both of which must start/stop with the Activity's own
+    // lifecycle, not just onCreate/onDestroy.
+    implementation(libs.androidx.lifecycle.runtime.ktx)
     debugImplementation(libs.androidx.compose.ui.tooling)
 
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     androidTestImplementation(libs.androidx.test.junit)
     androidTestImplementation(libs.androidx.test.runner)
+    // GrantPermissionRule — Step 48's MainActivity now requests RECORD_AUDIO for real in
+    // onCreate; MainActivity-launching tests pre-grant it (ordered ahead of the compose rule) so
+    // the real system permission dialog never appears and steals window focus, same class of bug
+    // already found and fixed once for this exact reason after Step 39.
+    androidTestImplementation(libs.androidx.test.rules)
+    // UiDevice — Step 50's real-SOS POST_NOTIFICATIONS-denied test needs to interact with the
+    // real system permission dialog (deny it), which lives outside this app's own Compose view
+    // hierarchy and so isn't reachable through ComposeTestRule's own node queries.
+    androidTestImplementation(libs.androidx.test.uiautomator)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
 }

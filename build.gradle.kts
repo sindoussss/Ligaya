@@ -53,3 +53,46 @@ tasks.register("checkModuleBoundaries") {
         }
     }
 }
+
+// Step 44's own acceptance criterion made structural, not just a matter of what code happens to
+// be written today: "a non-subscribed user can still fully use SOS, voice activation, 911, and
+// companion" can never regress into a hidden entitlement check if the modules rendering those
+// four things have no dependency edge to :core-billing to check it *through* in the first place.
+// feature-home hosts SOS (Step 36), feature-emergency-active hosts voice activation/911 (Step 37),
+// feature-companion hosts the Emergency Companion (Step 26/39) — exactly the acceptance
+// criterion's own four items, no more, no less (feature-family/feature-safetycircle/
+// feature-onboarding are deliberately not included: they're not "core emergency" screens per that
+// criterion's own wording, and nothing rules out billing awareness there).
+val forbiddenBillingDependents = setOf(":feature-home", ":feature-emergency-active", ":feature-companion")
+val forbiddenBillingTarget = ":core-billing"
+
+tasks.register("checkNoBillingInCoreScreens") {
+    group = "verification"
+    description = "Fails if a core emergency screen module (SOS/voice/911/companion) depends on :core-billing."
+
+    doLast {
+        var violationFound = false
+        subprojects.forEach { sub ->
+            if (sub.path in forbiddenBillingDependents) {
+                sub.configurations.forEach { config ->
+                    config.dependencies
+                        .filterIsInstance<org.gradle.api.artifacts.ProjectDependency>()
+                        .forEach { dep ->
+                            val depPath = dep.dependencyProject.path
+                            if (depPath == forbiddenBillingTarget) {
+                                violationFound = true
+                                logger.error(
+                                    "Architecture violation: ${sub.path} depends on $forbiddenBillingTarget " +
+                                        "via configuration '${config.name}'. Core emergency screens must never " +
+                                        "be able to check entitlement state (Step 44's own acceptance criterion)."
+                                )
+                            }
+                        }
+                }
+            }
+        }
+        if (violationFound) {
+            throw GradleException("checkNoBillingInCoreScreens failed: see errors above.")
+        }
+    }
+}

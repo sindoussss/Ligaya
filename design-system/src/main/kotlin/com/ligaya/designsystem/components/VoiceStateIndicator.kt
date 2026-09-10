@@ -25,6 +25,7 @@ import com.ligaya.designsystem.LigayaIcons
 import com.ligaya.designsystem.LigayaMotion
 import com.ligaya.designsystem.LigayaSpacing
 import com.ligaya.designsystem.LigayaVoiceState
+import com.ligaya.designsystem.rememberIsReduceMotionEnabled
 
 /**
  * Section 27's screen inventory: "A persistent, always-visible visual (e.g., an animated
@@ -38,22 +39,35 @@ import com.ligaya.designsystem.LigayaVoiceState
  * a fixed safety color like [SosControl]/[StatusCard]'s failure tone), with [listening]'s pulse
  * as the one state that visibly moves — [LigayaMotion.durationStateTransition] paced, matching the
  * brief's "slower/deliberate" guidance for anything more than instant feedback.
+ *
+ * Step 45: the pulse itself is the "component that actually animates" [LigayaMotion]'s own doc
+ * comment named as responsible for observing reduce-motion — [rememberIsReduceMotionEnabled] on,
+ * and the infinite pulse transition is skipped entirely (held at a constant, non-pulsing scale)
+ * rather than looping with a zero-length tween, which would still churn a frame every repeat for
+ * no visible effect. The state is still communicated (the icon/color/contentDescription below
+ * never depended on the animation), just not via motion.
  */
 @Composable
 fun VoiceStateIndicator(
     state: LigayaVoiceState,
     modifier: Modifier = Modifier,
 ) {
-    val transition = rememberInfiniteTransition(label = "voiceStatePulse")
-    val pulse by transition.animateFloat(
-        initialValue = 1f,
-        targetValue = if (state == LigayaVoiceState.LISTENING) 1.15f else 1f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = LigayaMotion.durationStateTransition, easing = LigayaMotion.easingStandard),
-            repeatMode = RepeatMode.Reverse,
-        ),
-        label = "voiceStatePulseScale",
-    )
+    val reduceMotion = rememberIsReduceMotionEnabled()
+    val pulse: Float = if (reduceMotion) {
+        1f
+    } else {
+        val transition = rememberInfiniteTransition(label = "voiceStatePulse")
+        val animatedPulse by transition.animateFloat(
+            initialValue = 1f,
+            targetValue = if (state == LigayaVoiceState.LISTENING) 1.15f else 1f,
+            animationSpec = infiniteRepeatable(
+                animation = tween(durationMillis = LigayaMotion.durationStateTransition, easing = LigayaMotion.easingStandard),
+                repeatMode = RepeatMode.Reverse,
+            ),
+            label = "voiceStatePulseScale",
+        )
+        animatedPulse
+    }
 
     val description = when (state) {
         LigayaVoiceState.IDLE -> "Voice assistant idle"

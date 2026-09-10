@@ -38,10 +38,14 @@ dependencies {
     implementation(project(":design-system"))
     implementation(project(":core-data"))
     // Step 38: binds design-system's VoiceStateIndicator to feature-companion's real pipeline
-    // phase (VoicePipelinePhase) — a UI feature module depending on a non-UI orchestration
-    // feature module, the same kind of edge :app itself already has to several feature-*
-    // modules, just one layer down since this module is the one that actually renders it.
+    // phase — a UI feature module depending on a non-UI orchestration feature module, the same
+    // kind of edge :app itself already has to several feature-* modules, just one layer down
+    // since this module is the one that actually renders it.
     implementation(project(":feature-companion"))
+    // VoicePipelinePhase itself lives in core-voice (moved there by Step 53's audit follow-up,
+    // see its own doc comment) — no longer reachable transitively through :feature-companion's
+    // own `implementation`-scoped dependency on it, so this module needs the edge directly now.
+    implementation(project(":core-voice"))
 
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.compose.ui)
@@ -55,6 +59,7 @@ dependencies {
 
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
+    androidTestImplementation(libs.androidx.compose.ui.test.junit4.accessibility)
     androidTestImplementation(libs.androidx.test.junit)
     androidTestImplementation(libs.androidx.test.runner)
     androidTestImplementation(libs.kotlinx.coroutines.test)

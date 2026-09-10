@@ -11,6 +11,7 @@ import {
 } from './family-alerts.js';
 import { createTwilioSmsGateway, isValidTwilioSignature } from './twilio-sms-gateway.js';
 import { computeFamilyEmergencyView } from './family-emergency-view.js';
+import { updateMemberCount } from './household-membership.js';
 
 initializeApp();
 
@@ -49,6 +50,25 @@ export const onFamilyAlertDispatch = onDocumentWritten(
       }),
       eventId: event.params.eventId,
       eventData: after,
+    });
+  },
+);
+
+/**
+ * Section 7's "up to 5 invited members - limit enforced by Ligaya backend" (Step 53's own
+ * conformance-audit finding — see household-membership.js). Maintains the denormalized counter
+ * firestore.rules' members/{memberUserId} create rule checks; fires on every write to a member
+ * doc but only actually changes the counter on a genuine create or delete (see
+ * updateMemberCount's own doc comment for why an update, e.g. accepting an invite, must not).
+ */
+export const onHouseholdMembershipChanged = onDocumentWritten(
+  'households/{householdId}/members/{memberId}',
+  async (event) => {
+    await updateMemberCount({
+      db: getFirestore(),
+      householdId: event.params.householdId,
+      existedBefore: event.data?.before?.exists ?? false,
+      existsAfter: event.data?.after?.exists ?? false,
     });
   },
 );

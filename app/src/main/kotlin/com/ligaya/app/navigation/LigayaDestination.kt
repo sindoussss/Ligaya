@@ -7,8 +7,29 @@ package com.ligaya.app.navigation
  * 19, 6, 7 respectively; each screen gets real content in its own later roadmap step).
  */
 sealed class LigayaDestination(val route: String, val title: String) {
+    /**
+     * The launch screen (visual design, screen 1). Deliberately absent from [all]: that list is
+     * what builds Home's own navigation buttons and what NavigationRouteReachabilityTest walks,
+     * and Splash is neither user-navigable nor returnable-to — it pops itself off the back stack
+     * the moment it hands off to Home. Listing it in [all] would put a "Splash" button on Home.
+     */
+    data object Splash : LigayaDestination("splash", "Splash")
+
     data object Home : LigayaDestination("home", "Home")
     data object Onboarding : LigayaDestination("onboarding", "Onboarding")
+
+    /**
+     * Visual design screen 3. Excluded from [all] for the same reason as [Splash]: it is reached
+     * from the onboarding carousel, not from Home, so listing it would put a "Create account"
+     * button on the Home screen alongside the real destinations.
+     */
+    data object CreateAccount : LigayaDestination("create_account", "Create account")
+
+    /** Visual design screen 4. Excluded from [all] for the same reason as [CreateAccount]. */
+    data object LocationPermission : LigayaDestination("location_permission", "Location access")
+
+    /** Visual design screen 5. Excluded from [all] for the same reason as [CreateAccount]. */
+    data object EmergencyProfile : LigayaDestination("emergency_profile", "Emergency Profile")
     data object Sos : LigayaDestination("sos", "SOS")
     data object EmergencyActive : LigayaDestination("emergency_active", "Emergency Active")
     data object EmergencyCompanion : LigayaDestination("companion", "Emergency Companion")

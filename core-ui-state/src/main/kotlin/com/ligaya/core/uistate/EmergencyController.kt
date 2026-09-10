@@ -21,6 +21,11 @@ import kotlinx.coroutines.flow.Flow
  * changing subsystem state and offer the persistent "I'm safe" control — neither existed on this
  * interface before, since nothing before Step 37 needed to observe state continuously rather than
  * read it once per action.
+ *
+ * [retryCall] (Step 41's own limitation, fixed): the Emergency Active screen's CallFailedCard
+ * needs a real retry action, not a no-op — core-telephony's own Unified911FlowCoordinator doc
+ * comment already documented exactly this wiring (`Unified911FlowReporter(persistedMachine::
+ * updateUnified911Flow)`), it was simply never connected to a live episode anywhere in the app.
  */
 interface EmergencyController {
     suspend fun triggerSos(): SosResult
@@ -29,6 +34,12 @@ interface EmergencyController {
      *  a thrown exception) if no emergency is active to mark safe from; see EmergencyStateMachine
      *  (Step 9) for exactly which transitions this can legally cause. */
     suspend fun markSafe(): Result<EmergencyState>
+
+    /** Re-attempts the Unified 911 hand-off (section 15's "Allow retry" — calling dial() again,
+     *  per Unified911FlowCoordinator's own doc comment, is the entire retry mechanism; there is no
+     *  separate concept of a retry beyond that). A no-op Result.failure, same shape as [markSafe],
+     *  if no emergency is active. */
+    suspend fun retryCall(): Result<EmergencyState>
 
     /** The live emergency snapshot, or null when no episode has ever started (Step 30's
      *  PersistedEmergencyStateMachine.restore() returning null — never emitted again once an

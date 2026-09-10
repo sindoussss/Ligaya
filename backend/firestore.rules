@@ -67,7 +67,13 @@ service cloud.firestore {
       match /members/{memberUserId} {
         allow read: if isHouseholdOwner(householdId) ||
           (isSignedIn() && request.auth.uid == memberUserId);
-        allow create: if isHouseholdOwner(householdId);
+        // Step 53's own finding: section 7's "up to 5 invited members - limit enforced by
+        // Ligaya backend" had no enforcement anywhere. member_count is a denormalized counter
+        // a Cloud Function trigger maintains on the household doc (household-membership.js) —
+        // rules cannot count a subcollection directly. .get(key, 0) defaults a household
+        // created before this counter existed to 0 rather than erroring.
+        allow create: if isHouseholdOwner(householdId) &&
+          get(/databases/$(database)/documents/households/$(householdId)).data.get('member_count', 0) < 5;
         allow update, delete: if isHouseholdOwner(householdId) ||
           (isSignedIn() && request.auth.uid == memberUserId);
       }
