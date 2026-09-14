@@ -7,6 +7,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
@@ -14,7 +15,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.ligaya.app.screens.PlaceholderScreen
 import com.ligaya.app.screens.SosScreen
-import com.ligaya.app.screens.SplashScreen
+import com.ligaya.app.screens.WelcomeScreen
 import com.ligaya.designsystem.LigayaMotion
 import com.ligaya.core.backend.auth.AuthRepository
 import com.ligaya.core.data.profile.EmergencyProfileRepository
@@ -44,12 +45,15 @@ fun LigayaNavHost(
     locationPermissionState: StateFlow<PermissionState>,
     onRequestLocationPermission: () -> Unit,
     onOpenAppSettings: () -> Unit,
+    showWelcome: Boolean,
+    onWelcomeCompleted: () -> Unit,
+    onStartVoiceTurn: () -> Unit,
     navController: NavHostController = rememberNavController(),
 ) {
     val scope = rememberCoroutineScope()
     NavHost(
         navController = navController,
-        startDestination = LigayaDestination.Splash.route,
+        startDestination = if (showWelcome) LigayaDestination.Welcome.route else LigayaDestination.Home.route,
         // One gentle crossfade for every route change, set once here rather than per-destination:
         // navigation-compose's default is a slide, which fights the calm of the visual design and
         // (more practically) would slide the splash off-screen right after it has just faded its
@@ -58,14 +62,13 @@ fun LigayaNavHost(
         enterTransition = { fadeIn(animationSpec = tween(LigayaMotion.durationStateTransition, easing = LigayaMotion.easingGentle)) },
         exitTransition = { fadeOut(animationSpec = tween(LigayaMotion.durationStateTransition, easing = LigayaMotion.easingGentle)) },
     ) {
-        composable(LigayaDestination.Splash.route) {
-            SplashScreen(
-                onFinished = {
+        composable(LigayaDestination.Welcome.route) {
+            WelcomeScreen(
+                onGetStarted = {
+                    onWelcomeCompleted()
                     navController.navigate(LigayaDestination.Home.route) {
-                        // Splash is never returnable-to: popping it (inclusive) means the very
-                        // first Back press from Home exits the app, rather than replaying the
-                        // brand animation the user has already sat through.
-                        popUpTo(LigayaDestination.Splash.route) { inclusive = true }
+                        // Not returnable-to: the first Back press from Home exits the app.
+                        popUpTo(LigayaDestination.Welcome.route) { inclusive = true }
                     }
                 },
             )
@@ -100,6 +103,13 @@ fun LigayaNavHost(
                         it != LigayaDestination.EmergencyActive
                 }
                 .map { NavigableDestination(it.route, it.title) }
+            // The greeting's name comes from the signed-in user's emergency profile; with no session or
+            // no saved name, Home greets them as "kaibigan".
+            val userName by produceState<String?>(initialValue = null) {
+                value = authRepository.currentUserId()?.let { userId ->
+                    runCatching { profileRepository.getProfile(userId) }.getOrNull()?.name
+                }
+            }
             HomeScreen(
                 emergencyController = emergencyController,
                 otherDestinations = otherDestinations,
@@ -109,7 +119,28 @@ fun LigayaNavHost(
                 onNavigateToRoute = { route -> navController.navigate(route) },
                 voicePhase = voicePhase,
                 voiceAiUnavailable = voiceAiUnavailable,
+                userName = userName,
+                // A typed question opens the conversation and is answered there, through the same
+                // validated companion turn the chat screen's own input uses.
+                onAskText = { question ->
+                    navController.navigate(LigayaDestination.EmergencyCompanion.route)
+                    scope.launch { companionCoordinator.runOneTurnWithText(question) }
+                },
+                onStartVoice = {
+                    navController.navigate(LigayaDestination.EmergencyCompanion.route)
+                    onStartVoiceTurn()
+                },
+                onNavigateToTools = { navController.navigate(LigayaDestination.Tools.route) },
+                onNavigateToProfile = {
+                    val signedIn = authRepository.currentUserId() != null
+                    navController.navigate(
+                        if (signedIn) LigayaDestination.EmergencyProfile.route else LigayaDestination.CreateAccount.route,
+                    )
+                },
             )
+        }
+        composable(LigayaDestination.Tools.route) {
+            PlaceholderScreen(destination = LigayaDestination.Tools, onBack = { navController.popBackStack() })
         }
         composable(LigayaDestination.Sos.route) {
             SosScreen(

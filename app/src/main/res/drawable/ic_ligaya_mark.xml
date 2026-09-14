@@ -1,58 +1,67 @@
 <!--
-  The Ligaya mark as a platform vector drawable — the same four-leaf geometry LigayaLogo draws in
-  Compose (design-system/LigayaLogo.kt), re-expressed here because the launcher icon and the
-  system splash screen are rendered by the OS before any Compose code runs and cannot call it.
-
-  Kept structurally identical on purpose: one <group> per leaf, rotated about the shared base
-  point, exactly mirroring how LigayaLogo rotates each leaf path about that same pivot. If the
-  mark's geometry is ever retuned, the two are meant to be changed together.
-
-  Base point (54, 95) and each leaf's length/width/rotation are LigayaLogo's own values scaled to
-  this 108x108 viewport; the per-leaf fills are its rose -> roseDeep tone blend, resolved.
+  The Ligaya flower mark as a platform vector drawable, for the system splash screen, which the OS
+  draws before any Compose code runs. Same petal geometry as LigayaLogo (design-system/LigayaLogo.kt)
+  in a 108x108 viewport: five pointed-oval petals rotated about the centre, each axis offset
+  sideways a little for the pinwheel. The whole mark is scaled to 0.8 because the splash screen only
+  shows the centre circle of its icon; at full size the petal tips would be clipped.
 -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
     android:width="108dp"
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
 
-    <!-- Outer left leaf -->
-    <group
-        android:pivotX="54"
-        android:pivotY="95"
-        android:rotation="-52">
-        <path
-            android:fillColor="#C08787"
-            android:pathData="M54,95 Q42.66,72.64 54,45.32 Q65.34,72.64 54,95 Z" />
-    </group>
-
-    <!-- Outer right leaf -->
-    <group
-        android:pivotX="54"
-        android:pivotY="95"
-        android:rotation="52">
-        <path
-            android:fillColor="#B97F81"
-            android:pathData="M54,95 Q43.2,73.62 54,47.48 Q64.8,73.62 54,95 Z" />
-    </group>
-
-    <!-- Inner left leaf (tall) -->
-    <group
-        android:pivotX="54"
-        android:pivotY="95"
-        android:rotation="-18">
-        <path
-            android:fillColor="#AE7377"
-            android:pathData="M54,95 Q40.5,60.01 54,17.24 Q67.5,60.01 54,95 Z" />
-    </group>
-
-    <!-- Inner right leaf (tall, deepest tone) -->
-    <group
-        android:pivotX="54"
-        android:pivotY="95"
-        android:rotation="18">
-        <path
-            android:fillColor="#A1646A"
-            android:pathData="M54,95 Q41.04,61.95 54,21.56 Q66.96,61.95 54,95 Z" />
+    <group android:pivotX="54" android:pivotY="54" android:scaleX="0.8" android:scaleY="0.8">
+        <group android:pivotX="54" android:pivotY="54" android:rotation="0">
+            <path android:pathData="M55.93,55.93 C41.97,38.15 48.23,17.02 55.93,16.27 C63.63,17.02 69.89,38.15 55.93,55.93 Z" android:strokeColor="#8C9A6A57" android:strokeWidth="0.8">
+                <aapt:attr name="android:fillColor">
+                    <gradient android:type="linear" android:startX="55.93" android:startY="55.93" android:endX="55.93" android:endY="16.27">
+                        <item android:offset="0" android:color="#FFC38E76" />
+                        <item android:offset="1" android:color="#FFD5A68D" />
+                    </gradient>
+                </aapt:attr>
+            </path>
+        </group>
+        <group android:pivotX="54" android:pivotY="54" android:rotation="72">
+            <path android:pathData="M55.93,55.93 C41.97,38.15 48.23,17.02 55.93,16.27 C63.63,17.02 69.89,38.15 55.93,55.93 Z" android:strokeColor="#8C9A6A57" android:strokeWidth="0.8">
+                <aapt:attr name="android:fillColor">
+                    <gradient android:type="linear" android:startX="55.93" android:startY="55.93" android:endX="55.93" android:endY="16.27">
+                        <item android:offset="0" android:color="#FFC38E76" />
+                        <item android:offset="1" android:color="#FFD5A68D" />
+                    </gradient>
+                </aapt:attr>
+            </path>
+        </group>
+        <group android:pivotX="54" android:pivotY="54" android:rotation="144">
+            <path android:pathData="M55.93,55.93 C41.97,38.15 48.23,17.02 55.93,16.27 C63.63,17.02 69.89,38.15 55.93,55.93 Z" android:strokeColor="#8C9A6A57" android:strokeWidth="0.8">
+                <aapt:attr name="android:fillColor">
+                    <gradient android:type="linear" android:startX="55.93" android:startY="55.93" android:endX="55.93" android:endY="16.27">
+                        <item android:offset="0" android:color="#FFC38E76" />
+                        <item android:offset="1" android:color="#FFD5A68D" />
+                    </gradient>
+                </aapt:attr>
+            </path>
+        </group>
+        <group android:pivotX="54" android:pivotY="54" android:rotation="216">
+            <path android:pathData="M55.93,55.93 C41.97,38.15 48.23,17.02 55.93,16.27 C63.63,17.02 69.89,38.15 55.93,55.93 Z" android:strokeColor="#8C9A6A57" android:strokeWidth="0.8">
+                <aapt:attr name="android:fillColor">
+                    <gradient android:type="linear" android:startX="55.93" android:startY="55.93" android:endX="55.93" android:endY="16.27">
+                        <item android:offset="0" android:color="#FFC38E76" />
+                        <item android:offset="1" android:color="#FFD5A68D" />
+                    </gradient>
+                </aapt:attr>
+            </path>
+        </group>
+        <group android:pivotX="54" android:pivotY="54" android:rotation="288">
+            <path android:pathData="M55.93,55.93 C41.97,38.15 48.23,17.02 55.93,16.27 C63.63,17.02 69.89,38.15 55.93,55.93 Z" android:strokeColor="#8C9A6A57" android:strokeWidth="0.8">
+                <aapt:attr name="android:fillColor">
+                    <gradient android:type="linear" android:startX="55.93" android:startY="55.93" android:endX="55.93" android:endY="16.27">
+                        <item android:offset="0" android:color="#FFC38E76" />
+                        <item android:offset="1" android:color="#FFD5A68D" />
+                    </gradient>
+                </aapt:attr>
+            </path>
+        </group>
     </group>
 </vector>

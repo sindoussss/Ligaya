@@ -5,9 +5,21 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.HelpOutline
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.automirrored.filled.VolumeUp
+import androidx.compose.material.icons.filled.ChatBubble
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Emergency
 import androidx.compose.material.icons.filled.ErrorOutline
+import androidx.compose.material.icons.filled.GraphicEq
+import androidx.compose.material.icons.filled.GridView
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.outlined.ChatBubbleOutline
+import androidx.compose.material.icons.outlined.GridView
+import androidx.compose.material.icons.outlined.Home
+import androidx.compose.material.icons.outlined.LightMode
+import androidx.compose.material.icons.outlined.Person
+import androidx.compose.material.icons.outlined.Sms
 import androidx.compose.material.icons.filled.LocalFireDepartment
 import androidx.compose.material.icons.filled.LocalPolice
 import androidx.compose.material.icons.filled.LocationOn
@@ -52,6 +64,23 @@ object LigayaIcons {
      * icon sizing.
      */
     val back: ImageVector = Icons.AutoMirrored.Filled.ArrowBack
+
+    // --- Home (visual design, screen 2) ---
+    val emergency: ImageVector = Icons.Filled.Emergency
+    val lightMode: ImageVector = Icons.Outlined.LightMode
+    val menu: ImageVector = Icons.Filled.Menu
+    val mic: ImageVector = Icons.Filled.Mic
+    val send: ImageVector = Icons.AutoMirrored.Filled.Send
+    val voiceWave: ImageVector = Icons.Filled.GraphicEq
+    val textChat: ImageVector = Icons.Outlined.Sms
+    val homeSelected: ImageVector = Icons.Filled.Home
+    val home: ImageVector = Icons.Outlined.Home
+    val chatSelected: ImageVector = Icons.Filled.ChatBubble
+    val chat: ImageVector = Icons.Outlined.ChatBubbleOutline
+    val toolsSelected: ImageVector = Icons.Filled.GridView
+    val tools: ImageVector = Icons.Outlined.GridView
+    val profileSelected: ImageVector = Icons.Filled.Person
+    val profile: ImageVector = Icons.Outlined.Person
 
     val incidentType: Map<LigayaIncidentType, ImageVector> = mapOf(
         LigayaIncidentType.FIRE to Icons.Filled.LocalFireDepartment,

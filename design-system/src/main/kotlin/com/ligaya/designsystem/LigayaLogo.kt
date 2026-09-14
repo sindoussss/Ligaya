@@ -8,32 +8,30 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.DrawScope
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.graphics.drawscope.scale
-import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.ligaya.designsystem.components.LigayaComponentPreviews
+import kotlin.math.min
 
 /**
- * The Ligaya mark: four leaves fanning from a single base point, in the brand's dusty-rose family.
+ * The Ligaya mark: a five-petal flower, one petal pointing straight up, the petals set in a slight
+ * pinwheel so each overlaps the next — the brand sheet's logo.
  *
- * Real vector art, drawn as Bézier paths rather than a raster asset — LigayaIcons' own doc comment
- * had noted "no custom vector art was produced for this step," which the visual-design pass is
- * what finally changes. Paths (not a PNG) specifically because this mark has to hold up at every
- * size it appears at — a 28dp header lockup, a 96dp splash, an adaptive launcher icon — and
- * because [revealProgress] animates the leaves individually, which a flat image can't do.
+ * Drawn as vector paths (not a raster asset) so it holds up at every size it appears at, and so
+ * [revealProgress] can bloom the petals one after another. The platform copies of this mark
+ * (app/res/drawable/ic_ligaya_mark.xml and ic_launcher_foreground.xml, drawn by the OS before any
+ * Compose code runs) use the same petal geometry; change one, change them together.
  *
- * Leaves are drawn outermost-first so the two tall inner leaves overlap on top, and each carries a
- * slightly different [Leaf.tone] blend between [LigayaColors.rose] and [LigayaColors.roseDeep] —
- * that tonal variation is what keeps the mark from reading as a flat silhouette at small sizes.
- *
- * Decorative by default ([contentDescription] null): wherever this appears next to the "LIGAYA"
- * wordmark, the wordmark is real text and already announces the brand — a described logo beside it
- * would make a screen reader say the name twice.
+ * Decorative by default ([contentDescription] null): next to the "Ligaya" wordmark, which is real
+ * text, a described logo would make a screen reader announce the name twice.
  */
 @Composable
 fun LigayaLogo(
@@ -48,68 +46,79 @@ fun LigayaLogo(
     }
 
     Canvas(modifier = modifier.then(semanticsModifier)) {
-        // Base sits below centre so the fan is optically centred rather than mathematically
-        // centred — a fan of leaves is top-heavy, so a true centre reads as sitting too low.
-        val base = Offset(size.width / 2f, size.height * 0.88f)
-        LEAVES.forEachIndexed { index, leaf ->
-            drawLeaf(leaf, index, base, revealProgress)
+        val radius = min(size.width, size.height) / 2f
+        // The soft white halo goes down first, under every petal, so it only shows round the outline.
+        for (index in 0 until PETAL_COUNT) {
+            drawPetal(index, center, radius, revealProgress, halo = true)
+        }
+        for (index in 0 until PETAL_COUNT) {
+            drawPetal(index, center, radius, revealProgress, halo = false)
         }
     }
 }
 
-private data class Leaf(
-    /** Degrees from vertical; negative leans left. */
-    val angleDegrees: Float,
-    /** Tip distance from the base, as a fraction of the canvas height. */
-    val length: Float,
-    /** Half-width at the leaf's widest point, as a fraction of the canvas height. */
-    val halfWidth: Float,
-    /** 0 = [LigayaColors.rose], 1 = [LigayaColors.roseDeep]. */
-    val tone: Float,
-)
+private const val PETAL_COUNT = 5
 
-/** Outermost first: the two tall inner leaves are drawn last so they overlap on top. */
-private val LEAVES = listOf(
-    Leaf(angleDegrees = -52f, length = 0.46f, halfWidth = 0.105f, tone = 0.10f),
-    Leaf(angleDegrees = 52f, length = 0.44f, halfWidth = 0.100f, tone = 0.28f),
-    Leaf(angleDegrees = -18f, length = 0.72f, halfWidth = 0.125f, tone = 0.55f),
-    Leaf(angleDegrees = 18f, length = 0.68f, halfWidth = 0.120f, tone = 0.88f),
-)
+/** Petal length and half-width at its widest, as fractions of the mark's radius. */
+private const val PETAL_LENGTH = 0.98f
+private const val PETAL_HALF_WIDTH = 0.25f
 
-/** Each leaf starts this fraction of [revealProgress] after the previous one. */
-private const val STAGGER_PER_LEAF = 0.13f
+/** How far each petal's base reaches past the centre, so the petals overlap there with no gap. */
+private const val PETAL_BASE_OVERLAP = 0.05f
 
-/** How much of [revealProgress] a single leaf's own reveal occupies. */
-private const val LEAF_REVEAL_WINDOW = 0.58f
+/** Sideways offset of each petal's axis from the centre — what turns five spokes into a pinwheel. */
+private const val PINWHEEL_OFFSET = 0.05f
 
-/** Leaves grow from this fraction of full size, about their own base point. */
-private const val LEAF_START_SCALE = 0.55f
+/** The darker line where one petal crosses the next — what keeps five petals from reading as one star. */
+private val PETAL_SEAM = Color(0xFF9A6A57)
 
-private fun DrawScope.drawLeaf(leaf: Leaf, index: Int, base: Offset, revealProgress: Float) {
-    val start = index * STAGGER_PER_LEAF
-    val raw = ((revealProgress - start) / LEAF_REVEAL_WINDOW).coerceIn(0f, 1f)
+private const val STAGGER_PER_PETAL = 0.11f
+private const val PETAL_REVEAL_WINDOW = 0.56f
+private const val PETAL_START_SCALE = 0.6f
+
+private fun DrawScope.drawPetal(index: Int, centre: Offset, radius: Float, revealProgress: Float, halo: Boolean) {
+    val raw = ((revealProgress - index * STAGGER_PER_PETAL) / PETAL_REVEAL_WINDOW).coerceIn(0f, 1f)
     if (raw <= 0f) return
-    // Same easing the splash uses for its own entrance, so a leaf settling and the wordmark
-    // settling share one motion character rather than two subtly different ones.
     val eased = LigayaMotion.easingEntrance.transform(raw)
 
-    val height = size.height
-    val length = leaf.length * height
-    val halfWidth = leaf.halfWidth * height
+    val length = radius * PETAL_LENGTH
+    val half = radius * PETAL_HALF_WIDTH
+    val x = centre.x + radius * PINWHEEL_OFFSET
+    val base = Offset(x, centre.y + radius * PETAL_BASE_OVERLAP)
+    val tipY = centre.y - length
 
-    val path = Path().apply {
+    // An oval petal: narrow where it meets the centre, full through the middle, rounded tip.
+    val petal = Path().apply {
         moveTo(base.x, base.y)
-        quadraticTo(base.x - halfWidth, base.y - length * 0.45f, base.x, base.y - length)
-        quadraticTo(base.x + halfWidth, base.y - length * 0.45f, base.x, base.y)
+        cubicTo(x - half * 1.45f, centre.y - length * 0.42f, x - half * 0.8f, tipY + length * 0.02f, x, tipY)
+        cubicTo(x + half * 0.8f, tipY + length * 0.02f, x + half * 1.45f, centre.y - length * 0.42f, base.x, base.y)
         close()
     }
+    val petalScale = PETAL_START_SCALE + (1f - PETAL_START_SCALE) * eased
 
-    val color = lerp(LigayaColors.rose, LigayaColors.roseDeep, leaf.tone)
-    val leafScale = LEAF_START_SCALE + (1f - LEAF_START_SCALE) * eased
-
-    rotate(degrees = leaf.angleDegrees, pivot = base) {
-        scale(scale = leafScale, pivot = base) {
-            drawPath(path = path, color = color.copy(alpha = eased))
+    rotate(degrees = index * 360f / PETAL_COUNT, pivot = centre) {
+        scale(scale = petalScale, pivot = centre) {
+            if (halo) {
+                drawPath(path = petal, color = Color.White.copy(alpha = 0.9f * eased), style = Stroke(width = radius * 0.12f))
+                return@scale
+            }
+            drawPath(
+                path = petal,
+                brush = Brush.linearGradient(listOf(LigayaColors.petalDeep, LigayaColors.petal), start = base, end = Offset(x, tipY)),
+                alpha = eased,
+            )
+            // One side of each petal a touch deeper, like the fold in the brand mark.
+            drawPath(
+                path = petal,
+                brush = Brush.horizontalGradient(
+                    listOf(LigayaColors.petalDeep.copy(alpha = 0.55f), Color.Transparent),
+                    startX = x - half,
+                    endX = x + half * 0.2f,
+                ),
+                alpha = eased,
+            )
+            // A faint darker edge keeps each petal distinct where it crosses its neighbour.
+            drawPath(path = petal, color = PETAL_SEAM.copy(alpha = 0.55f * eased), style = Stroke(width = radius * 0.025f))
         }
     }
 }

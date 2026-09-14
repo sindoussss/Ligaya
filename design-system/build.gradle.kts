@@ -47,6 +47,18 @@ dependencies {
     implementation(libs.androidx.compose.ui.tooling.preview)
     debugImplementation(libs.androidx.compose.ui.tooling)
 
+    // LigayaMascot (components/LigayaMascot.kt) hosts the Gemini mascot rig — DOM/CSS/JS, embedded
+    // rather than ported to Compose Canvas — inside a WebView. WebViewAssetLoader is what lets that
+    // page's ES module imports and relative asset URLs resolve correctly under a real https://
+    // origin instead of a restricted file:// one.
+    implementation(libs.androidx.webkit)
+    // androidx.compose.ui.platform.LocalLifecycleOwner (bundled with compose-ui) is deprecated in
+    // favor of this one — needed to tie the WebView's onPause/onResume to the host screen's
+    // lifecycle without pulling in a deprecated API.
+    implementation(libs.androidx.lifecycle.runtime.compose)
+    // Debug-only Mascot Lab (src/debug): drives every mascot state on a device for visual testing.
+    debugImplementation(libs.androidx.activity.compose)
+
     testImplementation(libs.junit)
 
     // Step 34's own "Compose preview screenshot tests" run as real instrumented tests against the

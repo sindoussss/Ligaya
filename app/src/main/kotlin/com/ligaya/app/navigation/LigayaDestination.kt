@@ -8,12 +8,12 @@ package com.ligaya.app.navigation
  */
 sealed class LigayaDestination(val route: String, val title: String) {
     /**
-     * The launch screen (visual design, screen 1). Deliberately absent from [all]: that list is
-     * what builds Home's own navigation buttons and what NavigationRouteReachabilityTest walks,
-     * and Splash is neither user-navigable nor returnable-to — it pops itself off the back stack
-     * the moment it hands off to Home. Listing it in [all] would put a "Splash" button on Home.
+     * The welcome screen (visual design, screen 1), shown until the user taps Get Started once.
+     * Deliberately absent from [all]: that list builds Home's own navigation buttons and is what
+     * NavigationRouteReachabilityTest walks, and Welcome is not returnable-to — it pops itself off
+     * the back stack when it hands off to Home.
      */
-    data object Splash : LigayaDestination("splash", "Splash")
+    data object Welcome : LigayaDestination("welcome", "Welcome")
 
     data object Home : LigayaDestination("home", "Home")
     data object Onboarding : LigayaDestination("onboarding", "Onboarding")
@@ -30,6 +30,11 @@ sealed class LigayaDestination(val route: String, val title: String) {
 
     /** Visual design screen 5. Excluded from [all] for the same reason as [CreateAccount]. */
     data object EmergencyProfile : LigayaDestination("emergency_profile", "Emergency Profile")
+    /**
+     * Home's Tools tab (visual design, screen 2). A placeholder until the Tools screen is designed.
+     * Excluded from [all]: it is reached from Home's tab bar, not the menu of destinations.
+     */
+    data object Tools : LigayaDestination("tools", "Tools")
     data object Sos : LigayaDestination("sos", "SOS")
     data object EmergencyActive : LigayaDestination("emergency_active", "Emergency Active")
     data object EmergencyCompanion : LigayaDestination("companion", "Emergency Companion")

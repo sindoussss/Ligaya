@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Debug builds only. Launch: adb shell am start -n com.ligaya.app/com.ligaya.designsystem.debug.MascotLabActivity -->
+    <application>
+        <activity
+            android:name="com.ligaya.designsystem.debug.MascotLabActivity"
+            android:exported="true"
+            android:label="Mascot Lab"
+            android:launchMode="singleTop"
+            android:theme="@android:style/Theme.Material.Light.NoActionBar" />
+    </application>
+</manifest>

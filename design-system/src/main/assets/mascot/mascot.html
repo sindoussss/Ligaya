@@ -1,0 +1,47 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+    <meta name="color-scheme" content="light only" />
+    <link rel="stylesheet" href="ligaya.css" />
+    <style>
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        height: 100%;
+        overflow: hidden;
+        background: transparent;
+        -webkit-user-select: none;
+        user-select: none;
+        -webkit-touch-callout: none;
+        -webkit-tap-highlight-color: transparent;
+      }
+      #stage {
+        position: absolute;
+        inset: 0;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Loaded by LigayaMascot.kt over https://appassets.androidplatform.net/assets/mascot/. Opened in a
+         plain browser (no bridge), add ?debug=1 for the debug hooks. -->
+    <div id="stage"></div>
+    <script type="module">
+      import { createLigaya } from './engine.js';
+
+      const bridge = window.LigayaMascotBridge;
+      const debug = bridge ? bridge.isDebug() : new URLSearchParams(location.search).has('debug');
+      const ligaya = createLigaya(document.getElementById('stage'), { assetBase: 'layers', frame: 'bust', motion: 'system', debug });
+      window.ligaya = ligaya;
+
+      if (bridge) {
+        ligaya.on('state', (state) => bridge.onState(JSON.stringify(state)));
+        ligaya.ready.then(() => bridge.onReady());
+        // Last: the host replays its desired state as soon as the engine exists.
+        bridge.onEngineCreated();
+      }
+    </script>
+  </body>
+</html>

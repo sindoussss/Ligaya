@@ -49,4 +49,49 @@ object LigayaTypography {
         fontWeight = FontWeight.Light,
         letterSpacing = 12.sp,
     )
+
+    /** Welcome screen: "Ligaya" in the brand sans, large and semibold. */
+    val welcomeWordmark = TextStyle(
+        fontFamily = LigayaFonts.sans,
+        fontSize = 80.sp,
+        lineHeight = 80.sp,
+        fontWeight = FontWeight.SemiBold,
+    )
+
+    /** Welcome screen tagline under the wordmark. */
+    val welcomeTagline = TextStyle(
+        fontFamily = LigayaFonts.sans,
+        fontSize = 22.sp,
+        lineHeight = 27.sp,
+        fontWeight = FontWeight.Normal,
+    )
+
+    /** Home header: "Ligaya" beside the flower mark. */
+    val homeBrand = TextStyle(fontFamily = LigayaFonts.sans, fontSize = 22.sp, lineHeight = 28.sp, fontWeight = FontWeight.Medium)
+
+    /** Home greeting's first line, "Magandang araw,". */
+    val homeGreeting = TextStyle(fontFamily = LigayaFonts.sans, fontSize = 25.sp, lineHeight = 32.sp, fontWeight = FontWeight.Medium)
+
+    /** Home greeting's second line, the user's name. */
+    val homeName = TextStyle(fontFamily = LigayaFonts.sans, fontSize = 31.sp, lineHeight = 38.sp, fontWeight = FontWeight.Medium)
+
+    /** Home's short introduction under the greeting. */
+    val homeIntro = TextStyle(fontFamily = LigayaFonts.sans, fontSize = 16.sp, lineHeight = 25.sp, fontWeight = FontWeight.Normal)
+
+    /** Placeholder and typed text in the ask bar. */
+    val askField = TextStyle(fontFamily = LigayaFonts.sans, fontSize = 16.sp, lineHeight = 22.sp, fontWeight = FontWeight.Normal)
+
+    /** Voice / Text chips and small captions on Home. */
+    val chipLabel = TextStyle(fontFamily = LigayaFonts.sans, fontSize = 14.sp, lineHeight = 18.sp, fontWeight = FontWeight.Medium)
+
+    /** Bottom tab bar labels. */
+    val tabLabel = TextStyle(fontFamily = LigayaFonts.sans, fontSize = 12.sp, lineHeight = 16.sp, fontWeight = FontWeight.Medium)
+
+    /** Label on the brand's filled pill buttons. */
+    val pillLabel = TextStyle(
+        fontFamily = LigayaFonts.sans,
+        fontSize = 19.sp,
+        lineHeight = 24.sp,
+        fontWeight = FontWeight.Medium,
+    )
 }

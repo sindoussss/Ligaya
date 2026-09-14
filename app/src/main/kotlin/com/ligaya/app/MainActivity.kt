@@ -61,6 +61,7 @@ import com.ligaya.core.voice.VoiceCaptureCoordinator
 import com.ligaya.core.voice.VoiceEmergencyIntentReporter
 import com.ligaya.feature.companion.EmergencyCompanionCoordinator
 import com.ligaya.feature.companion.EmergencySnapshotProvider
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -259,11 +260,21 @@ class MainActivity : ComponentActivity() {
             checker = permissionChecker,
             onResult = { _, _ -> requestPostNotificationsIfNeeded() },
         )
-        if (permissionChecker.currentState(Manifest.permission.RECORD_AUDIO) != PermissionState.Granted) {
-            recordAudioRequester.request(Manifest.permission.RECORD_AUDIO)
-        } else {
-            requestPostNotificationsIfNeeded()
+        fun requestStartupPermissions() {
+            if (permissionChecker.currentState(Manifest.permission.RECORD_AUDIO) != PermissionState.Granted) {
+                recordAudioRequester.request(Manifest.permission.RECORD_AUDIO)
+            } else {
+                requestPostNotificationsIfNeeded()
+            }
         }
+
+        // Visual design, screen 1: the welcome screen shows until Get Started is tapped once; after
+        // that every launch opens straight to Home, so SOS is never behind an extra tap. On that first
+        // launch the permission dialogs wait until Get Started, so they don't cover the welcome screen;
+        // the wake-word loop below already waits for RECORD_AUDIO on its own.
+        val appPreferences = getSharedPreferences(APP_PREFERENCES, MODE_PRIVATE)
+        val showWelcome = !appPreferences.getBoolean(KEY_WELCOME_COMPLETED, false)
+        if (!showWelcome) requestStartupPermissions()
 
         // Step 51: every real STT/Gemini/TTS call below is wrapped with a timing decorator
         // (TimingSpeechTranscriber/TimingIntentProvider/TimingCompanionResponseProvider/
@@ -338,6 +349,24 @@ class MainActivity : ComponentActivity() {
         // is more precise than trying to stretch the coordinator's own phase to cover it.
         val aiUnavailableNotice = MutableStateFlow(false)
 
+        // Visual design screen 2: Home's mic button and Voice chip start one companion voice turn.
+        // Android runs one speech recognizer at a time, so while that turn listens the wake-word loop
+        // below stands down (cancelling its session releases the recognizer) and resumes after.
+        val manualVoiceTurn = MutableStateFlow(false)
+        val startVoiceTurn: () -> Unit = {
+            if (!manualVoiceTurn.value) {
+                manualVoiceTurn.value = true
+                lifecycleScope.launch {
+                    try {
+                        delay(RECOGNIZER_HANDOFF_DELAY_MILLIS)
+                        companionCoordinator.runOneTurn()
+                    } finally {
+                        manualVoiceTurn.value = false
+                    }
+                }
+            }
+        }
+
         // Step 48: the real Location flow.
         val fusedLocationSource = FusedLocationSource(LocationServices.getFusedLocationProviderClient(applicationContext))
         val locationCoordinator = LocationFlowCoordinator(
@@ -361,6 +390,12 @@ class MainActivity : ComponentActivity() {
             MaterialTheme {
                 Surface(modifier = Modifier.fillMaxSize()) {
                     LigayaNavHost(
+                        showWelcome = showWelcome,
+                        onWelcomeCompleted = {
+                            appPreferences.edit().putBoolean(KEY_WELCOME_COMPLETED, true).apply()
+                            requestStartupPermissions()
+                        },
+                        onStartVoiceTurn = startVoiceTurn,
                         emergencyController = emergencyController,
                         companionCoordinator = companionCoordinator,
                         voicePhase = voiceActivationCoordinator.phase,
@@ -420,20 +455,35 @@ class MainActivity : ComponentActivity() {
                         delay(RECORD_AUDIO_NOT_GRANTED_RETRY_DELAY_MILLIS)
                         continue
                     }
-                    voiceActivationCoordinator.listenForWakePhrase().collect { result ->
-                        // A Decision's own side effects already happened via voiceReporter above
-                        // — nothing more to do here for that case. AiUnavailable is different:
-                        // VoiceActivationCoordinator never calls voiceReporter for it (see its own
-                        // doc comment), so without this branch a spoken wake phrase with the AI
-                        // stack unreachable produced no feedback of any kind — a silent hang from
-                        // the user's own perspective, which Step 49's acceptance criteria (no
-                        // silent hang; AI-dependent parts show explicit unavailable states)
-                        // specifically rules out.
-                        if (result is VoiceActivationResult.AiUnavailable) {
-                            aiUnavailableNotice.value = true
-                            timedSpeechOutput.speak(EmergencyStatusMessage.VOICE_AI_UNAVAILABLE)
-                            aiUnavailableNotice.value = false
+                    if (manualVoiceTurn.value) {
+                        manualVoiceTurn.first { !it }
+                        continue
+                    }
+                    coroutineScope {
+                        val session = launch {
+                            voiceActivationCoordinator.listenForWakePhrase().collect { result ->
+                                // A Decision's own side effects already happened via voiceReporter
+                                // above — nothing more to do here for that case. AiUnavailable is
+                                // different: VoiceActivationCoordinator never calls voiceReporter for
+                                // it (see its own doc comment), so without this branch a spoken wake
+                                // phrase with the AI stack unreachable produced no feedback of any
+                                // kind — a silent hang from the user's own perspective, which Step
+                                // 49's acceptance criteria (no silent hang; AI-dependent parts show
+                                // explicit unavailable states) specifically rules out.
+                                if (result is VoiceActivationResult.AiUnavailable) {
+                                    aiUnavailableNotice.value = true
+                                    timedSpeechOutput.speak(EmergencyStatusMessage.VOICE_AI_UNAVAILABLE)
+                                    aiUnavailableNotice.value = false
+                                }
+                            }
                         }
+                        // A voice turn started from Home takes the recognizer; stand this session down.
+                        val handOff = launch {
+                            manualVoiceTurn.first { it }
+                            session.cancel()
+                        }
+                        session.join()
+                        handOff.cancel()
                     }
                     delay(BETWEEN_LISTENING_SESSIONS_DELAY_MILLIS)
                 }
@@ -458,8 +508,11 @@ class MainActivity : ComponentActivity() {
     }
 
     private companion object {
+        const val APP_PREFERENCES = "ligaya_app"
+        const val KEY_WELCOME_COMPLETED = "welcome_completed"
         const val RECORD_AUDIO_NOT_GRANTED_RETRY_DELAY_MILLIS = 3_000L
         const val BETWEEN_LISTENING_SESSIONS_DELAY_MILLIS = 300L
+        const val RECOGNIZER_HANDOFF_DELAY_MILLIS = 250L
 
         // Short, not generous like the other two Step 51 timeouts: an already-active emergency's
         // snapshot is a local Room query away, not an external service call — this bound only

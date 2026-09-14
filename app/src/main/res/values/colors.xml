@@ -10,4 +10,6 @@
     <color name="ligaya_blush">#F7EBE8</color>
     <!-- LigayaColors.canvas -->
     <color name="ligaya_canvas">#FAF7F6</color>
+    <!-- LigayaColors.cream: the welcome screen, so the launch window hands over without a colour jump -->
+    <color name="ligaya_cream">#FBF6F1</color>
 </resources>

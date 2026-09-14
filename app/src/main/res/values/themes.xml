@@ -15,7 +15,7 @@
 
     <!-- The window the OS itself draws, before any of this app's code runs. -->
     <style name="Theme.Ligaya.Splash" parent="Theme.SplashScreen">
-        <item name="windowSplashScreenBackground">@color/ligaya_blush</item>
+        <item name="windowSplashScreenBackground">@color/ligaya_cream</item>
         <item name="windowSplashScreenAnimatedIcon">@drawable/ic_ligaya_mark</item>
         <!-- Handed to the Activity by installSplashScreen() once the first frame is ready. -->
         <item name="postSplashScreenTheme">@style/Theme.Ligaya</item>
@@ -24,6 +24,6 @@
     <!-- The real Activity theme. Window background is the splash's own canvas colour so the
          very first Compose frame never flashes the platform's default white behind it. -->
     <style name="Theme.Ligaya" parent="android:Theme.Material.Light.NoActionBar">
-        <item name="android:windowBackground">@color/ligaya_canvas</item>
+        <item name="android:windowBackground">@color/ligaya_cream</item>
     </style>
 </resources>

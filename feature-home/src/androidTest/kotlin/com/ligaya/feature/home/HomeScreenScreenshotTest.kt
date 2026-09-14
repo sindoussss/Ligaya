@@ -108,10 +108,10 @@ class HomeScreenScreenshotTest {
             FileOutputStream(outFile).use { bitmap.compress(Bitmap.CompressFormat.PNG, 100, it) }
         }
 
-        // A real layout assertion, not just "it rendered": the SOS control's minimum large-touch-
-        // target requirement (this step's own second acceptance criterion) must actually hold.
+        // A real layout assertion, not just "it rendered": the header SOS pill (visual design,
+        // screen 2) must still clear the app-wide touch-target floor at every variant.
         composeTestRule.onNodeWithContentDescription("Send SOS emergency alert")
-            .assertWidthIsAtLeast(LigayaSpacing.emergencyTouchTarget)
-            .assertHeightIsAtLeast(LigayaSpacing.emergencyTouchTarget)
+            .assertWidthIsAtLeast(LigayaSpacing.minTouchTarget)
+            .assertHeightIsAtLeast(LigayaSpacing.minTouchTarget)
     }
 }

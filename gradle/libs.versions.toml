@@ -26,6 +26,8 @@ androidxLifecycleRuntimeKtx = "2.8.7"
 androidxNavigationCompose = "2.8.3"
 playServicesLocation = "21.3.0"
 revenueCatPurchases = "10.15.1"
+# LigayaMascot (design-system) hosts the Gemini mascot rig in a WebView; WebViewAssetLoader needs this.
+webkit = "1.17.0"
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
@@ -71,4 +73,6 @@ androidx-lifecycle-runtime-ktx = { group = "androidx.lifecycle", name = "lifecyc
 androidx-navigation-compose = { group = "androidx.navigation", name = "navigation-compose", version.ref = "androidxNavigationCompose" }
 play-services-location = { group = "com.google.android.gms", name = "play-services-location", version.ref = "playServicesLocation" }
 androidx-compose-material-icons-extended = { group = "androidx.compose.material", name = "material-icons-extended" }
+androidx-lifecycle-runtime-compose = { group = "androidx.lifecycle", name = "lifecycle-runtime-compose", version.ref = "androidxLifecycleRuntimeKtx" }
+androidx-webkit = { group = "androidx.webkit", name = "webkit", version.ref = "webkit" }
 revenuecat-purchases = { group = "com.revenuecat.purchases", name = "purchases", version.ref = "revenueCatPurchases" }

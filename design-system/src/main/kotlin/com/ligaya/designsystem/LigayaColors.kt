@@ -49,6 +49,10 @@ object LigayaColors {
     /** The signature dusty rose: the logo mark, decorative strokes. Ornament only. */
     val rose = Color(0xFFC48B8B)
 
+    /** The flower mark's petals: [petal] at the tips, [petalDeep] toward the centre. Ornament only. */
+    val petal = Color(0xFFD5A68D)
+    val petalDeep = Color(0xFFC38E76)
+
     /** The one rose deep enough for white text on top — primary buttons, brand accents. */
     val roseDeep = Color(0xFF9C5F66)
     val onRoseDeep = Color(0xFFFFFFFF)
@@ -64,6 +68,43 @@ object LigayaColors {
 
     /** Warm gray for secondary/supporting text. Tuned to clear 4.5:1 on [canvas], not by eye. */
     val inkSoft = Color(0xFF756A6C)
+
+    // --- Visual design: welcome and brand surfaces ----------------------------------------------
+
+    /** Warm cream page background. */
+    val cream = Color(0xFFFBF6F1)
+
+    /** The soft blush waves along the bottom of the welcome screen. Ornament only. */
+    val waveLight = Color(0xFFF8EDE6)
+    val waveDeep = Color(0xFFF3E1D7)
+
+    /** Deep cocoa fill for the primary pill button; white label on top. */
+    val cocoa = Color(0xFF4A2E2F)
+    val onCocoa = Color(0xFFFFFFFF)
+
+    /** Near-black warm brown for display type such as the wordmark. */
+    val cocoaInk = Color(0xFF2E1F1D)
+
+    /** Warm grey-brown for secondary text on [cream]. */
+    val taupe = Color(0xFF6E5E59)
+
+    // --- Visual design: Home ------------------------------------------------------------------
+
+    /** The bottom of Home's page wash, a shade warmer than [cream]. */
+    val creamDeep = Color(0xFFF7ECE6)
+
+    /** Soft white of the ask bar, chips and tab bar sitting on [cream]. */
+    val shell = Color(0xFFFFFCFA)
+
+    /** Hairline border around [shell] surfaces. Ornament only. */
+    val shellEdge = Color(0xFFF0E4DE)
+
+    /** Deep berry of the ask bar's mic button; white glyph on top. */
+    val berry = Color(0xFF8E3B46)
+    val onBerry = Color(0xFFFFFFFF)
+
+    /** Hand-drawn doodles around Ligaya on Home. Ornament only. */
+    val doodle = Color(0xFFB9777D)
 
     // --- Shared neutral ---
     val onSurface = Color(0xFF1B1F24)

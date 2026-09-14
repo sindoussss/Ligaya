@@ -1,10 +1,21 @@
 package com.ligaya.feature.home
 
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.requiredSize
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.assertHeightIsAtLeast
+import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.getUnclippedBoundsInRoot
+import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performImeAction
+import androidx.compose.ui.test.performTextInput
+import androidx.compose.ui.unit.dp
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.ligaya.core.emergencyengine.EmergencySnapshot
 import com.ligaya.core.emergencyengine.EmergencyState
@@ -14,6 +25,7 @@ import com.ligaya.core.voice.VoicePipelinePhase
 import com.ligaya.designsystem.LigayaSpacing
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.flowOf
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -22,9 +34,9 @@ import org.junit.Test
 import org.junit.runner.RunWith
 
 /**
- * Step 36's acceptance criterion: "SOS control tap triggers Step 13's flow." Same fake-controller
- * pattern as app/screens/SosScreenTest.kt (Step 13) — no database, no foreground service, no
- * MainActivity launch needed to prove the control is wired to the controller at all.
+ * Home (visual design, screen 2): the header SOS pill still triggers Step 13's flow directly, every
+ * destination stays reachable (menu and tab bar), the ask bar and Voice shortcut hand off to Ligaya,
+ * and the live voice/AI-unavailable states still show.
  */
 @RunWith(AndroidJUnit4::class)
 class HomeScreenTest {
@@ -32,8 +44,6 @@ class HomeScreenTest {
     @get:Rule
     val composeTestRule = createComposeRule()
 
-    // Fixed IDLE/false — voice-state behavior itself is VoiceActivationCoordinatorTest's own
-    // scope (core-voice); these tests only need HomeScreen to accept and render some value.
     private val idleVoicePhase = MutableStateFlow(VoicePipelinePhase.IDLE)
     private val noAiUnavailableNotice = MutableStateFlow(false)
 
@@ -53,23 +63,45 @@ class HomeScreenTest {
         override fun observeSnapshot(): Flow<EmergencySnapshot?> = flowOf(null)
     }
 
+    private fun setHome(
+        fake: EmergencyController = FakeEmergencyController(SosResult.Activated(EmergencyState.EMERGENCY_ACTIVE)),
+        otherDestinations: List<NavigableDestination> = emptyList(),
+        onSosActivated: () -> Unit = {},
+        onNavigateToSafetyCircle: () -> Unit = {},
+        onNavigateToCompanion: () -> Unit = {},
+        onNavigateToRoute: (String) -> Unit = {},
+        voicePhase: StateFlow<VoicePipelinePhase> = idleVoicePhase,
+        voiceAiUnavailable: StateFlow<Boolean> = noAiUnavailableNotice,
+        userName: String? = null,
+        onAskText: (String) -> Unit = {},
+        onStartVoice: () -> Unit = {},
+        onNavigateToTools: () -> Unit = {},
+        onNavigateToProfile: () -> Unit = {},
+    ) {
+        composeTestRule.setContent {
+            HomeScreen(
+                emergencyController = fake,
+                otherDestinations = otherDestinations,
+                onSosActivated = onSosActivated,
+                onNavigateToSafetyCircle = onNavigateToSafetyCircle,
+                onNavigateToCompanion = onNavigateToCompanion,
+                onNavigateToRoute = onNavigateToRoute,
+                voicePhase = voicePhase,
+                voiceAiUnavailable = voiceAiUnavailable,
+                userName = userName,
+                onAskText = onAskText,
+                onStartVoice = onStartVoice,
+                onNavigateToTools = onNavigateToTools,
+                onNavigateToProfile = onNavigateToProfile,
+            )
+        }
+    }
+
     @Test
     fun tappingSosControlCallsTheControllerAndReportsActivation() {
         val fake = FakeEmergencyController(SosResult.Activated(EmergencyState.EMERGENCY_ACTIVE))
         var activated = false
-
-        composeTestRule.setContent {
-            HomeScreen(
-                emergencyController = fake,
-                otherDestinations = emptyList(),
-                onSosActivated = { activated = true },
-                onNavigateToSafetyCircle = {},
-                onNavigateToCompanion = {},
-                onNavigateToRoute = {},
-                voicePhase = idleVoicePhase,
-                voiceAiUnavailable = noAiUnavailableNotice,
-            )
-        }
+        setHome(fake = fake, onSosActivated = { activated = true })
 
         composeTestRule.onNodeWithContentDescription("Send SOS emergency alert").performClick()
         composeTestRule.waitUntil(timeoutMillis = 5_000) { activated }
@@ -82,19 +114,7 @@ class HomeScreenTest {
     fun tappingSosControlWhenAlreadyInProgressStillReportsActivationRatherThanBlockingTheUser() {
         val fake = FakeEmergencyController(SosResult.AlreadyInProgress(EmergencyState.EMERGENCY_ACTIVE))
         var activated = false
-
-        composeTestRule.setContent {
-            HomeScreen(
-                emergencyController = fake,
-                otherDestinations = emptyList(),
-                onSosActivated = { activated = true },
-                onNavigateToSafetyCircle = {},
-                onNavigateToCompanion = {},
-                onNavigateToRoute = {},
-                voicePhase = idleVoicePhase,
-                voiceAiUnavailable = noAiUnavailableNotice,
-            )
-        }
+        setHome(fake = fake, onSosActivated = { activated = true })
 
         composeTestRule.onNodeWithContentDescription("Send SOS emergency alert").performClick()
         composeTestRule.waitUntil(timeoutMillis = 5_000) { activated }
@@ -103,23 +123,12 @@ class HomeScreenTest {
     }
 
     @Test
-    fun tappingSafetyCircleCardNavigatesWithoutCallingTheController() {
+    fun safetyCircleIsReachableFromTheMenuWithoutCallingTheController() {
         val fake = FakeEmergencyController(SosResult.Activated(EmergencyState.EMERGENCY_ACTIVE))
         var navigated = false
+        setHome(fake = fake, onNavigateToSafetyCircle = { navigated = true })
 
-        composeTestRule.setContent {
-            HomeScreen(
-                emergencyController = fake,
-                otherDestinations = emptyList(),
-                onSosActivated = {},
-                onNavigateToSafetyCircle = { navigated = true },
-                onNavigateToCompanion = {},
-                onNavigateToRoute = {},
-                voicePhase = idleVoicePhase,
-                voiceAiUnavailable = noAiUnavailableNotice,
-            )
-        }
-
+        composeTestRule.onNodeWithContentDescription("Menu").performClick()
         composeTestRule.onNodeWithText("Safety Circle").performClick()
 
         assertTrue(navigated)
@@ -127,62 +136,51 @@ class HomeScreenTest {
     }
 
     @Test
-    fun tappingCompanionCardNavigatesWithoutCallingTheController() {
+    fun chatTabOpensTheCompanionWithoutCallingTheController() {
         val fake = FakeEmergencyController(SosResult.Activated(EmergencyState.EMERGENCY_ACTIVE))
         var navigated = false
+        setHome(fake = fake, onNavigateToCompanion = { navigated = true })
 
-        composeTestRule.setContent {
-            HomeScreen(
-                emergencyController = fake,
-                otherDestinations = emptyList(),
-                onSosActivated = {},
-                onNavigateToSafetyCircle = {},
-                onNavigateToCompanion = { navigated = true },
-                onNavigateToRoute = {},
-                voicePhase = idleVoicePhase,
-                voiceAiUnavailable = noAiUnavailableNotice,
-            )
-        }
-
-        composeTestRule.onNodeWithText("Emergency Companion").performClick()
+        composeTestRule.onNodeWithText("Chat").performClick()
 
         assertTrue(navigated)
         assertEquals(0, fake.callCount)
     }
 
     @Test
-    fun otherDestinationsAreRenderedAndNavigable() {
-        val fake = FakeEmergencyController(SosResult.Activated(EmergencyState.EMERGENCY_ACTIVE))
+    fun toolsAndProfileTabsNavigate() {
+        var tools = false
+        var profile = false
+        setHome(onNavigateToTools = { tools = true }, onNavigateToProfile = { profile = true })
+
+        composeTestRule.onNodeWithText("Tools").performClick()
+        composeTestRule.onNodeWithText("Profile").performClick()
+
+        assertTrue(tools)
+        assertTrue(profile)
+    }
+
+    @Test
+    fun otherDestinationsAreListedInTheMenuAndNavigable() {
         var navigatedRoute: String? = null
+        setHome(
+            otherDestinations = listOf(NavigableDestination("onboarding", "Onboarding")),
+            onNavigateToRoute = { navigatedRoute = it },
+        )
 
-        composeTestRule.setContent {
-            HomeScreen(
-                emergencyController = fake,
-                otherDestinations = listOf(NavigableDestination("onboarding", "Onboarding")),
-                onSosActivated = {},
-                onNavigateToSafetyCircle = {},
-                onNavigateToCompanion = {},
-                onNavigateToRoute = { navigatedRoute = it },
-                voicePhase = idleVoicePhase,
-                voiceAiUnavailable = noAiUnavailableNotice,
-            )
-        }
-
+        composeTestRule.onNodeWithContentDescription("Menu").performClick()
         composeTestRule.onNodeWithText("Onboarding").performClick()
 
         assertEquals("onboarding", navigatedRoute)
     }
 
-    /** Step 45's accessibility fix: GlanceableCard's touch target must hold at the 48dp floor
-     *  regardless of its text content's own incidental height, not just happen to clear it — see
-     *  HomeScreen.kt's own comment on why an explicit heightIn was added. */
     @Test
-    fun glanceableCardsMeetTheMinimumTouchTargetSize() {
-        val fake = FakeEmergencyController(SosResult.Activated(EmergencyState.EMERGENCY_ACTIVE))
-
+    fun greetingUsesTheProfileNameAndFallsBackToKaibigan() {
+        val name = MutableStateFlow<String?>(null)
         composeTestRule.setContent {
+            val current = name.collectAsStateValue()
             HomeScreen(
-                emergencyController = fake,
+                emergencyController = FakeEmergencyController(SosResult.Activated(EmergencyState.EMERGENCY_ACTIVE)),
                 otherDestinations = emptyList(),
                 onSosActivated = {},
                 onNavigateToSafetyCircle = {},
@@ -190,31 +188,92 @@ class HomeScreenTest {
                 onNavigateToRoute = {},
                 voicePhase = idleVoicePhase,
                 voiceAiUnavailable = noAiUnavailableNotice,
+                userName = current,
             )
         }
 
-        composeTestRule.onNodeWithText("Safety Circle").assertHeightIsAtLeast(LigayaSpacing.minTouchTarget)
-        composeTestRule.onNodeWithText("Emergency Companion").assertHeightIsAtLeast(LigayaSpacing.minTouchTarget)
+        composeTestRule.onNodeWithText("Magandang araw,").assertExists()
+        composeTestRule.onNodeWithText("kaibigan!").assertExists()
+
+        name.value = "John Daniel"
+        composeTestRule.waitForIdle()
+        composeTestRule.onNodeWithText("John Daniel!").assertExists()
     }
 
-    // --- Step 53 audit follow-up: the always-on wake-word loop's own voice indicator on Home ---
+    @Test
+    fun typedQuestionIsSentToLigayaAndTheBarClears() {
+        var asked: String? = null
+        setHome(onAskText = { asked = it })
+
+        composeTestRule.onNode(hasSetTextAction()).performTextInput("  Is it safe to cross the flood?  ")
+        composeTestRule.onNode(hasSetTextAction()).performImeAction()
+
+        assertEquals("Is it safe to cross the flood?", asked)
+        composeTestRule.onNodeWithText("Ask me anything...").assertExists()
+    }
+
+    @Test
+    fun blankQuestionIsNotSent() {
+        var asked = false
+        setHome(onAskText = { asked = true })
+
+        composeTestRule.onNode(hasSetTextAction()).performTextInput("   ")
+        composeTestRule.onNode(hasSetTextAction()).performImeAction()
+
+        assertTrue(!asked)
+    }
+
+    @Test
+    fun micButtonAndVoiceChipStartAVoiceTurn() {
+        var voiceTurns = 0
+        setHome(onStartVoice = { voiceTurns++ })
+
+        composeTestRule.onNodeWithContentDescription("Talk to Ligaya").performClick()
+        composeTestRule.onNodeWithText("Voice").performClick()
+
+        assertEquals(2, voiceTurns)
+    }
+
+    /** SOS lives in the header, so on the smallest supported phone it is on screen without scrolling. */
+    @Test
+    fun sosControlStaysFullyOnScreenOnASmallPhone() {
+        val screenHeight = 568.dp
+        composeTestRule.setContent {
+            Box(Modifier.requiredSize(320.dp, screenHeight)) {
+                HomeScreen(
+                    emergencyController = FakeEmergencyController(SosResult.Activated(EmergencyState.EMERGENCY_ACTIVE)),
+                    otherDestinations = emptyList(),
+                    onSosActivated = {},
+                    onNavigateToSafetyCircle = {},
+                    onNavigateToCompanion = {},
+                    onNavigateToRoute = {},
+                    voicePhase = idleVoicePhase,
+                    voiceAiUnavailable = noAiUnavailableNotice,
+                )
+            }
+        }
+
+        val sos = composeTestRule.onNodeWithContentDescription("Send SOS emergency alert")
+        sos.assertIsDisplayed()
+        val bottom = sos.getUnclippedBoundsInRoot().bottom
+        assertTrue("SOS bottom $bottom must be within the $screenHeight screen", bottom <= screenHeight)
+        composeTestRule.onNodeWithText("Home").assertIsDisplayed()
+    }
+
+    @Test
+    fun tappableControlsMeetTheMinimumTouchTargetSize() {
+        setHome()
+
+        composeTestRule.onNodeWithContentDescription("Send SOS emergency alert").assertHeightIsAtLeast(LigayaSpacing.minTouchTarget)
+        composeTestRule.onNodeWithContentDescription("Talk to Ligaya").assertHeightIsAtLeast(LigayaSpacing.minTouchTarget)
+        listOf("Voice", "Text", "Home", "Chat", "Tools", "Profile").forEach {
+            composeTestRule.onNodeWithText(it).assertHeightIsAtLeast(LigayaSpacing.minTouchTarget)
+        }
+    }
 
     @Test
     fun voiceIndicatorReflectsTheRealListeningPhaseNotAStaticPlaceholder() {
-        val fake = FakeEmergencyController(SosResult.Activated(EmergencyState.EMERGENCY_ACTIVE))
-
-        composeTestRule.setContent {
-            HomeScreen(
-                emergencyController = fake,
-                otherDestinations = emptyList(),
-                onSosActivated = {},
-                onNavigateToSafetyCircle = {},
-                onNavigateToCompanion = {},
-                onNavigateToRoute = {},
-                voicePhase = MutableStateFlow(VoicePipelinePhase.LISTENING),
-                voiceAiUnavailable = noAiUnavailableNotice,
-            )
-        }
+        setHome(voicePhase = MutableStateFlow(VoicePipelinePhase.LISTENING))
 
         composeTestRule.onNodeWithContentDescription("Voice assistant listening").assertExists()
         composeTestRule.onNodeWithText("Listening for \"Ligaya\"…").assertExists()
@@ -222,21 +281,8 @@ class HomeScreenTest {
 
     @Test
     fun aiUnavailableBannerIsHiddenByDefaultAndAppearsOnlyWhenTheFlowSaysSo() {
-        val fake = FakeEmergencyController(SosResult.Activated(EmergencyState.EMERGENCY_ACTIVE))
         val aiUnavailable = MutableStateFlow(false)
-
-        composeTestRule.setContent {
-            HomeScreen(
-                emergencyController = fake,
-                otherDestinations = emptyList(),
-                onSosActivated = {},
-                onNavigateToSafetyCircle = {},
-                onNavigateToCompanion = {},
-                onNavigateToRoute = {},
-                voicePhase = idleVoicePhase,
-                voiceAiUnavailable = aiUnavailable,
-            )
-        }
+        setHome(voiceAiUnavailable = aiUnavailable)
 
         val bannerText = "Voice assistant unavailable right now — use the SOS button instead."
         composeTestRule.onNodeWithText(bannerText).assertDoesNotExist()
@@ -250,3 +296,6 @@ class HomeScreenTest {
         composeTestRule.onNodeWithText(bannerText).assertDoesNotExist()
     }
 }
+
+@Composable
+private fun <T> StateFlow<T>.collectAsStateValue(): T = collectAsState().value

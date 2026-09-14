@@ -4,6 +4,7 @@ import android.Manifest
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -60,18 +61,16 @@ class NavigationRouteReachabilityTest {
     val composeTestRule = createAndroidComposeRule<MainActivity>()
 
     /**
-     * Visual design, screen 1: the app now launches to Splash, which hands off to Home on its own
-     * after its entrance animation. So "launches to Home" became "settles on Home" — waiting for
-     * it is the honest assertion, not a workaround: an immediate assert would be asserting the app
-     * has no launch screen, which is no longer true. The timeout is deliberately far longer than
-     * the splash's own ~2.6s so this never becomes a timing-flaky test on a slow emulator.
+     * Visual design, screen 1: a first launch shows the welcome screen, which goes to Home on Get
+     * Started; later launches open on Home directly. Either way, this settles on Home.
      */
     private fun awaitHome() {
-        composeTestRule.waitUntil(timeoutMillis = SPLASH_HANDOFF_TIMEOUT_MILLIS) {
-            composeTestRule.onAllNodesWithText(LigayaDestination.Home.title)
-                .fetchSemanticsNodes()
-                .isNotEmpty()
+        fun showing(text: String) = composeTestRule.onAllNodesWithText(text).fetchSemanticsNodes().isNotEmpty()
+        composeTestRule.waitUntil(timeoutMillis = LAUNCH_TIMEOUT_MILLIS) {
+            showing(GET_STARTED) || showing(LigayaDestination.Home.title)
         }
+        if (showing(GET_STARTED)) composeTestRule.onNodeWithText(GET_STARTED).performClick()
+        composeTestRule.waitUntil(timeoutMillis = LAUNCH_TIMEOUT_MILLIS) { showing(LigayaDestination.Home.title) }
     }
 
     @Test
@@ -97,6 +96,8 @@ class NavigationRouteReachabilityTest {
         }
 
         for (destination in destinations) {
+            // Visual design screen 2: Home lists these in its header menu.
+            composeTestRule.onNodeWithContentDescription("Menu").performClick()
             composeTestRule.onNodeWithText(destination.title).performClick()
             composeTestRule.onNodeWithText(destination.title).assertIsDisplayed()
 
@@ -106,6 +107,7 @@ class NavigationRouteReachabilityTest {
     }
 
     private companion object {
-        const val SPLASH_HANDOFF_TIMEOUT_MILLIS = 15_000L
+        const val LAUNCH_TIMEOUT_MILLIS = 15_000L
+        const val GET_STARTED = "Get Started"
     }
 }

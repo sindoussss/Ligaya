@@ -11,6 +11,19 @@ plugins {
     alias(libs.plugins.kotlin.compose) apply false
 }
 
+// This checkout lives under OneDrive. OneDrive's real-time sync grabs a lock on a build/ output
+// file/directory the instant Gradle creates it, racing the next task that needs to write or
+// delete it — surfaces as "Unable to delete directory ... Failed to delete some children",
+// on a different build/ subpath each retry, never the same one twice. Routing every module's
+// build/ dir to outside the synced folder removes the race instead of chasing it one directory
+// at a time. Computed from the user's home dir, not a hardcoded path, so this is fine on any
+// machine regardless of whether it happens to be OneDrive-synced.
+val externalBuildRoot = File(System.getProperty("user.home"), ".gradle-builds/Ligaya")
+allprojects {
+    val safePath = if (path == ":") "_root" else path.removePrefix(":").replace(":", "/")
+    layout.buildDirectory.set(File(externalBuildRoot, safePath))
+}
+
 // Architecture rule from LIGAYA_ARCHITECTURE_FINAL_VOICE.md / the implementation plan:
 // UI-facing modules must never depend on core-emergency-engine directly — they consume it
 // only through core-ui-state's presentation-mapping layer. This task fails the build if that
