@@ -10,6 +10,11 @@ import kotlinx.serialization.json.jsonPrimitive
  *  adapter shape, reused rather than duplicated for the second Gemini use this codebase has. */
 internal const val GEMINI_GENERATE_CONTENT_URL = "https://generativelanguage.googleapis.com/v1beta/models"
 
+/** HttpURLConnection waits forever by default, so a stalled network would leave Ligaya "thinking" with no end. With
+ *  these a stalled request fails instead, and each caller's own fallback takes over. */
+internal const val GEMINI_CONNECT_TIMEOUT_MILLIS = 10_000
+internal const val GEMINI_READ_TIMEOUT_MILLIS = 20_000
+
 /** Both callers send the same request envelope and get the same response envelope back — only
  *  `generationConfig` (present only for structured output) differs — so parsing the response
  *  text out of `candidates[0].content.parts[0].text` is genuinely one shared piece of logic, not

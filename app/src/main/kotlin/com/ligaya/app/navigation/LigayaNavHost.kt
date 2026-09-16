@@ -1,5 +1,6 @@
 package com.ligaya.app.navigation
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -7,8 +8,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -17,14 +21,22 @@ import com.ligaya.app.screens.PlaceholderScreen
 import com.ligaya.app.screens.SosScreen
 import com.ligaya.app.screens.WelcomeScreen
 import com.ligaya.designsystem.LigayaMotion
+import com.ligaya.designsystem.components.LigayaTab
 import com.ligaya.core.backend.auth.AuthRepository
 import com.ligaya.core.data.profile.EmergencyProfileRepository
+import com.ligaya.core.emergencyengine.EmergencyState
 import com.ligaya.core.permissions.PermissionState
 import com.ligaya.core.uistate.EmergencyController
+import com.ligaya.core.uistate.SosResult
 import com.ligaya.core.voice.VoicePipelinePhase
+import com.ligaya.feature.companion.CompanionTurnResult
 import com.ligaya.feature.companion.EmergencyCompanionCoordinator
 import com.ligaya.feature.companion.EmergencyCompanionScreen
+import com.ligaya.feature.companion.ListeningState
+import com.ligaya.feature.companion.VoiceListeningScreen
+import com.ligaya.feature.companion.VoiceThinkingScreen
 import com.ligaya.feature.emergencyactive.EmergencyActiveScreen
+import com.ligaya.feature.emergencyactive.EmergencyResolvedScreen
 import com.ligaya.feature.home.HomeScreen
 import com.ligaya.feature.home.NavigableDestination
 import com.ligaya.feature.onboarding.CreateAccountScreen
@@ -32,7 +44,27 @@ import com.ligaya.feature.onboarding.EmergencyProfileScreen
 import com.ligaya.feature.onboarding.LocationPermissionScreen
 import com.ligaya.feature.onboarding.OnboardingIntroScreen
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
+
+/** The signed-in user's name from their emergency profile, or null with no session or no saved name. */
+@Composable
+private fun rememberProfileName(authRepository: AuthRepository, profileRepository: EmergencyProfileRepository): String? {
+    val name by produceState<String?>(initialValue = null) {
+        value = authRepository.currentUserId()?.let { userId ->
+            runCatching { profileRepository.getProfile(userId) }.getOrNull()?.name
+        }
+    }
+    return name
+}
+
+/** States in which an emergency is underway, so the chat greets the user as a companion, not an assistant. */
+private val EMERGENCY_IN_PROGRESS = setOf(
+    EmergencyState.EMERGENCY_DETECTED,
+    EmergencyState.EMERGENCY_CONFIRMED,
+    EmergencyState.EMERGENCY_ACTIVE,
+)
 
 @Composable
 fun LigayaNavHost(
@@ -48,9 +80,40 @@ fun LigayaNavHost(
     showWelcome: Boolean,
     onWelcomeCompleted: () -> Unit,
     onStartVoiceTurn: () -> Unit,
+    /** Whether Gemini is configured for chat replies; without it the chat says replies are limited. */
+    companionAiAvailable: Boolean,
+    /** Live microphone level (0..1) from the speech recognizer, for the Listening screen's bars. */
+    inputLevel: StateFlow<Float>,
+    /** True while a voice turn started with [onStartVoiceTurn] is running. */
+    voiceTurnActive: StateFlow<Boolean>,
+    onCancelVoiceTurn: () -> Unit,
+    isMicPermitted: () -> Boolean,
     navController: NavHostController = rememberNavController(),
 ) {
     val scope = rememberCoroutineScope()
+    val emergencySnapshots = remember { emergencyController.observeSnapshot() }
+
+    // Sections 5 and 9: however an emergency becomes active — SOS, the wake phrase, or something said to Ligaya's
+    // mic — the Emergency screen comes up. Only on the transition, so leaving it after resolving isn't undone.
+    LaunchedEffect(emergencySnapshots) {
+        emergencySnapshots.map { it?.state }.distinctUntilChanged().collect { state ->
+            if (state == EmergencyState.EMERGENCY_ACTIVE &&
+                navController.currentDestination?.route != LigayaDestination.EmergencyActive.route
+            ) {
+                navController.navigate(LigayaDestination.EmergencyActive.route) { launchSingleTop = true }
+            }
+        }
+    }
+    val openListening = {
+        navController.navigate(LigayaDestination.Listening.route) { launchSingleTop = true }
+    }
+    val openChat = {
+        navController.navigate(LigayaDestination.EmergencyCompanion.route) { launchSingleTop = true }
+    }
+    val openProfile = {
+        val signedIn = authRepository.currentUserId() != null
+        navController.navigate(if (signedIn) LigayaDestination.EmergencyProfile.route else LigayaDestination.CreateAccount.route)
+    }
     NavHost(
         navController = navController,
         startDestination = if (showWelcome) LigayaDestination.Welcome.route else LigayaDestination.Home.route,
@@ -105,17 +168,13 @@ fun LigayaNavHost(
                 .map { NavigableDestination(it.route, it.title) }
             // The greeting's name comes from the signed-in user's emergency profile; with no session or
             // no saved name, Home greets them as "kaibigan".
-            val userName by produceState<String?>(initialValue = null) {
-                value = authRepository.currentUserId()?.let { userId ->
-                    runCatching { profileRepository.getProfile(userId) }.getOrNull()?.name
-                }
-            }
+            val userName = rememberProfileName(authRepository, profileRepository)
             HomeScreen(
                 emergencyController = emergencyController,
                 otherDestinations = otherDestinations,
-                onSosActivated = { navController.navigate(LigayaDestination.EmergencyActive.route) },
+                onSosActivated = { navController.navigate(LigayaDestination.EmergencyActive.route) { launchSingleTop = true } },
                 onNavigateToSafetyCircle = { navController.navigate(LigayaDestination.SafetyCircle.route) },
-                onNavigateToCompanion = { navController.navigate(LigayaDestination.EmergencyCompanion.route) },
+                onNavigateToCompanion = openChat,
                 onNavigateToRoute = { route -> navController.navigate(route) },
                 voicePhase = voicePhase,
                 voiceAiUnavailable = voiceAiUnavailable,
@@ -123,20 +182,13 @@ fun LigayaNavHost(
                 // A typed question opens the conversation and is answered there, through the same
                 // validated companion turn the chat screen's own input uses.
                 onAskText = { question ->
-                    navController.navigate(LigayaDestination.EmergencyCompanion.route)
+                    openChat()
                     scope.launch { companionCoordinator.runOneTurnWithText(question) }
                 },
-                onStartVoice = {
-                    navController.navigate(LigayaDestination.EmergencyCompanion.route)
-                    onStartVoiceTurn()
-                },
+                // The Listening screen starts (and owns) the voice turn.
+                onStartVoice = openListening,
                 onNavigateToTools = { navController.navigate(LigayaDestination.Tools.route) },
-                onNavigateToProfile = {
-                    val signedIn = authRepository.currentUserId() != null
-                    navController.navigate(
-                        if (signedIn) LigayaDestination.EmergencyProfile.route else LigayaDestination.CreateAccount.route,
-                    )
-                },
+                onNavigateToProfile = openProfile,
             )
         }
         composable(LigayaDestination.Tools.route) {
@@ -145,7 +197,7 @@ fun LigayaNavHost(
         composable(LigayaDestination.Sos.route) {
             SosScreen(
                 controller = emergencyController,
-                onActivated = { navController.navigate(LigayaDestination.EmergencyActive.route) },
+                onActivated = { navController.navigate(LigayaDestination.EmergencyActive.route) { launchSingleTop = true } },
                 onBack = { navController.popBackStack() },
             )
         }
@@ -163,12 +215,166 @@ fun LigayaNavHost(
                 emergencyController = emergencyController,
                 safetyCircleDeliveryStatus = emptyList(),
                 voicePipelinePhase = companionCoordinator.phase,
-                onMarkedSafe = { navController.popBackStack(LigayaDestination.Home.route, inclusive = false) },
+                // Only called once the engine has accepted "I'm safe" (see EmergencyActiveScreen), so screen 6 can
+                // state it as fact. The emergency screen itself is left behind, not returnable-to.
+                onMarkedSafe = {
+                    navController.navigate(LigayaDestination.Resolved.route) {
+                        popUpTo(LigayaDestination.EmergencyActive.route) { inclusive = true }
+                        launchSingleTop = true
+                    }
+                },
                 onRetryCall = { scope.launch { emergencyController.retryCall() } },
             )
         }
         composable(LigayaDestination.EmergencyCompanion.route) {
-            EmergencyCompanionScreen(coordinator = companionCoordinator)
+            // Visual design screen 3: Chat. SOS from its menu goes straight to the deterministic engine, the
+            // same one-tap flow as Home's pill, never through Gemini.
+            val userName = rememberProfileName(authRepository, profileRepository)
+            val snapshot by emergencySnapshots.collectAsState(initial = null)
+            EmergencyCompanionScreen(
+                coordinator = companionCoordinator,
+                userName = userName,
+                aiAvailable = companionAiAvailable,
+                inEmergency = snapshot?.state in EMERGENCY_IN_PROGRESS,
+                onBack = { navController.popBackStack() },
+                onSelectTab = { tab ->
+                    when (tab) {
+                        LigayaTab.Home -> if (!navController.popBackStack(LigayaDestination.Home.route, inclusive = false)) {
+                            navController.navigate(LigayaDestination.Home.route)
+                        }
+                        LigayaTab.Chat -> Unit
+                        LigayaTab.Tools -> navController.navigate(LigayaDestination.Tools.route)
+                        LigayaTab.Profile -> openProfile()
+                    }
+                },
+                onStartVoice = openListening,
+                onSos = {
+                    scope.launch {
+                        when (emergencyController.triggerSos()) {
+                            is SosResult.Activated, is SosResult.AlreadyInProgress ->
+                                navController.navigate(LigayaDestination.EmergencyActive.route) { launchSingleTop = true }
+                        }
+                    }
+                },
+            )
+        }
+        composable(LigayaDestination.Listening.route) {
+            // Visual design screen 4. This screen starts the voice turn when it opens and owns it: closing or
+            // going back cancels it. Once Ligaya has heard something, the turn moves on to Thinking.
+            val phase by companionCoordinator.phase.collectAsState()
+            val lastResult by companionCoordinator.lastResult.collectAsState()
+            val active by voiceTurnActive.collectAsState()
+            val level by inputLevel.collectAsState()
+            var micPermitted by remember { mutableStateOf(isMicPermitted()) }
+            // `requested` covers the moment between asking for a turn and it actually starting; `finishedOne` makes
+            // sure "didn't catch that" only ever describes a turn started here, not an older one.
+            var requested by remember { mutableStateOf(false) }
+            var sawActive by remember { mutableStateOf(false) }
+            var finishedOne by remember { mutableStateOf(false) }
+
+            fun start() {
+                micPermitted = isMicPermitted()
+                if (!micPermitted) return
+                requested = true
+                onStartVoiceTurn()
+            }
+            fun close() {
+                onCancelVoiceTurn()
+                navController.popBackStack()
+            }
+
+            LaunchedEffect(Unit) { start() }
+            LaunchedEffect(active) {
+                if (active) {
+                    sawActive = true
+                } else if (sawActive) {
+                    sawActive = false
+                    requested = false
+                    finishedOne = true
+                }
+            }
+            LaunchedEffect(phase) {
+                if (phase == VoicePipelinePhase.PROCESSING) {
+                    navController.navigate(LigayaDestination.Thinking.route) {
+                        popUpTo(LigayaDestination.Listening.route) { inclusive = true }
+                        launchSingleTop = true
+                    }
+                }
+            }
+            BackHandler { close() }
+
+            val state = when {
+                !micPermitted -> ListeningState.MicBlocked
+                active || requested -> ListeningState.Listening
+                finishedOne && lastResult is CompanionTurnResult.NoSpeechCaptured -> ListeningState.NotHeard
+                else -> ListeningState.Paused
+            }
+            VoiceListeningScreen(
+                state = state,
+                inputLevel = level,
+                onMicTap = {
+                    when (state) {
+                        ListeningState.Listening -> {
+                            requested = false
+                            onCancelVoiceTurn()
+                        }
+                        ListeningState.MicBlocked -> {
+                            micPermitted = isMicPermitted()
+                            if (micPermitted) start() else onOpenAppSettings()
+                        }
+                        else -> start()
+                    }
+                },
+                onClose = ::close,
+            )
+        }
+        composable(LigayaDestination.Resolved.route) {
+            // Visual design screen 6, after the engine has confirmed "I'm safe". Back or the Home tab returns to Home;
+            // the emergency screen is already off the stack.
+            val goHome = {
+                if (!navController.popBackStack(LigayaDestination.Home.route, inclusive = false)) {
+                    navController.navigate(LigayaDestination.Home.route) {
+                        popUpTo(LigayaDestination.Resolved.route) { inclusive = true }
+                    }
+                }
+            }
+            BackHandler { goHome() }
+            EmergencyResolvedScreen(
+                emergencyController = emergencyController,
+                onSelectTab = { tab ->
+                    when (tab) {
+                        LigayaTab.Home -> goHome()
+                        LigayaTab.Chat -> openChat()
+                        LigayaTab.Tools -> navController.navigate(LigayaDestination.Tools.route)
+                        LigayaTab.Profile -> openProfile()
+                    }
+                },
+            )
+        }
+        composable(LigayaDestination.Thinking.route) {
+            // Visual design screen 5, shown while her reply is being worked out. As soon as the turn moves on (she
+            // starts speaking, or it ended without a reply) the conversation continues in Chat, where the reply or
+            // the reason there isn't one appears. Back cancels the turn. What was said has already gone to the
+            // emergency engine as well, and cancelling doesn't undo that.
+            val phase by companionCoordinator.phase.collectAsState()
+            var leaving by remember { mutableStateOf(false) }
+            LaunchedEffect(phase) {
+                if (phase != VoicePipelinePhase.PROCESSING && !leaving) {
+                    leaving = true
+                    navController.navigate(LigayaDestination.EmergencyCompanion.route) {
+                        popUpTo(LigayaDestination.Thinking.route) { inclusive = true }
+                        launchSingleTop = true
+                    }
+                }
+            }
+            BackHandler {
+                if (!leaving) {
+                    leaving = true
+                    onCancelVoiceTurn()
+                    navController.popBackStack()
+                }
+            }
+            VoiceThinkingScreen(aiAvailable = companionAiAvailable)
         }
         composable(LigayaDestination.Onboarding.route) {
             // Visual design screen 2. Both exits pop back for now: the real hand-off into the

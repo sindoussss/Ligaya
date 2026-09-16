@@ -1,5 +1,7 @@
 package com.ligaya.core.ai
 
+import kotlin.coroutines.cancellation.CancellationException
+
 /**
  * Produces Ligaya's next companion reply given the conversation so far (section 19's "update
  * context" step). GeminiCompanionResponseProvider is the real implementation; a fake lets
@@ -27,7 +29,15 @@ class GeminiCompanionResponseProvider(
 
     override suspend fun respond(history: List<CompanionTurn>, latestUserUtterance: String): String {
         val prompt = buildCompanionPrompt(history, latestUserUtterance)
-        return runCatching { textGenerator.generateText(prompt) }.getOrElse { SAFE_FALLBACK_RESPONSE }
+        return try {
+            textGenerator.generateText(prompt)
+        } catch (e: CancellationException) {
+            // A turn the user cancelled (closing the Thinking screen) ends here. Swallowing it would add the fallback
+            // to the conversation as if Ligaya had replied.
+            throw e
+        } catch (t: Throwable) {
+            SAFE_FALLBACK_RESPONSE
+        }
     }
 
     companion object {

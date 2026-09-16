@@ -27,6 +27,7 @@ import com.ligaya.core.ai.IntentProvider
 import com.ligaya.core.ai.NullIntentProvider
 import com.ligaya.core.ai.TimingCompanionResponseProvider
 import com.ligaya.core.ai.TimingIntentProvider
+import com.ligaya.core.ai.VoiceInterpretationOutcome
 import com.ligaya.core.backend.auth.AuthRepository
 import com.ligaya.core.backend.auth.LocalAuthRepository
 import com.ligaya.core.data.LigayaDatabase
@@ -61,6 +62,7 @@ import com.ligaya.core.voice.VoiceCaptureCoordinator
 import com.ligaya.core.voice.VoiceEmergencyIntentReporter
 import com.ligaya.feature.companion.EmergencyCompanionCoordinator
 import com.ligaya.feature.companion.EmergencySnapshotProvider
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -286,8 +288,10 @@ class MainActivity : ComponentActivity() {
         // timedSpeechOutput is the wrapped one every coordinator actually gets.
         speechOutput = AndroidSpeechOutput(applicationContext)
         val timedSpeechOutput = TimingSpeechOutput(speechOutput)
+        // Kept as its own val: the Listening screen draws its sound bars from this recognizer's live input level.
+        val speechTranscriber = AndroidSpeechTranscriber(applicationContext)
         val captureCoordinator = VoiceCaptureCoordinator(
-            TimingSpeechTranscriber(AndroidSpeechTranscriber(applicationContext)),
+            TimingSpeechTranscriber(speechTranscriber),
             permissionChecker,
         )
         val responseProvider: CompanionResponseProvider = TimingCompanionResponseProvider(
@@ -314,11 +318,14 @@ class MainActivity : ComponentActivity() {
                 emergencyController.observeSnapshot().filterNotNull().first()
             } ?: EmergencySnapshot()
         }
+        // Assigned once the intent pipeline below exists; the companion calls it with each utterance it hears.
+        var onCompanionHeard: (String) -> Unit = {}
         val companionCoordinator = EmergencyCompanionCoordinator(
             captureCoordinator,
             responseProvider,
             timedSpeechOutput,
             snapshotProvider,
+            onHeard = { transcript -> onCompanionHeard(transcript) },
         )
 
         // Step 48: the voice-activation (wake phrase) pipeline. Same BuildConfig.GEMINI_API_KEY
@@ -341,6 +348,17 @@ class MainActivity : ComponentActivity() {
         }
         val voiceActivationCoordinator = VoiceActivationCoordinator(captureCoordinator, intentProvider, voiceReporter)
 
+        // Visual design screen 4 (sections 5, 9, 11): whatever is said into Ligaya's mic also goes through the same
+        // intent pipeline as the wake phrase — Gemini interprets, the engine alone decides whether it's an
+        // emergency — so "tulong, may sunog" reaches the emergency engine, not just the conversation. Runs
+        // alongside her reply, never delaying it; a non-emergency is simply not activated.
+        onCompanionHeard = { transcript ->
+            lifecycleScope.launch {
+                val outcome = intentProvider.interpret(transcript)
+                if (outcome is VoiceInterpretationOutcome.Interpreted) voiceReporter.reportVoiceIntent(outcome.intent)
+            }
+        }
+
         // Step 53 audit follow-up: the one moment the wake-word loop below actually speaks
         // (VOICE_AI_UNAVAILABLE) has no visual counterpart from voiceActivationCoordinator.phase
         // alone — that flow settles back to IDLE once its capture session ends, which happens
@@ -353,10 +371,11 @@ class MainActivity : ComponentActivity() {
         // Android runs one speech recognizer at a time, so while that turn listens the wake-word loop
         // below stands down (cancelling its session releases the recognizer) and resumes after.
         val manualVoiceTurn = MutableStateFlow(false)
+        var voiceTurnJob: Job? = null
         val startVoiceTurn: () -> Unit = {
             if (!manualVoiceTurn.value) {
                 manualVoiceTurn.value = true
-                lifecycleScope.launch {
+                voiceTurnJob = lifecycleScope.launch {
                     try {
                         delay(RECOGNIZER_HANDOFF_DELAY_MILLIS)
                         companionCoordinator.runOneTurn()
@@ -366,6 +385,9 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
+        // Cancelling closes the recognizer session (the transcriber's awaitClose) and hands the mic back to the
+        // wake-word loop.
+        val cancelVoiceTurn: () -> Unit = { voiceTurnJob?.cancel() }
 
         // Step 48: the real Location flow.
         val fusedLocationSource = FusedLocationSource(LocationServices.getFusedLocationProviderClient(applicationContext))
@@ -396,6 +418,13 @@ class MainActivity : ComponentActivity() {
                             requestStartupPermissions()
                         },
                         onStartVoiceTurn = startVoiceTurn,
+                        companionAiAvailable = BuildConfig.GEMINI_API_KEY.isNotBlank(),
+                        inputLevel = speechTranscriber.inputLevel,
+                        voiceTurnActive = manualVoiceTurn.asStateFlow(),
+                        onCancelVoiceTurn = cancelVoiceTurn,
+                        isMicPermitted = {
+                            permissionChecker.currentState(Manifest.permission.RECORD_AUDIO) == PermissionState.Granted
+                        },
                         emergencyController = emergencyController,
                         companionCoordinator = companionCoordinator,
                         voicePhase = voiceActivationCoordinator.phase,

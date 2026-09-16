@@ -2,7 +2,6 @@ package com.ligaya.feature.companion
 
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
-import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -72,7 +71,7 @@ class EmergencyCompanionScreenTextFallbackTest {
             EmergencyCompanionScreen(coordinator = coordinator)
         }
 
-        composeTestRule.onNodeWithContentDescription("Voice assistant idle").assertExists()
+        composeTestRule.onNodeWithText("Online").assertExists()
 
         composeTestRule.onNodeWithTag("companionTextInput").performTextInput("Tulong, sunog!")
         composeTestRule.onNodeWithTag("companionSendButton").performClick()
@@ -83,6 +82,6 @@ class EmergencyCompanionScreenTextFallbackTest {
 
         composeTestRule.onNodeWithText("Tulong, sunog!").assertExists()
         composeTestRule.onNodeWithText(safeReply).assertExists()
-        composeTestRule.onNodeWithContentDescription("Voice assistant idle").assertExists()
+        composeTestRule.onNodeWithText("Online").assertExists()
     }
 }

@@ -37,6 +37,8 @@ class HttpGeminiTextGenerator(
             requestMethod = "POST"
             doOutput = true
             setRequestProperty("Content-Type", "application/json")
+            connectTimeout = GEMINI_CONNECT_TIMEOUT_MILLIS
+            readTimeout = GEMINI_READ_TIMEOUT_MILLIS
         }
 
         try {

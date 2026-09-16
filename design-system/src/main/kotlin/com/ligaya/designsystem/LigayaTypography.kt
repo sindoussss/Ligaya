@@ -87,6 +87,24 @@ object LigayaTypography {
     /** Bottom tab bar labels. */
     val tabLabel = TextStyle(fontFamily = LigayaFonts.sans, fontSize = 12.sp, lineHeight = 16.sp, fontWeight = FontWeight.Medium)
 
+    /** Chat header: "Ligaya". */
+    val chatTitle = TextStyle(fontFamily = LigayaFonts.sans, fontSize = 19.sp, lineHeight = 24.sp, fontWeight = FontWeight.SemiBold)
+
+    /** Chat header status ("Online") and small notes in the conversation. */
+    val chatStatus = TextStyle(fontFamily = LigayaFonts.sans, fontSize = 13.sp, lineHeight = 18.sp, fontWeight = FontWeight.Normal)
+
+    /** Message text inside chat bubbles. */
+    val bubble = TextStyle(fontFamily = LigayaFonts.sans, fontSize = 16.sp, lineHeight = 24.sp, fontWeight = FontWeight.Normal)
+
+    /** Time under a chat message. */
+    val messageTime = TextStyle(fontFamily = LigayaFonts.sans, fontSize = 12.sp, lineHeight = 16.sp, fontWeight = FontWeight.Normal)
+
+    /** Voice screens' big status line: "Listening...". */
+    val voiceTitle = TextStyle(fontFamily = LigayaFonts.sans, fontSize = 27.sp, lineHeight = 34.sp, fontWeight = FontWeight.SemiBold)
+
+    /** The gentle line under [voiceTitle]. */
+    val voiceSubtitle = TextStyle(fontFamily = LigayaFonts.sans, fontSize = 16.sp, lineHeight = 22.sp, fontWeight = FontWeight.Normal)
+
     /** Label on the brand's filled pill buttons. */
     val pillLabel = TextStyle(
         fontFamily = LigayaFonts.sans,

@@ -36,12 +36,31 @@ class EmergencyCompanionCoordinator(
     private val responseProvider: CompanionResponseProvider,
     private val speechOutput: SpeechOutput,
     private val snapshotProvider: EmergencySnapshotProvider,
+    private val clock: () -> Long = System::currentTimeMillis,
+    /**
+     * Called with each final spoken utterance [runOneTurn] captures, before Ligaya replies. The composition root
+     * uses it to pass what was said into the emergency intake too (section 9: voice reaches the deterministic
+     * engine), so an emergency said to Ligaya's mic isn't only answered in conversation. Must not block.
+     */
+    private val onHeard: (String) -> Unit = {},
 ) {
     private val _transcript = MutableStateFlow<List<CompanionTurn>>(emptyList())
 
     /** Step 39's live transcript signal — the same list [runOneTurn]/[runOneTurnWithText] already
      *  maintained internally since Step 26, just observable now instead of private. */
     val transcript: StateFlow<List<CompanionTurn>> = _transcript.asStateFlow()
+
+    private val _turnTimes = MutableStateFlow<List<Long>>(emptyList())
+
+    /** When each [transcript] turn was added (epoch millis, from [clock]), index-aligned with it — the chat
+     *  screen's message times. Kept here rather than in the screen so they survive leaving and reopening it. */
+    val turnTimes: StateFlow<List<Long>> = _turnTimes.asStateFlow()
+
+    private val _lastResult = MutableStateFlow<CompanionTurnResult?>(null)
+
+    /** How the most recent turn ended; null before the first turn and while one is running. Lets the chat say
+     *  something when a turn ends without a reply, instead of the conversation silently stopping. */
+    val lastResult: StateFlow<CompanionTurnResult?> = _lastResult.asStateFlow()
 
     private val _phase = MutableStateFlow(VoicePipelinePhase.IDLE)
 
@@ -70,14 +89,17 @@ class EmergencyCompanionCoordinator(
      * session early — it only ever matters when nothing would otherwise end the wait at all.
      */
     suspend fun runOneTurn(): CompanionTurnResult {
+        _lastResult.value = null
         try {
             _phase.value = VoicePipelinePhase.LISTENING
             val transcriptEvent = withTimeoutOrNull(LISTENING_TIMEOUT_MILLIS) {
                 captureCoordinator.startListening().firstOrNull { it is TranscriptionEvent.Success && it.isFinal }
             } as? TranscriptionEvent.Success
-                ?: return CompanionTurnResult.NoSpeechCaptured
 
-            return respondTo(transcriptEvent.text)
+            if (transcriptEvent != null) onHeard(transcriptEvent.text)
+            val result = if (transcriptEvent == null) CompanionTurnResult.NoSpeechCaptured else respondTo(transcriptEvent.text)
+            _lastResult.value = result
+            return result
         } finally {
             _phase.value = VoicePipelinePhase.IDLE
         }
@@ -91,8 +113,11 @@ class EmergencyCompanionCoordinator(
      * a transcript in hand.
      */
     suspend fun runOneTurnWithText(text: String): CompanionTurnResult {
+        _lastResult.value = null
         try {
-            return respondTo(text)
+            val result = respondTo(text)
+            _lastResult.value = result
+            return result
         } finally {
             _phase.value = VoicePipelinePhase.IDLE
         }
@@ -109,6 +134,7 @@ class EmergencyCompanionCoordinator(
         // isn't redundantly present in both places.
         val priorHistory = _transcript.value
         _transcript.value = priorHistory + CompanionTurn(CompanionTurn.Speaker.USER, userUtterance)
+        _turnTimes.value = _turnTimes.value + clock()
 
         _phase.value = VoicePipelinePhase.PROCESSING
         val rawResponse = responseProvider.respond(priorHistory, userUtterance)
@@ -117,6 +143,7 @@ class EmergencyCompanionCoordinator(
         val speech = validated.toValidatedSpeechOrNull() ?: return CompanionTurnResult.ResponseBlocked
 
         _transcript.value = _transcript.value + CompanionTurn(CompanionTurn.Speaker.LIGAYA, speech.text)
+        _turnTimes.value = _turnTimes.value + clock()
         _phase.value = VoicePipelinePhase.SPEAKING
         speechOutput.speak(speech)
 

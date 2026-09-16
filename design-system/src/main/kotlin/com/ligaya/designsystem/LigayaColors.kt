@@ -106,6 +106,43 @@ object LigayaColors {
     /** Hand-drawn doodles around Ligaya on Home. Ornament only. */
     val doodle = Color(0xFFB9777D)
 
+    // --- Visual design: Chat ------------------------------------------------------------------
+
+    /** Ligaya's message bubbles, and their hairline edge. */
+    val bubbleLigaya = Color(0xFFF7F1ED)
+    val bubbleLigayaEdge = Color(0xFFEDE3DD)
+
+    /** The user's own message bubbles. */
+    val bubbleUser = Color(0xFFF9E3E1)
+
+    /** "Online" dot and the answered tick. Icon-only, never text. */
+    val online = Color(0xFF3F9A66)
+
+    // --- Visual design: Listening -------------------------------------------------------------
+
+    /** The sound bars that follow the microphone level. Ornament only. */
+    val waveBar = Color(0xFFD5A29E)
+
+    /** The soft disc Ligaya sits in while she listens. Ornament only. */
+    val listeningDisc = Color(0xFFFCF8F4)
+
+    // --- Visual design: Thinking --------------------------------------------------------------
+
+    /** The thought bubbles rising beside Ligaya. Ornament only. */
+    val thoughtBubble = Color(0xFFC9AAA3)
+
+    /** The loading dots: dark, and the light spot that travels along them. Ornament only. */
+    val thinkingDot = Color(0xFF4F2226)
+    val thinkingDotLight = Color(0xFFEBCBBF)
+
+    // --- Visual design: resolved ("That's great!") --------------------------------------------
+
+    /** The soft sage disc behind a confirmed outcome's tick. Carries white glyphs only, never text. */
+    val confirmDisc = Color(0xFF8AAF9B)
+
+    /** The four-point stars around Ligaya on the resolved screen. Ornament only. */
+    val sparkle = Color(0xFFE9C0A2)
+
     // --- Shared neutral ---
     val onSurface = Color(0xFF1B1F24)
 

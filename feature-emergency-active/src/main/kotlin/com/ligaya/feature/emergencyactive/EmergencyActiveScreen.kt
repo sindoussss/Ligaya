@@ -161,8 +161,9 @@ fun EmergencyActiveScreen(
         ImSafeButton(
             onClick = {
                 scope.launch {
-                    emergencyController.markSafe()
-                    onMarkedSafe()
+                    // Only once the engine has actually accepted the transition: the screen this leads to states that
+                    // the user is marked safe, and section 23 forbids showing that before it is true.
+                    if (emergencyController.markSafe().isSuccess) onMarkedSafe()
                 }
             },
         )

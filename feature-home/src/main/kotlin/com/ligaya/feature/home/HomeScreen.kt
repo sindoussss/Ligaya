@@ -47,6 +47,7 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.StrokeCap
@@ -56,7 +57,6 @@ import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
@@ -72,6 +72,8 @@ import com.ligaya.designsystem.components.LigayaEmotion
 import com.ligaya.designsystem.components.LigayaFrame
 import com.ligaya.designsystem.components.LigayaMascot
 import com.ligaya.designsystem.components.LigayaMascotController
+import com.ligaya.designsystem.components.LigayaTab
+import com.ligaya.designsystem.components.LigayaTabBar
 import com.ligaya.designsystem.components.VoiceStateIndicator
 import com.ligaya.designsystem.components.rememberLigayaMascotController
 import kotlinx.coroutines.flow.StateFlow
@@ -163,6 +165,15 @@ fun HomeScreen(
                     frame = LigayaFrame.Bust,
                     modifier = Modifier.fillMaxSize().padding(start = 4.dp, end = 28.dp, top = 12.dp),
                 )
+                // Her artwork ends on a straight edge at the bottom of its canvas; this washes it into the page
+                // above the ask bar, so she fades out rather than stopping on a line.
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter)
+                        .fillMaxWidth()
+                        .fillMaxHeight(0.3f)
+                        .background(Brush.verticalGradient(listOf(Color.Transparent, LigayaColors.cream))),
+                )
                 Doodles(Modifier.fillMaxSize())
                 if (phase != VoicePipelinePhase.IDLE) {
                     VoiceCaption(phase, Modifier.align(Alignment.BottomCenter).padding(bottom = 8.dp))
@@ -170,10 +181,17 @@ fun HomeScreen(
             }
 
             AskBar(onAskText = onAskText, onStartVoice = onStartVoice)
-            HomeTabBar(
-                onChat = onNavigateToCompanion,
-                onTools = onNavigateToTools,
-                onProfile = onNavigateToProfile,
+            LigayaTabBar(
+                selected = LigayaTab.Home,
+                onSelect = { tab ->
+                    when (tab) {
+                        LigayaTab.Chat -> onNavigateToCompanion()
+                        LigayaTab.Tools -> onNavigateToTools()
+                        LigayaTab.Profile -> onNavigateToProfile()
+                        LigayaTab.Home -> Unit
+                    }
+                },
+                modifier = Modifier.padding(top = 12.dp),
             )
         }
     }
@@ -370,38 +388,6 @@ private fun ShortcutChip(icon: ImageVector, label: String, modifier: Modifier, o
     }
 }
 
-@Composable
-private fun HomeTabBar(onChat: () -> Unit, onTools: () -> Unit, onProfile: () -> Unit) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(top = 12.dp)
-            .background(LigayaColors.shell)
-            .padding(vertical = 6.dp),
-    ) {
-        TabItem(LigayaIcons.homeSelected, "Home", selected = true, Modifier.weight(1f)) {}
-        TabItem(LigayaIcons.chat, "Chat", selected = false, Modifier.weight(1f), onChat)
-        TabItem(LigayaIcons.tools, "Tools", selected = false, Modifier.weight(1f), onTools)
-        TabItem(LigayaIcons.profile, "Profile", selected = false, Modifier.weight(1f), onProfile)
-    }
-}
-
-@Composable
-private fun TabItem(icon: ImageVector, label: String, selected: Boolean, modifier: Modifier, onClick: () -> Unit) {
-    val tint = if (selected) LigayaColors.cocoa else LigayaColors.taupe
-    Column(
-        modifier = modifier
-            .heightIn(min = 56.dp)
-            .clickable(role = Role.Tab, onClick = onClick)
-            .semantics { this.selected = selected },
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center,
-    ) {
-        Icon(icon, contentDescription = null, tint = tint, modifier = Modifier.size(26.dp))
-        Text(label, style = LigayaTypography.tabLabel, color = tint, modifier = Modifier.padding(top = 2.dp))
-    }
-}
-
 /** The live voice phase, shown over Ligaya only while the voice loop is doing something. */
 @Composable
 private fun VoiceCaption(phase: VoicePipelinePhase, modifier: Modifier = Modifier) {
@@ -465,10 +451,11 @@ private fun LigayaMascotController.reflectVoice(phase: VoicePipelinePhase, aiUna
         VoicePipelinePhase.IDLE -> {
             stopListening()
             stopSpeaking()
-            setEmotion(LigayaEmotion.Happy)
+            setEmotion(LigayaEmotion.Content)
         }
         VoicePipelinePhase.LISTENING -> {
-            setEmotion(LigayaEmotion.Neutral)
+            // The wake-word loop listens nearly all the time on Home, so this is her resting look too.
+            setEmotion(LigayaEmotion.Content)
             startListening()
         }
         VoicePipelinePhase.PROCESSING -> {

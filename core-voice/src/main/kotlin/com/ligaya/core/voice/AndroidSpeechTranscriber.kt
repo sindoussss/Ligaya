@@ -8,6 +8,9 @@ import android.speech.RecognizerIntent
 import android.speech.SpeechRecognizer
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.callbackFlow
 import java.util.Locale
 
@@ -35,6 +38,14 @@ class AndroidSpeechTranscriber(
     private val fallbackLanguageTag: String = Locale.getDefault().toLanguageTag(),
 ) : SpeechTranscriber {
 
+    private val _inputLevel = MutableStateFlow(0f)
+
+    /**
+     * How loud the microphone input is right now, 0..1, while a session is listening (0 otherwise). Straight from
+     * the recognizer's own level callback, so anything drawn from it moves only when there really is sound.
+     */
+    val inputLevel: StateFlow<Float> = _inputLevel.asStateFlow()
+
     override fun startListening(): Flow<TranscriptionEvent> = callbackFlow {
         val recognizer = SpeechRecognizer.createSpeechRecognizer(context)
         var triedFallback = false
@@ -51,7 +62,10 @@ class AndroidSpeechTranscriber(
         recognizer.setRecognitionListener(object : RecognitionListener {
             override fun onReadyForSpeech(params: Bundle?) = Unit
             override fun onBeginningOfSpeech() = Unit
-            override fun onRmsChanged(rmsdB: Float) = Unit
+            // The recognizer reports roughly -2dB (silence) to 10dB (loud speech).
+            override fun onRmsChanged(rmsdB: Float) {
+                _inputLevel.value = ((rmsdB + 2f) / 12f).coerceIn(0f, 1f)
+            }
             override fun onBufferReceived(buffer: ByteArray?) = Unit
             override fun onEndOfSpeech() = Unit
             override fun onEvent(eventType: Int, params: Bundle?) = Unit
@@ -85,6 +99,7 @@ class AndroidSpeechTranscriber(
         startWith(primaryLanguageTag)
 
         awaitClose {
+            _inputLevel.value = 0f
             recognizer.stopListening()
             recognizer.destroy()
         }

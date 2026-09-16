@@ -35,6 +35,18 @@ sealed class LigayaDestination(val route: String, val title: String) {
      * Excluded from [all]: it is reached from Home's tab bar, not the menu of destinations.
      */
     data object Tools : LigayaDestination("tools", "Tools")
+
+    /** Visual design screen 4: a voice turn with Ligaya. Opened from the mic buttons; excluded from [all]. */
+    data object Listening : LigayaDestination("listening", "Listening")
+
+    /** Visual design screen 5: Ligaya working out her reply to a voice turn. Follows [Listening]; excluded from [all]. */
+    data object Thinking : LigayaDestination("thinking", "Thinking")
+
+    /**
+     * Visual design screen 6: shown once the engine has confirmed the user marked themselves safe. Reached only from
+     * [EmergencyActive]'s "I'm safe", never on its own, so it is excluded from [all].
+     */
+    data object Resolved : LigayaDestination("resolved", "Resolved")
     data object Sos : LigayaDestination("sos", "SOS")
     data object EmergencyActive : LigayaDestination("emergency_active", "Emergency Active")
     data object EmergencyCompanion : LigayaDestination("companion", "Emergency Companion")

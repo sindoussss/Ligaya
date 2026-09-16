@@ -6,7 +6,12 @@ import androidx.compose.material.icons.automirrored.filled.HelpOutline
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.automirrored.filled.VolumeUp
 import androidx.compose.material.icons.filled.ChatBubble
+import androidx.compose.material.icons.automirrored.filled.ArrowBackIos
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.DoneAll
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Emergency
 import androidx.compose.material.icons.filled.ErrorOutline
 import androidx.compose.material.icons.filled.GraphicEq
@@ -81,6 +86,18 @@ object LigayaIcons {
     val tools: ImageVector = Icons.Outlined.GridView
     val profileSelected: ImageVector = Icons.Filled.Person
     val profile: ImageVector = Icons.Outlined.Person
+
+    // --- Chat (visual design, screen 3) ---
+    val chevronBack: ImageVector = Icons.AutoMirrored.Filled.ArrowBackIos
+    val moreOptions: ImageVector = Icons.Filled.MoreVert
+    val answered: ImageVector = Icons.Filled.DoneAll
+
+    // --- Listening (visual design, screen 4) ---
+    val close: ImageVector = Icons.Filled.Close
+
+    // --- Resolved (visual design, screen 6) ---
+    val confirmed: ImageVector = Icons.Filled.Check
+    val failed: ImageVector = Icons.Filled.ErrorOutline
 
     val incidentType: Map<LigayaIncidentType, ImageVector> = mapOf(
         LigayaIncidentType.FIRE to Icons.Filled.LocalFireDepartment,

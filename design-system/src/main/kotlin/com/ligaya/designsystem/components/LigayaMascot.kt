@@ -60,6 +60,9 @@ import org.json.JSONObject
  */
 enum class LigayaEmotion(internal val jsName: String) {
     Neutral("neutral"),
+
+    /** At ease: a gentle closed smile, warm cheeks and soft open eyes. Her resting face. */
+    Content("content"),
     Happy("happy"),
     Thinking("thinking"),
     Concerned("concerned"),
@@ -68,6 +71,9 @@ enum class LigayaEmotion(internal val jsName: String) {
     Reassuring("reassuring"),
     Emergency("emergency"),
     Resolved("resolved"),
+
+    /** Her sign-off: a wink over a soft closed smile ("Always here for you."). */
+    Fond("fond"),
 }
 
 /** System follows the device's reduce-motion setting, Calm keeps idle motion small, Still removes it. */
@@ -96,6 +102,8 @@ data class LigayaMascotState(
     val speaking: Boolean,
     val listening: Boolean,
     val camera: LigayaCameraView,
+    val animationSpeed: Float = 1.0f,
+    val depthStrength: Float = 0.6f,
 )
 
 private const val TAG = "LigayaMascot"
@@ -121,6 +129,8 @@ class LigayaMascotController internal constructor() {
     private var camera = LigayaCameraView.Front
     private var motion = LigayaMotionMode.System
     private var frame = LigayaFrame.Bust
+    private var animationSpeed = 1.0f
+    private var depthStrength = 0.6f
 
     private val stateHolder = mutableStateOf<LigayaMascotState?>(null)
     private val readyHolder = mutableStateOf(false)
@@ -134,6 +144,16 @@ class LigayaMascotController internal constructor() {
     fun setEmotion(value: LigayaEmotion) {
         emotion = value
         send("setEmotion('${value.jsName}')")
+    }
+
+    fun setAnimationSpeed(multiplier: Float) {
+        animationSpeed = multiplier.coerceIn(0.5f, 2.0f)
+        send("setAnimationSpeed($animationSpeed)")
+    }
+
+    fun setDepthStrength(strength: Float) {
+        depthStrength = strength.coerceIn(0f, 1f)
+        send("setDepthStrength($depthStrength)")
     }
 
     fun startListening() {
@@ -217,6 +237,8 @@ class LigayaMascotController internal constructor() {
             append("(function(l){l.reset();")
             append("l.setMotion('${motion.jsName}');")
             append("l.setFrame('${frame.jsName}');")
+            append("l.setDepthStrength($depthStrength);")
+            append("l.setAnimationSpeed($animationSpeed);")
             append("l.setEmotion('${emotion.jsName}');")
             append("l.setCameraView('${camera.jsName}');")
             if (listening) append("l.startListening();")
@@ -238,6 +260,8 @@ class LigayaMascotController internal constructor() {
             speaking = obj.optBoolean("speaking"),
             listening = obj.optBoolean("listening"),
             camera = LigayaCameraView.entries.firstOrNull { it.jsName == obj.optString("camera") } ?: LigayaCameraView.Front,
+            animationSpeed = obj.optDouble("animationSpeed", animationSpeed.toDouble()).toFloat(),
+            depthStrength = obj.optDouble("depthStrength", depthStrength.toDouble()).toFloat(),
         )
     }
 
@@ -396,7 +420,7 @@ private object MascotPoster {
 
 /**
  * Same placement as engine.js layout(): contain framing sits 40% down the spare height, cover keeps the
- * top in view; the artwork's hard bottom edge (canvas y=706) is faded out over 16% of the height.
+ * top in view.
  */
 private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawPoster(poster: ImageBitmap, frame: LigayaFrame) {
     val w = size.width
@@ -413,10 +437,4 @@ private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawPoster(poster: 
             drawImage(poster)
         }
     }
-    val cut = minOf(h, 706f * scale + ty)
-    val fadeStart = cut - h * 0.16f
-    drawRect(
-        brush = Brush.verticalGradient(0f to androidx.compose.ui.graphics.Color.Black, 1f to androidx.compose.ui.graphics.Color.Transparent, startY = fadeStart, endY = cut),
-        blendMode = BlendMode.DstIn,
-    )
 }

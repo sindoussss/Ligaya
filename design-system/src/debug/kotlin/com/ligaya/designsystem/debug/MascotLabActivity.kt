@@ -41,7 +41,7 @@ import com.ligaya.designsystem.components.rememberLigayaMascotController
  *   adb shell am start -n com.ligaya.app/com.ligaya.designsystem.debug.MascotLabActivity --es cmd "emotion:happy,listen:on"
  *
  * Commands: emotion:<name> listen:on|off speak:on|off camera:front|left|right frame:bust|portrait|head
- * motion:system|calm|still dark:on|off blink smile reset
+ * motion:system|calm|still speed:<0.5-2.0> depth:<0-1> dark:on|off blink smile reset
  */
 class MascotLabActivity : ComponentActivity() {
     private val pending = mutableStateOf<List<String>>(emptyList())
@@ -69,6 +69,8 @@ private fun Lab(pending: androidx.compose.runtime.MutableState<List<String>>) {
     var motion by remember { mutableStateOf(LigayaMotionMode.System) }
     var dark by remember { mutableStateOf(false) }
     var emotion by remember { mutableStateOf(LigayaEmotion.Neutral) }
+    var speed by remember { mutableStateOf(1.0f) }
+    var depth by remember { mutableStateOf(0.6f) }
     var listening by remember { mutableStateOf(false) }
     var speaking by remember { mutableStateOf(false) }
     var camera by remember { mutableStateOf(LigayaCameraView.Front) }
@@ -77,6 +79,8 @@ private fun Lab(pending: androidx.compose.runtime.MutableState<List<String>>) {
         val (key, value) = cmd.split(':').let { it[0] to it.getOrNull(1) }
         when (key) {
             "emotion" -> LigayaEmotion.entries.firstOrNull { it.name.equals(value, true) }?.let { emotion = it; c.setEmotion(it) }
+            "speed" -> value?.toFloatOrNull()?.let { speed = it.coerceIn(0.5f, 2f); c.setAnimationSpeed(speed) }
+            "depth" -> value?.toFloatOrNull()?.let { depth = it.coerceIn(0f, 1f); c.setDepthStrength(depth) }
             "listen" -> { listening = value == "on"; speaking = speaking && !listening; if (listening) c.startListening() else c.stopListening() }
             "speak" -> { speaking = value == "on"; listening = listening && !speaking; if (speaking) c.startSpeaking() else c.stopSpeaking() }
             "camera" -> {
@@ -88,7 +92,13 @@ private fun Lab(pending: androidx.compose.runtime.MutableState<List<String>>) {
             "dark" -> dark = value == "on"
             "blink" -> c.blink()
             "smile" -> c.smile()
-            "reset" -> { emotion = LigayaEmotion.Neutral; listening = false; speaking = false; camera = LigayaCameraView.Front; c.reset() }
+            "reset" -> {
+                emotion = LigayaEmotion.Neutral
+                listening = false
+                speaking = false
+                camera = LigayaCameraView.Front
+                c.reset()
+            }
         }
     }
 
@@ -108,7 +118,7 @@ private fun Lab(pending: androidx.compose.runtime.MutableState<List<String>>) {
             LigayaMascot(controller = controller, modifier = Modifier.fillMaxSize(), frame = frame, motion = motion)
         }
         Text(
-            "ready=$ready  ${state?.let { "emotion=${it.emotion} listening=${it.listening} speaking=${it.speaking} camera=${it.camera}" } ?: "engine not started"}",
+            "ready=$ready  ${state?.let { "emotion=${it.emotion} listening=${it.listening} speaking=${it.speaking} camera=${it.camera} speed=${it.animationSpeed} depth=${it.depthStrength}" } ?: "engine not started"}",
             color = fg,
             modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
         )
@@ -119,6 +129,14 @@ private fun Lab(pending: androidx.compose.runtime.MutableState<List<String>>) {
             FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                 LigayaEmotion.entries.forEach { e ->
                     FilterChip(selected = emotion == e, onClick = { run("emotion:${e.name}", controller) }, label = { Text(e.name) })
+                }
+            }
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                listOf(0.5f, 1.0f, 2.0f).forEach { v ->
+                    FilterChip(selected = speed == v, onClick = { run("speed:$v", controller) }, label = { Text("Speed ${v}x") })
+                }
+                listOf(0f, 0.6f, 1f).forEach { v ->
+                    FilterChip(selected = depth == v, onClick = { run("depth:$v", controller) }, label = { Text("Depth $v") })
                 }
             }
             FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
