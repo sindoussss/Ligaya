@@ -37,7 +37,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.ligaya.designsystem.LigayaColors
+import com.ligaya.designsystem.LigayaTheme
 import com.ligaya.designsystem.LigayaLogo
 import com.ligaya.designsystem.LigayaMotion
 import com.ligaya.designsystem.LigayaTypography
@@ -65,7 +65,7 @@ fun WelcomeScreen(
     }
     val t = timeline.value
 
-    BoxWithConstraints(modifier = modifier.fillMaxSize().background(LigayaColors.cream)) {
+    BoxWithConstraints(modifier = modifier.fillMaxSize().background(LigayaTheme.colors.cream)) {
         val screenHeight = maxHeight
         BlushWaves(Modifier.fillMaxSize())
 
@@ -81,7 +81,7 @@ fun WelcomeScreen(
             Text(
                 text = "Ligaya",
                 style = LigayaTypography.welcomeWordmark,
-                color = LigayaColors.cocoaInk,
+                color = LigayaTheme.colors.cocoaInk,
                 // The font's ascent padding leaves a gap above the capitals; pull it up to sit under the mark.
                 modifier = Modifier.offset(y = -WORDMARK_LIFT).rise(slice(t, 0.25f, 0.8f)),
             )
@@ -89,7 +89,7 @@ fun WelcomeScreen(
             Text(
                 text = "More than an assistant.\nA kaibigan, always.",
                 style = LigayaTypography.welcomeTagline,
-                color = LigayaColors.taupe,
+                color = LigayaTheme.colors.taupe,
                 textAlign = TextAlign.Center,
                 modifier = Modifier.offset(y = -WORDMARK_LIFT).rise(slice(t, 0.4f, 0.95f)),
             )
@@ -112,21 +112,23 @@ fun WelcomeScreen(
 private fun GetStartedPill(onClick: () -> Unit, modifier: Modifier = Modifier) {
     Box(
         modifier = modifier
-            .shadow(elevation = 12.dp, shape = CircleShape, ambientColor = LigayaColors.cocoa, spotColor = LigayaColors.cocoa)
+            .shadow(elevation = 12.dp, shape = CircleShape, ambientColor = LigayaTheme.colors.cocoa, spotColor = LigayaTheme.colors.cocoa)
             .clip(CircleShape)
-            .background(LigayaColors.cocoa)
-            .border(1.5.dp, LigayaColors.onCocoa.copy(alpha = 0.35f), CircleShape)
+            .background(LigayaTheme.colors.cocoa)
+            .border(1.5.dp, LigayaTheme.colors.onCocoa.copy(alpha = 0.35f), CircleShape)
             .clickable(role = Role.Button, onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            Text(text = "Get Started", style = LigayaTypography.pillLabel, color = LigayaColors.onCocoa)
+            Text(text = "Get Started", style = LigayaTypography.pillLabel, color = LigayaTheme.colors.onCocoa)
+            // Read here, in composable scope: the draw lambda below is a DrawScope and cannot read the theme.
+            val arrow = LigayaTheme.colors.onCocoa
             Canvas(Modifier.size(width = 18.dp, height = 14.dp)) {
                 val stroke = 1.6.dp.toPx()
                 val midY = size.height / 2f
-                drawLine(LigayaColors.onCocoa, Offset(0f, midY), Offset(size.width, midY), stroke, StrokeCap.Round)
-                drawLine(LigayaColors.onCocoa, Offset(size.width, midY), Offset(size.width * 0.58f, 0f), stroke, StrokeCap.Round)
-                drawLine(LigayaColors.onCocoa, Offset(size.width, midY), Offset(size.width * 0.58f, size.height), stroke, StrokeCap.Round)
+                drawLine(arrow, Offset(0f, midY), Offset(size.width, midY), stroke, StrokeCap.Round)
+                drawLine(arrow, Offset(size.width, midY), Offset(size.width * 0.58f, 0f), stroke, StrokeCap.Round)
+                drawLine(arrow, Offset(size.width, midY), Offset(size.width * 0.58f, size.height), stroke, StrokeCap.Round)
             }
         }
     }
@@ -135,6 +137,10 @@ private fun GetStartedPill(onClick: () -> Unit, modifier: Modifier = Modifier) {
 /** The two soft blush waves that fill the bottom third behind the button. */
 @Composable
 private fun BlushWaves(modifier: Modifier = Modifier) {
+    // Read here, in composable scope: the draw lambda below is a DrawScope and cannot read the theme.
+    val waveLight = LigayaTheme.colors.waveLight
+    val waveDeep = LigayaTheme.colors.waveDeep
+
     Canvas(modifier) {
         val w = size.width
         val h = size.height
@@ -145,7 +151,7 @@ private fun BlushWaves(modifier: Modifier = Modifier) {
             lineTo(0f, h)
             close()
         }
-        drawPath(back, Brush.verticalGradient(listOf(LigayaColors.waveLight, LigayaColors.waveDeep), startY = h * 0.66f, endY = h))
+        drawPath(back, Brush.verticalGradient(listOf(waveLight, waveDeep), startY = h * 0.66f, endY = h))
         val front = Path().apply {
             moveTo(0f, h * 0.745f)
             cubicTo(w * 0.22f, h * 0.80f, w * 0.52f, h * 0.835f, w, h * 0.88f)
@@ -153,7 +159,7 @@ private fun BlushWaves(modifier: Modifier = Modifier) {
             lineTo(0f, h)
             close()
         }
-        drawPath(front, Brush.verticalGradient(listOf(LigayaColors.waveDeep.copy(alpha = 0.45f), LigayaColors.waveDeep), startY = h * 0.75f, endY = h))
+        drawPath(front, Brush.verticalGradient(listOf(waveDeep.copy(alpha = 0.45f), waveDeep), startY = h * 0.75f, endY = h))
     }
 }
 

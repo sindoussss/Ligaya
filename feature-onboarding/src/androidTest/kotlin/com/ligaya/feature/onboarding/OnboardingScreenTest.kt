@@ -36,6 +36,7 @@ class OnboardingScreenTest {
         override suspend fun logIn(email: String, password: String): AuthResult = AuthResult.Success("test-user-id")
         override fun logOut() = Unit
         override fun currentUserId(): String? = null
+        override fun currentUserEmail(): String? = null
     }
 
     private class FakeEmergencyProfileRepository : EmergencyProfileRepository {

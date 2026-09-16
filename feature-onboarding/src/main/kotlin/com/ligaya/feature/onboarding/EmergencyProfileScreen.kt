@@ -27,7 +27,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import com.ligaya.core.data.profile.EmergencyProfile
 import com.ligaya.core.data.profile.EmergencyProfileRepository
 import com.ligaya.core.data.profile.MedicalInfo
-import com.ligaya.designsystem.LigayaColors
+import com.ligaya.designsystem.LigayaTheme
 import com.ligaya.designsystem.LigayaMotion
 import com.ligaya.designsystem.LigayaSpacing
 import com.ligaya.designsystem.LigayaTypography
@@ -103,7 +103,7 @@ fun EmergencyProfileScreen(
     Column(
         modifier = modifier
             .fillMaxSize()
-            .background(LigayaColors.canvas)
+            .background(LigayaTheme.colors.canvas)
             .safeDrawingPadding()
             // Without this the keyboard covers the field being typed into and the Next button
             // below it — on a form this tall, that is most of the screen.
@@ -118,13 +118,13 @@ fun EmergencyProfileScreen(
         Text(
             text = "Emergency Profile",
             style = LigayaTypography.headline,
-            color = LigayaColors.ink,
+            color = LigayaTheme.colors.ink,
             modifier = Modifier.alpha(slice(t, 0f, 0.5f)),
         )
         Text(
             text = "Help us get you the right kind of help.",
             style = LigayaTypography.body,
-            color = LigayaColors.inkSoft,
+            color = LigayaTheme.colors.inkSoft,
             modifier = Modifier
                 .padding(top = LigayaSpacing.xs)
                 .alpha(slice(t, 0.1f, 0.6f)),

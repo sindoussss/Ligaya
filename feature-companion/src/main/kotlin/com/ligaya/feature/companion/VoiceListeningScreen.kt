@@ -48,7 +48,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.ligaya.designsystem.LigayaColors
+import com.ligaya.designsystem.LigayaTheme
 import com.ligaya.designsystem.LigayaIcons
 import com.ligaya.designsystem.LigayaLogo
 import com.ligaya.designsystem.LigayaTypography
@@ -123,7 +123,7 @@ fun VoiceListeningScreen(
         else -> "Start listening"
     }
 
-    BoxWithConstraints(modifier = modifier.fillMaxSize().background(LigayaColors.cream)) {
+    BoxWithConstraints(modifier = modifier.fillMaxSize().background(LigayaTheme.colors.cream)) {
         val disc = minOf(maxWidth * 0.96f, maxHeight * 0.56f)
         Column(modifier = Modifier.fillMaxSize().statusBarsPadding().navigationBarsPadding()) {
             Row(
@@ -131,10 +131,10 @@ fun VoiceListeningScreen(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 LigayaLogo(modifier = Modifier.size(30.dp))
-                Text("Ligaya", style = LigayaTypography.homeBrand, color = LigayaColors.cocoaInk, modifier = Modifier.padding(start = 10.dp))
+                Text("Ligaya", style = LigayaTypography.homeBrand, color = LigayaTheme.colors.cocoaInk, modifier = Modifier.padding(start = 10.dp))
                 Spacer(Modifier.weight(1f))
                 IconButton(onClick = onClose) {
-                    Icon(LigayaIcons.close, contentDescription = "Close", tint = LigayaColors.cocoa, modifier = Modifier.size(26.dp))
+                    Icon(LigayaIcons.close, contentDescription = "Close", tint = LigayaTheme.colors.cocoa, modifier = Modifier.size(26.dp))
                 }
             }
 
@@ -146,11 +146,11 @@ fun VoiceListeningScreen(
                     .semantics(mergeDescendants = true) { liveRegion = LiveRegionMode.Polite },
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
-                Text(title, style = LigayaTypography.voiceTitle, color = LigayaColors.cocoaInk, textAlign = TextAlign.Center)
+                Text(title, style = LigayaTypography.voiceTitle, color = LigayaTheme.colors.cocoaInk, textAlign = TextAlign.Center)
                 Text(
                     subtitle,
                     style = LigayaTypography.voiceSubtitle,
-                    color = LigayaColors.taupe,
+                    color = LigayaTheme.colors.taupe,
                     textAlign = TextAlign.Center,
                     modifier = Modifier.padding(top = 18.dp),
                 )
@@ -166,10 +166,10 @@ fun VoiceListeningScreen(
                     modifier = Modifier
                         .align(Alignment.TopCenter)
                         .size(disc)
-                        .shadow(14.dp, CircleShape, ambientColor = LigayaColors.cocoa.copy(alpha = 0.12f), spotColor = LigayaColors.cocoa.copy(alpha = 0.12f))
+                        .shadow(14.dp, CircleShape, ambientColor = LigayaTheme.colors.cocoa.copy(alpha = 0.12f), spotColor = LigayaTheme.colors.cocoa.copy(alpha = 0.12f))
                         .clip(CircleShape)
-                        .background(LigayaColors.listeningDisc)
-                        .border(1.dp, LigayaColors.shellEdge, CircleShape),
+                        .background(LigayaTheme.colors.listeningDisc)
+                        .border(1.dp, LigayaTheme.colors.shellEdge, CircleShape),
                 ) {
                     // Head, shoulders and the top of her cardigan, with the disc's edge cutting across her body. Her
                     // view is taller than the disc so the artwork's own bottom fade falls outside it: the cardigan stays
@@ -211,18 +211,18 @@ private fun MicButton(description: String, onClick: () -> Unit, modifier: Modifi
     Box(
         modifier = modifier
             .size(104.dp)
-            .shadow(10.dp, CircleShape, ambientColor = LigayaColors.cocoa.copy(alpha = 0.18f), spotColor = LigayaColors.cocoa.copy(alpha = 0.18f))
+            .shadow(10.dp, CircleShape, ambientColor = LigayaTheme.colors.cocoa.copy(alpha = 0.18f), spotColor = LigayaTheme.colors.cocoa.copy(alpha = 0.18f))
             .clip(CircleShape)
-            .background(LigayaColors.shell)
+            .background(LigayaTheme.colors.shell)
             .clickable(role = Role.Button, onClick = onClick)
             .semantics { contentDescription = description },
         contentAlignment = Alignment.Center,
     ) {
         Box(
-            modifier = Modifier.size(82.dp).clip(CircleShape).background(LigayaColors.berry),
+            modifier = Modifier.size(82.dp).clip(CircleShape).background(LigayaTheme.colors.berry),
             contentAlignment = Alignment.Center,
         ) {
-            Icon(LigayaIcons.mic, contentDescription = null, tint = LigayaColors.onBerry, modifier = Modifier.size(36.dp))
+            Icon(LigayaIcons.mic, contentDescription = null, tint = LigayaTheme.colors.onBerry, modifier = Modifier.size(36.dp))
         }
     }
 }
@@ -241,12 +241,14 @@ private fun SoundBars(level: Float, active: Boolean, count: Int, barHeight: Dp, 
     val transition = rememberInfiniteTransition(label = "bars")
     val time by transition.animateFloat(0f, (2 * PI).toFloat(), infiniteRepeatable(tween(900, easing = LinearEasing), RepeatMode.Restart), label = "barsTime")
     val sway = if (active && !reduceMotion) time else 0f
+    // Read here, in composable scope: the draw lambda below is a DrawScope and cannot read the theme.
+    val barColor = LigayaTheme.colors.waveBar
     Canvas(Modifier.width(barHeight * 0.16f * count).height(barHeight).clearAndSetSemantics { }) {
         val gap = size.width / count
         val stroke = 1.8.dp.toPx()
         val midY = size.height / 2f
         val rest = if (active) 0.4f else 0.26f
-        val color = if (active) LigayaColors.waveBar else LigayaColors.waveBar.copy(alpha = 0.6f)
+        val color = if (active) barColor else barColor.copy(alpha = 0.6f)
         for (i in 0 until count) {
             // Position 0 is nearest Ligaya.
             val fromCentre = if (mirrored) count - 1 - i else i

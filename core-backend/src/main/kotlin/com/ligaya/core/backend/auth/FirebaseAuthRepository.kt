@@ -24,4 +24,6 @@ class FirebaseAuthRepository(private val auth: FirebaseAuth) : AuthRepository {
     override fun logOut() = auth.signOut()
 
     override fun currentUserId(): String? = auth.currentUser?.uid
+
+    override fun currentUserEmail(): String? = auth.currentUser?.email
 }

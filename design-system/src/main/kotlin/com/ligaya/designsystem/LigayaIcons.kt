@@ -23,6 +23,14 @@ import androidx.compose.material.icons.filled.PriorityHigh
 import androidx.compose.material.icons.outlined.ChatBubbleOutline
 import androidx.compose.material.icons.outlined.GridView
 import androidx.compose.material.icons.outlined.Home
+import androidx.compose.material.icons.automirrored.outlined.ArrowForwardIos
+import androidx.compose.material.icons.outlined.DarkMode
+import androidx.compose.material.icons.outlined.Face
+import androidx.compose.material.icons.outlined.Info
+import androidx.compose.material.icons.outlined.Lock
+import androidx.compose.material.icons.outlined.Palette
+import androidx.compose.material.icons.outlined.RecordVoiceOver
+import androidx.compose.material.icons.outlined.Tune
 import androidx.compose.material.icons.outlined.LightMode
 import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material.icons.outlined.Sms
@@ -74,6 +82,9 @@ object LigayaIcons {
     // --- Home (visual design, screen 2) ---
     val emergency: ImageVector = Icons.Filled.Emergency
     val lightMode: ImageVector = Icons.Outlined.LightMode
+
+    /** Shown in place of [lightMode] once the app is dark, as the reference's dark Home draws it. */
+    val darkMode: ImageVector = Icons.Outlined.DarkMode
     val menu: ImageVector = Icons.Filled.Menu
     val mic: ImageVector = Icons.Filled.Mic
     val send: ImageVector = Icons.AutoMirrored.Filled.Send
@@ -99,6 +110,15 @@ object LigayaIcons {
     // --- Resolved (visual design, screen 6) ---
     val confirmed: ImageVector = Icons.Filled.Check
     val failed: ImageVector = Icons.Filled.ErrorOutline
+
+    // --- Settings (visual design, screen 9): one icon per row, and the chevron that ends each of them. ---
+    val settingsGeneral: ImageVector = Icons.Outlined.Tune
+    val settingsAppearance: ImageVector = Icons.Outlined.Palette
+    val settingsVoice: ImageVector = Icons.Outlined.RecordVoiceOver
+    val settingsCharacter: ImageVector = Icons.Outlined.Face
+    val settingsPrivacy: ImageVector = Icons.Outlined.Lock
+    val settingsAbout: ImageVector = Icons.Outlined.Info
+    val chevronForward: ImageVector = Icons.AutoMirrored.Outlined.ArrowForwardIos
 
     // --- Trouble (visual design, screen 8): the "!" on a failure card, filled to read on its rose disc. ---
     val trouble: ImageVector = Icons.Filled.PriorityHigh

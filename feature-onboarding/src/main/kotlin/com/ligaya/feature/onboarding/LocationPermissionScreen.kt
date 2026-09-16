@@ -33,7 +33,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.ligaya.core.permissions.PermissionState
-import com.ligaya.designsystem.LigayaColors
+import com.ligaya.designsystem.LigayaTheme
 import com.ligaya.designsystem.LigayaIcons
 import com.ligaya.designsystem.LigayaMotion
 import com.ligaya.designsystem.LigayaShapes
@@ -85,7 +85,7 @@ fun LocationPermissionScreen(
     Column(
         modifier = modifier
             .fillMaxSize()
-            .background(LigayaColors.canvas)
+            .background(LigayaTheme.colors.canvas)
             .safeDrawingPadding()
             .verticalScroll(rememberScrollState())
             .padding(horizontal = LigayaSpacing.lg),
@@ -107,13 +107,13 @@ fun LocationPermissionScreen(
                     alpha = badge
                 }
                 .clip(CircleShape)
-                .background(LigayaColors.blush),
+                .background(LigayaTheme.colors.blush),
             contentAlignment = Alignment.Center,
         ) {
             Icon(
                 imageVector = LigayaIcons.location,
                 contentDescription = null,
-                tint = LigayaColors.roseDeep,
+                tint = LigayaTheme.colors.roseDeep,
                 modifier = Modifier.size(BADGE_ICON_SIZE),
             )
         }
@@ -126,7 +126,7 @@ fun LocationPermissionScreen(
         Text(
             text = if (granted) "Location access is on" else "Allow location access",
             style = LigayaTypography.headline,
-            color = LigayaColors.ink,
+            color = LigayaTheme.colors.ink,
             textAlign = TextAlign.Center,
             modifier = Modifier
                 .fillMaxWidth()
@@ -145,7 +145,7 @@ fun LocationPermissionScreen(
                     "We need your location to:"
                 },
                 style = LigayaTypography.body,
-                color = LigayaColors.inkSoft,
+                color = LigayaTheme.colors.inkSoft,
             )
             Spacer(modifier = Modifier.height(LigayaSpacing.sm))
             REASONS.forEach { reason -> ReasonRow(reason) }
@@ -160,7 +160,7 @@ fun LocationPermissionScreen(
                     "You can turn it on in Settings. Without it, an emergency still starts and still " +
                     "calls 911 — we just can't share where you are.",
                 style = LigayaTypography.label,
-                color = LigayaColors.colorStatusPending,
+                color = LigayaTheme.colors.colorStatusPending,
             )
         }
 
@@ -198,12 +198,12 @@ private fun ReasonRow(reason: String) {
             modifier = Modifier
                 .size(BULLET_SIZE)
                 .clip(CircleShape)
-                .background(LigayaColors.rose),
+                .background(LigayaTheme.colors.rose),
         )
         Text(
             text = reason,
             style = LigayaTypography.body,
-            color = LigayaColors.ink,
+            color = LigayaTheme.colors.ink,
             modifier = Modifier.padding(start = LigayaSpacing.sm),
         )
     }

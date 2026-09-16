@@ -105,6 +105,12 @@ object LigayaTypography {
     /** The gentle line under [voiceTitle]. */
     val voiceSubtitle = TextStyle(fontFamily = LigayaFonts.sans, fontSize = 16.sp, lineHeight = 22.sp, fontWeight = FontWeight.Normal)
 
+    /** Settings header: the word "Settings" beside the back arrow. */
+    val settingsTitle = TextStyle(fontFamily = LigayaFonts.sans, fontSize = 26.sp, lineHeight = 32.sp, fontWeight = FontWeight.SemiBold)
+
+    /** A settings row label, and the name on the profile card. */
+    val settingsRow = TextStyle(fontFamily = LigayaFonts.sans, fontSize = 17.sp, lineHeight = 22.sp, fontWeight = FontWeight.Medium)
+
     /** Label on the brand's filled pill buttons. */
     val pillLabel = TextStyle(
         fontFamily = LigayaFonts.sans,

@@ -33,7 +33,7 @@ import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.ligaya.designsystem.LigayaColors
+import com.ligaya.designsystem.LigayaTheme
 import com.ligaya.designsystem.LigayaIcons
 import com.ligaya.designsystem.LigayaLogo
 import com.ligaya.designsystem.LigayaTypography
@@ -82,7 +82,7 @@ fun VoiceTroubleScreen(
     Column(
         modifier = modifier
             .fillMaxSize()
-            .background(LigayaColors.cream)
+            .background(LigayaTheme.colors.cream)
             .statusBarsPadding()
             .navigationBarsPadding(),
     ) {
@@ -91,7 +91,7 @@ fun VoiceTroubleScreen(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             LigayaLogo(modifier = Modifier.size(30.dp))
-            Text("Ligaya", style = LigayaTypography.homeBrand, color = LigayaColors.cocoaInk, modifier = Modifier.padding(start = 10.dp))
+            Text("Ligaya", style = LigayaTypography.homeBrand, color = LigayaTheme.colors.cocoaInk, modifier = Modifier.padding(start = 10.dp))
         }
 
         Column(
@@ -102,11 +102,11 @@ fun VoiceTroubleScreen(
                 .semantics(mergeDescendants = true) { liveRegion = LiveRegionMode.Polite },
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            Text("Oops...", style = LigayaTypography.voiceTitle, color = LigayaColors.cocoaInk, textAlign = TextAlign.Center)
+            Text("Oops...", style = LigayaTypography.voiceTitle, color = LigayaTheme.colors.cocoaInk, textAlign = TextAlign.Center)
             Text(
                 "I'm having trouble with that right now.\nLet's try something else.",
                 style = LigayaTypography.voiceSubtitle,
-                color = LigayaColors.taupe,
+                color = LigayaTheme.colors.taupe,
                 textAlign = TextAlign.Center,
                 modifier = Modifier.padding(top = 14.dp),
             )
@@ -120,7 +120,7 @@ fun VoiceTroubleScreen(
                     .align(Alignment.BottomCenter)
                     .fillMaxWidth()
                     .fillMaxHeight(0.34f)
-                    .background(Brush.verticalGradient(listOf(Color.Transparent, LigayaColors.cream))),
+                    .background(Brush.verticalGradient(listOf(Color.Transparent, LigayaTheme.colors.cream))),
             )
         }
 
@@ -136,20 +136,20 @@ private fun TroubleCard(title: String, detail: String, onTryAgain: () -> Unit) {
             .fillMaxWidth()
             .padding(horizontal = 20.dp)
             .clip(RoundedCornerShape(26.dp))
-            .background(LigayaColors.shell)
-            .border(1.dp, LigayaColors.shellEdge, RoundedCornerShape(26.dp))
+            .background(LigayaTheme.colors.shell)
+            .border(1.dp, LigayaTheme.colors.shellEdge, RoundedCornerShape(26.dp))
             .padding(horizontal = 18.dp, vertical = 18.dp),
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Box(
-                modifier = Modifier.size(34.dp).clip(CircleShape).background(LigayaColors.troubleDisc),
+                modifier = Modifier.size(34.dp).clip(CircleShape).background(LigayaTheme.colors.troubleDisc),
                 contentAlignment = Alignment.Center,
             ) {
-                Icon(LigayaIcons.trouble, contentDescription = null, tint = LigayaColors.onBerry, modifier = Modifier.size(21.dp))
+                Icon(LigayaIcons.trouble, contentDescription = null, tint = LigayaTheme.colors.onBerry, modifier = Modifier.size(21.dp))
             }
             Column(modifier = Modifier.padding(start = 14.dp)) {
-                Text(title, style = LigayaTypography.chatTitle, color = LigayaColors.cocoaInk)
-                Text(detail, style = LigayaTypography.chatStatus, color = LigayaColors.taupe, modifier = Modifier.padding(top = 2.dp))
+                Text(title, style = LigayaTypography.chatTitle, color = LigayaTheme.colors.cocoaInk)
+                Text(detail, style = LigayaTypography.chatStatus, color = LigayaTheme.colors.taupe, modifier = Modifier.padding(top = 2.dp))
             }
         }
         Box(
@@ -158,11 +158,11 @@ private fun TroubleCard(title: String, detail: String, onTryAgain: () -> Unit) {
                 .fillMaxWidth()
                 .heightIn(min = 52.dp)
                 .clip(RoundedCornerShape(26.dp))
-                .background(LigayaColors.berry)
+                .background(LigayaTheme.colors.berry)
                 .clickable(role = Role.Button, onClick = onTryAgain),
             contentAlignment = Alignment.Center,
         ) {
-            Text("Try Again", style = LigayaTypography.pillLabel, color = LigayaColors.onBerry)
+            Text("Try Again", style = LigayaTypography.pillLabel, color = LigayaTheme.colors.onBerry)
         }
     }
 }

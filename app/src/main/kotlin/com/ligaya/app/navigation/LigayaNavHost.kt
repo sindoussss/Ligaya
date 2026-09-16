@@ -17,10 +17,22 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.compose.runtime.saveable.rememberSaveable
 import com.ligaya.app.screens.PlaceholderScreen
+import com.ligaya.app.screens.settings.AboutSettingsScreen
+import com.ligaya.app.screens.settings.AppearanceSettingsScreen
+import com.ligaya.app.screens.settings.CharacterSettingsScreen
+import com.ligaya.app.screens.settings.GeneralSettingsScreen
+import com.ligaya.app.screens.settings.LigayaSettings
+import com.ligaya.app.screens.settings.PrivacySettingsScreen
+import com.ligaya.app.screens.settings.SettingsScreen
+import com.ligaya.app.screens.settings.SettingsSection
+import com.ligaya.app.screens.settings.VoiceSettingsScreen
 import com.ligaya.app.screens.SosScreen
 import com.ligaya.app.screens.WelcomeScreen
 import com.ligaya.designsystem.LigayaMotion
+import com.ligaya.designsystem.rememberIsReduceMotionEnabled
+import com.ligaya.designsystem.LigayaThemeMode
 import com.ligaya.designsystem.components.LigayaTab
 import com.ligaya.core.backend.auth.AuthRepository
 import com.ligaya.core.data.profile.EmergencyProfileRepository
@@ -96,6 +108,16 @@ fun LigayaNavHost(
     /** Read when a turn fails, so screen 8 can name being offline as the cause only when that is actually true
      *  (section 21 lists it as its own failure row; section 23 forbids stating a cause nothing established). */
     networkStatus: NetworkStatus,
+    /** The saved Appearance choice, and the action that cycles it. Both the Home header's button and Settings
+     *  change the same one setting. */
+    themeMode: LigayaThemeMode,
+    isDarkTheme: Boolean,
+    onToggleTheme: () -> Unit,
+    onSetThemeMode: (LigayaThemeMode) -> Unit,
+    /** Every saved setting Settings can change: appearance, her animation, and the wake phrase. */
+    settings: LigayaSettings,
+    /** Shown on About. The real one, read from the build, not a number typed into the screen. */
+    appVersionName: String,
     navController: NavHostController = rememberNavController(),
 ) {
     val scope = rememberCoroutineScope()
@@ -121,6 +143,9 @@ fun LigayaNavHost(
     val openProfile = {
         val signedIn = authRepository.currentUserId() != null
         navController.navigate(if (signedIn) LigayaDestination.EmergencyProfile.route else LigayaDestination.CreateAccount.route)
+    }
+    val openSettings = {
+        navController.navigate(LigayaDestination.Settings.route) { launchSingleTop = true }
     }
     NavHost(
         navController = navController,
@@ -196,7 +221,11 @@ fun LigayaNavHost(
                 // The Listening screen starts (and owns) the voice turn.
                 onStartVoice = openListening,
                 onNavigateToTools = { navController.navigate(LigayaDestination.Tools.route) },
-                onNavigateToProfile = openProfile,
+                // The Profile tab opens Settings (screen 9); the profile card there leads on to the profile
+                // itself, or to signing in when there is no account yet.
+                onNavigateToProfile = openSettings,
+                onToggleTheme = onToggleTheme,
+                isDarkTheme = isDarkTheme,
             )
         }
         composable(LigayaDestination.Tools.route) {
@@ -252,7 +281,7 @@ fun LigayaNavHost(
                         }
                         LigayaTab.Chat -> Unit
                         LigayaTab.Tools -> navController.navigate(LigayaDestination.Tools.route)
-                        LigayaTab.Profile -> openProfile()
+                        LigayaTab.Profile -> openSettings()
                     }
                 },
                 onStartVoice = openListening,
@@ -354,7 +383,7 @@ fun LigayaNavHost(
                         LigayaTab.Home -> goHome()
                         LigayaTab.Chat -> openChat()
                         LigayaTab.Tools -> navController.navigate(LigayaDestination.Tools.route)
-                        LigayaTab.Profile -> openProfile()
+                        LigayaTab.Profile -> openSettings()
                     }
                 },
             )
@@ -452,6 +481,111 @@ fun LigayaNavHost(
                 }
             }
             VoiceThinkingScreen(aiAvailable = companionAiAvailable)
+        }
+        // Visual design, screen 9 and its six destinations. Each row leads to a real screen; nothing here is
+        // a placeholder, and every choice on those screens is saved and applied at once.
+        composable(LigayaDestination.Settings.route) {
+            val settingsName = rememberProfileName(authRepository, profileRepository)
+            val appearanceValue = when (themeMode) {
+                LigayaThemeMode.Light -> "Light"
+                LigayaThemeMode.Dark -> "Dark"
+                LigayaThemeMode.System -> "System"
+            }
+            SettingsScreen(
+                userName = settingsName,
+                userEmail = authRepository.currentUserEmail(),
+                appearanceValue = appearanceValue,
+                onBack = { navController.popBackStack() },
+                onOpenSection = { section ->
+                    navController.navigate(
+                        when (section) {
+                            SettingsSection.General -> LigayaDestination.SettingsGeneral.route
+                            SettingsSection.Appearance -> LigayaDestination.SettingsAppearance.route
+                            SettingsSection.Voice -> LigayaDestination.SettingsVoice.route
+                            SettingsSection.Character -> LigayaDestination.SettingsCharacter.route
+                            SettingsSection.Privacy -> LigayaDestination.SettingsPrivacy.route
+                            SettingsSection.About -> LigayaDestination.SettingsAbout.route
+                        },
+                    )
+                },
+                onOpenProfile = openProfile,
+                onSelectTab = { tab ->
+                    when (tab) {
+                        LigayaTab.Home -> if (!navController.popBackStack(LigayaDestination.Home.route, inclusive = false)) {
+                            navController.navigate(LigayaDestination.Home.route)
+                        }
+                        LigayaTab.Chat -> openChat()
+                        LigayaTab.Tools -> navController.navigate(LigayaDestination.Tools.route)
+                        LigayaTab.Profile -> Unit
+                    }
+                },
+            )
+        }
+        composable(LigayaDestination.SettingsGeneral.route) {
+            // Read once per visit: the welcome flag is only acted on at launch, so this is what the next
+            // launch will do, not something that changes while the screen is open.
+            val willShowWelcomeAgain = remember { !settings.welcomeCompleted }
+            var askedForWelcome by rememberSaveable { mutableStateOf(false) }
+            GeneralSettingsScreen(
+                onOpenProfile = openProfile,
+                onShowWelcomeAgain = {
+                    settings.setWelcomeCompleted(false)
+                    askedForWelcome = true
+                },
+                welcomeWillShowAgain = willShowWelcomeAgain || askedForWelcome,
+                onBack = { navController.popBackStack() },
+            )
+        }
+        composable(LigayaDestination.SettingsAppearance.route) {
+            AppearanceSettingsScreen(
+                mode = themeMode,
+                onSelectMode = onSetThemeMode,
+                onBack = { navController.popBackStack() },
+            )
+        }
+        composable(LigayaDestination.SettingsVoice.route) {
+            val wakePhraseEnabled by settings.wakePhraseEnabled.collectAsState()
+            VoiceSettingsScreen(
+                wakePhraseEnabled = wakePhraseEnabled,
+                onWakePhraseChange = settings::setWakePhraseEnabled,
+                micPermitted = isMicPermitted(),
+                smartRepliesConfigured = companionAiAvailable,
+                onOpenSystemSettings = onOpenAppSettings,
+                onBack = { navController.popBackStack() },
+            )
+        }
+        composable(LigayaDestination.SettingsCharacter.route) {
+            val mascotPreferences by settings.mascot.collectAsState()
+            CharacterSettingsScreen(
+                preferences = mascotPreferences,
+                reduceMotionOnPhone = rememberIsReduceMotionEnabled(),
+                onAnimationSpeedChange = settings::setAnimationSpeed,
+                onDepthStrengthChange = settings::setDepthStrength,
+                onMotionChange = settings::setMotion,
+                onBack = { navController.popBackStack() },
+            )
+        }
+        composable(LigayaDestination.SettingsPrivacy.route) {
+            PrivacySettingsScreen(
+                signedInEmail = authRepository.currentUserEmail(),
+                smartRepliesConfigured = companionAiAvailable,
+                onSignOut = {
+                    authRepository.logOut()
+                    // Back to Home rather than staying on a screen describing an account nobody is in.
+                    navController.navigate(LigayaDestination.Home.route) {
+                        popUpTo(LigayaDestination.Home.route) { inclusive = true }
+                    }
+                },
+                onOpenSystemSettings = onOpenAppSettings,
+                onBack = { navController.popBackStack() },
+            )
+        }
+        composable(LigayaDestination.SettingsAbout.route) {
+            AboutSettingsScreen(
+                versionName = appVersionName,
+                smartRepliesConfigured = companionAiAvailable,
+                onBack = { navController.popBackStack() },
+            )
         }
         composable(LigayaDestination.Onboarding.route) {
             // Visual design screen 2. Both exits pop back for now: the real hand-off into the

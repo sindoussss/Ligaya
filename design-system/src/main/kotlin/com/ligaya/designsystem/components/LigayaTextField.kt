@@ -34,7 +34,7 @@ import androidx.compose.ui.semantics.error
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
-import com.ligaya.designsystem.LigayaColors
+import com.ligaya.designsystem.LigayaTheme
 import com.ligaya.designsystem.LigayaMotion
 import com.ligaya.designsystem.LigayaShapes
 import com.ligaya.designsystem.LigayaSpacing
@@ -74,9 +74,9 @@ fun LigayaTextField(
 
     val borderColor by animateColorAsState(
         targetValue = when {
-            hasError -> LigayaColors.colorStatusFailed
-            focused -> LigayaColors.roseDeep
-            else -> LigayaColors.blushDeep
+            hasError -> LigayaTheme.colors.colorStatusFailed
+            focused -> LigayaTheme.colors.roseDeep
+            else -> LigayaTheme.colors.blushDeep
         },
         animationSpec = tween(LigayaMotion.durationStateTransition, easing = LigayaMotion.easingGentle),
         label = "fieldBorder",
@@ -88,7 +88,7 @@ fun LigayaTextField(
                 .fillMaxWidth()
                 .heightIn(min = FIELD_MIN_HEIGHT)
                 .clip(LigayaShapes.field)
-                .background(LigayaColors.surface)
+                .background(LigayaTheme.colors.surface)
                 .border(width = BORDER_WIDTH, color = borderColor, shape = LigayaShapes.field)
                 .padding(horizontal = LigayaSpacing.md, vertical = if (singleLine) 0.dp else LigayaSpacing.md),
             // A multi-line field grows downward, so centring would leave the first line drifting
@@ -97,7 +97,7 @@ fun LigayaTextField(
         ) {
             Box(modifier = Modifier.weight(1f)) {
                 if (value.isEmpty()) {
-                    Text(text = placeholder, style = LigayaTypography.body, color = LigayaColors.inkSoft)
+                    Text(text = placeholder, style = LigayaTypography.body, color = LigayaTheme.colors.inkSoft)
                 }
                 CompositionLocalProvider(LocalTextStyle provides LigayaTypography.body) {
                     BasicTextField(
@@ -105,8 +105,8 @@ fun LigayaTextField(
                         onValueChange = onValueChange,
                         singleLine = singleLine,
                         minLines = if (singleLine) 1 else MULTILINE_MIN_LINES,
-                        textStyle = LigayaTypography.body.copy(color = LigayaColors.ink),
-                        cursorBrush = SolidColor(LigayaColors.roseDeep),
+                        textStyle = LigayaTypography.body.copy(color = LigayaTheme.colors.ink),
+                        cursorBrush = SolidColor(LigayaTheme.colors.roseDeep),
                         keyboardOptions = keyboardOptions,
                         visualTransformation = visualTransformation,
                         interactionSource = interactionSource,
@@ -137,7 +137,7 @@ fun LigayaTextField(
             Text(
                 text = errorMessage.orEmpty(),
                 style = LigayaTypography.label,
-                color = LigayaColors.colorStatusFailed,
+                color = LigayaTheme.colors.colorStatusFailed,
                 modifier = Modifier.padding(top = LigayaSpacing.xs, start = LigayaSpacing.sm),
             )
         }

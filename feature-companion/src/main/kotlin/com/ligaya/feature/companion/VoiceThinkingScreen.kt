@@ -46,7 +46,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.ligaya.designsystem.LigayaColors
+import com.ligaya.designsystem.LigayaTheme
 import com.ligaya.designsystem.LigayaLogo
 import com.ligaya.designsystem.LigayaTypography
 import com.ligaya.designsystem.components.LigayaEmotion
@@ -100,7 +100,7 @@ fun VoiceThinkingScreen(
         else -> "Let me think about that for a moment."
     }
 
-    BoxWithConstraints(modifier = modifier.fillMaxSize().background(LigayaColors.cream)) {
+    BoxWithConstraints(modifier = modifier.fillMaxSize().background(LigayaTheme.colors.cream)) {
         val unit = minOf(maxWidth, maxHeight * 0.58f)
         Column(modifier = Modifier.fillMaxSize().statusBarsPadding().navigationBarsPadding()) {
             Row(
@@ -108,7 +108,7 @@ fun VoiceThinkingScreen(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 LigayaLogo(modifier = Modifier.size(30.dp))
-                Text("Ligaya", style = LigayaTypography.homeBrand, color = LigayaColors.cocoaInk, modifier = Modifier.padding(start = 10.dp))
+                Text("Ligaya", style = LigayaTypography.homeBrand, color = LigayaTheme.colors.cocoaInk, modifier = Modifier.padding(start = 10.dp))
             }
 
             Column(
@@ -119,11 +119,11 @@ fun VoiceThinkingScreen(
                     .semantics(mergeDescendants = true) { liveRegion = LiveRegionMode.Polite },
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
-                Text("Thinking...", style = LigayaTypography.voiceTitle, color = LigayaColors.cocoaInk, textAlign = TextAlign.Center)
+                Text("Thinking...", style = LigayaTypography.voiceTitle, color = LigayaTheme.colors.cocoaInk, textAlign = TextAlign.Center)
                 Text(
                     subtitle,
                     style = LigayaTypography.voiceSubtitle,
-                    color = LigayaColors.taupe,
+                    color = LigayaTheme.colors.taupe,
                     textAlign = TextAlign.Center,
                     modifier = Modifier.padding(top = 23.dp),
                 )
@@ -137,9 +137,9 @@ fun VoiceThinkingScreen(
                     modifier = Modifier
                         .align(Alignment.TopCenter)
                         .size(unit * DISC)
-                        .shadow(16.dp, CircleShape, ambientColor = LigayaColors.cocoa.copy(alpha = 0.1f), spotColor = LigayaColors.cocoa.copy(alpha = 0.1f))
+                        .shadow(16.dp, CircleShape, ambientColor = LigayaTheme.colors.cocoa.copy(alpha = 0.1f), spotColor = LigayaTheme.colors.cocoa.copy(alpha = 0.1f))
                         .clip(CircleShape)
-                        .background(LigayaColors.listeningDisc),
+                        .background(LigayaTheme.colors.listeningDisc),
                 )
                 // Ligaya fills the disc and a little beyond it; only below is she cut off, on a wider curve than the disc.
                 LigayaMascot(
@@ -184,12 +184,14 @@ private fun ThoughtBubbles(unit: Dp, modifier: Modifier = Modifier) {
     val reduceMotion = rememberIsReduceMotionEnabled()
     val transition = rememberInfiniteTransition(label = "thoughtBubbles")
     val time by transition.animateFloat(0f, 1f, infiniteRepeatable(tween(2400, easing = LinearEasing)), label = "thoughtBubblesTime")
+    // Read here, in composable scope: the draw lambda below is a DrawScope and cannot read the theme.
+    val bubbleColor = LigayaTheme.colors.thoughtBubble
     Canvas(modifier = modifier.clearAndSetSemantics { }) {
         val unitPx = unit.toPx()
         BUBBLES.forEachIndexed { i, bubble ->
             val pulse = if (reduceMotion) 1f else 0.5f + 0.5f * sin(2 * PI * (time - i * 0.15f)).toFloat()
             drawCircle(
-                color = LigayaColors.thoughtBubble.copy(alpha = 0.6f + 0.4f * pulse),
+                color = bubbleColor.copy(alpha = 0.6f + 0.4f * pulse),
                 radius = bubble.radius * unitPx * (0.88f + 0.12f * pulse),
                 center = Offset(size.width / 2f + (bubble.x - 0.5f) * unitPx, bubble.y * unitPx),
             )
@@ -206,7 +208,7 @@ private fun ThinkingDots(modifier: Modifier = Modifier) {
     Row(modifier = modifier.clearAndSetSemantics { }, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
         repeat(3) { i ->
             val light = if (reduceMotion) (if (i == 0) 1f else 0f) else (1f - ringDistance(spot, i.toFloat(), 3f)).coerceIn(0f, 1f)
-            Box(Modifier.size(10.dp).clip(CircleShape).background(lerp(LigayaColors.thinkingDot, LigayaColors.thinkingDotLight, light)))
+            Box(Modifier.size(10.dp).clip(CircleShape).background(lerp(LigayaTheme.colors.thinkingDot, LigayaTheme.colors.thinkingDotLight, light)))
         }
     }
 }

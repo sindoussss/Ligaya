@@ -27,7 +27,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
-import com.ligaya.designsystem.LigayaColors
+import com.ligaya.designsystem.LigayaTheme
 import com.ligaya.designsystem.LigayaSpacing
 import com.ligaya.designsystem.LigayaTypography
 
@@ -45,7 +45,7 @@ import com.ligaya.designsystem.LigayaTypography
  * [StatusCard]: [CallFailedCard] is the only one with an actual retry action, [LookupFailedCard]
  * is outlined rather than filled (an outcome you're informed of, not one to retry), and
  * [OfflineDegradedBanner] is a full-width row rather than a card at all — a reduced-capability
- * banner, not a failure card, using the calmer amber [LigayaColors.colorStatusPending] token
+ * banner, not a failure card, using the calmer amber [LigayaTheme.colors.colorStatusPending] token
  * rather than red, since "the app keeps working in a degraded mode" is a different message than
  * "this action failed."
  */
@@ -57,26 +57,26 @@ fun CallFailedCard(onRetry: () -> Unit, modifier: Modifier = Modifier) {
             .fillMaxWidth()
             .semantics { contentDescription = "911 call failed" },
         colors = CardDefaults.cardColors(
-            containerColor = LigayaColors.colorStatusFailed,
-            contentColor = LigayaColors.onStatusFailed,
+            containerColor = LigayaTheme.colors.colorStatusFailed,
+            contentColor = LigayaTheme.colors.onStatusFailed,
         ),
     ) {
         Row(
             modifier = Modifier.padding(LigayaSpacing.md),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Icon(imageVector = Icons.Filled.PhoneDisabled, contentDescription = null, tint = LigayaColors.onStatusFailed)
+            Icon(imageVector = Icons.Filled.PhoneDisabled, contentDescription = null, tint = LigayaTheme.colors.onStatusFailed)
             Spacer(Modifier.width(LigayaSpacing.sm))
             Column(modifier = Modifier.weight(1f)) {
-                Text(text = "911 call failed", style = LigayaTypography.headline, color = LigayaColors.onStatusFailed)
-                Text(text = "The call didn't go through.", style = LigayaTypography.body, color = LigayaColors.onStatusFailed)
+                Text(text = "911 call failed", style = LigayaTypography.headline, color = LigayaTheme.colors.onStatusFailed)
+                Text(text = "The call didn't go through.", style = LigayaTypography.body, color = LigayaTheme.colors.onStatusFailed)
             }
             Spacer(Modifier.width(LigayaSpacing.sm))
             Button(
                 onClick = onRetry,
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = LigayaColors.onStatusFailed,
-                    contentColor = LigayaColors.colorStatusFailed,
+                    containerColor = LigayaTheme.colors.onStatusFailed,
+                    contentColor = LigayaTheme.colors.colorStatusFailed,
                 ),
             ) {
                 Text("Retry")
@@ -100,20 +100,20 @@ fun LookupFailedCard(reason: LookupFailureReason, modifier: Modifier = Modifier)
         modifier = modifier
             .fillMaxWidth()
             .semantics { contentDescription = "$message Please call 911 directly." },
-        border = BorderStroke(1.dp, LigayaColors.colorStatusFailed),
+        border = BorderStroke(1.dp, LigayaTheme.colors.colorStatusFailed),
     ) {
         Row(
             modifier = Modifier.padding(LigayaSpacing.md),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Icon(imageVector = Icons.Filled.SearchOff, contentDescription = null, tint = LigayaColors.colorStatusFailed)
+            Icon(imageVector = Icons.Filled.SearchOff, contentDescription = null, tint = LigayaTheme.colors.colorStatusFailed)
             Spacer(Modifier.width(LigayaSpacing.sm))
             Column {
-                Text(text = message, style = LigayaTypography.body, color = LigayaColors.onSurface)
+                Text(text = message, style = LigayaTypography.body, color = LigayaTheme.colors.onSurface)
                 Text(
                     text = "Please call 911 directly.",
                     style = LigayaTypography.label,
-                    color = LigayaColors.colorStatusFailed,
+                    color = LigayaTheme.colors.colorStatusFailed,
                 )
             }
         }
@@ -127,20 +127,20 @@ fun DeliveryFailedCard(channelLabel: String, modifier: Modifier = Modifier) {
             .fillMaxWidth()
             .semantics { contentDescription = "$channelLabel delivery failed" },
         colors = CardDefaults.cardColors(
-            containerColor = LigayaColors.colorStatusFailed,
-            contentColor = LigayaColors.onStatusFailed,
+            containerColor = LigayaTheme.colors.colorStatusFailed,
+            contentColor = LigayaTheme.colors.onStatusFailed,
         ),
     ) {
         Row(
             modifier = Modifier.padding(LigayaSpacing.md),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Icon(imageVector = Icons.Filled.ErrorOutline, contentDescription = null, tint = LigayaColors.onStatusFailed)
+            Icon(imageVector = Icons.Filled.ErrorOutline, contentDescription = null, tint = LigayaTheme.colors.onStatusFailed)
             Spacer(Modifier.width(LigayaSpacing.sm))
             Text(
                 text = "$channelLabel delivery failed",
                 style = LigayaTypography.body,
-                color = LigayaColors.onStatusFailed,
+                color = LigayaTheme.colors.onStatusFailed,
             )
         }
     }
@@ -159,7 +159,7 @@ fun OfflineDegradedBanner(reason: DegradedReason, modifier: Modifier = Modifier)
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .background(LigayaColors.colorStatusPending.copy(alpha = 0.2f))
+            .background(LigayaTheme.colors.colorStatusPending.copy(alpha = 0.2f))
             .semantics { contentDescription = message }
             .padding(LigayaSpacing.md),
         verticalAlignment = Alignment.CenterVertically,
@@ -167,9 +167,9 @@ fun OfflineDegradedBanner(reason: DegradedReason, modifier: Modifier = Modifier)
         Icon(
             imageVector = if (reason == DegradedReason.GEMINI_UNAVAILABLE) Icons.Filled.SyncProblem else Icons.Filled.CloudOff,
             contentDescription = null,
-            tint = LigayaColors.onStatusPending,
+            tint = LigayaTheme.colors.onStatusPending,
         )
         Spacer(Modifier.width(LigayaSpacing.sm))
-        Text(text = message, style = LigayaTypography.label, color = LigayaColors.onStatusPending)
+        Text(text = message, style = LigayaTypography.label, color = LigayaTheme.colors.onStatusPending)
     }
 }

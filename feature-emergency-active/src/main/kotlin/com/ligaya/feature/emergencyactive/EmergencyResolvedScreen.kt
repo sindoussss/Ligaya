@@ -41,7 +41,7 @@ import com.ligaya.core.emergencyengine.EmergencyState
 import com.ligaya.core.emergencyengine.FamilyAlertFlowState
 import com.ligaya.core.emergencyengine.Unified911FlowState
 import com.ligaya.core.uistate.EmergencyController
-import com.ligaya.designsystem.LigayaColors
+import com.ligaya.designsystem.LigayaTheme
 import com.ligaya.designsystem.LigayaIcons
 import com.ligaya.designsystem.LigayaLogo
 import com.ligaya.designsystem.LigayaTypography
@@ -101,7 +101,7 @@ fun EmergencyResolvedScreen(
     Column(
         modifier = modifier
             .fillMaxSize()
-            .background(LigayaColors.cream)
+            .background(LigayaTheme.colors.cream)
             .statusBarsPadding()
             .navigationBarsPadding(),
     ) {
@@ -110,18 +110,18 @@ fun EmergencyResolvedScreen(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             LigayaLogo(modifier = Modifier.size(30.dp))
-            Text("Ligaya", style = LigayaTypography.homeBrand, color = LigayaColors.cocoaInk, modifier = Modifier.padding(start = 10.dp))
+            Text("Ligaya", style = LigayaTypography.homeBrand, color = LigayaTheme.colors.cocoaInk, modifier = Modifier.padding(start = 10.dp))
         }
 
         Column(
             modifier = Modifier.fillMaxWidth().padding(horizontal = 32.dp).padding(top = 34.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            Text("That's great!", style = LigayaTypography.voiceTitle, color = LigayaColors.cocoaInk, textAlign = TextAlign.Center)
+            Text("That's great!", style = LigayaTypography.voiceTitle, color = LigayaTheme.colors.cocoaInk, textAlign = TextAlign.Center)
             Text(
                 "I'm happy I could help!",
                 style = LigayaTypography.voiceSubtitle,
-                color = LigayaColors.taupe,
+                color = LigayaTheme.colors.taupe,
                 textAlign = TextAlign.Center,
                 modifier = Modifier.padding(top = 16.dp),
             )
@@ -136,7 +136,7 @@ fun EmergencyResolvedScreen(
                     .align(Alignment.BottomCenter)
                     .fillMaxWidth()
                     .fillMaxHeight(0.34f)
-                    .background(Brush.verticalGradient(listOf(Color.Transparent, LigayaColors.cream))),
+                    .background(Brush.verticalGradient(listOf(Color.Transparent, LigayaTheme.colors.cream))),
             )
         }
 
@@ -156,15 +156,15 @@ private class Outcome(val title: String, val detail: String, val confirmed: Bool
 
 @Composable
 private fun OutcomeCard(outcome: Outcome) {
-    val disc = if (outcome.confirmed) LigayaColors.confirmDisc else LigayaColors.colorStatusFailed.copy(alpha = 0.14f)
+    val disc = if (outcome.confirmed) LigayaTheme.colors.confirmDisc else LigayaTheme.colors.colorStatusFailed.copy(alpha = 0.14f)
     val glyph: ImageVector = if (outcome.confirmed) LigayaIcons.confirmed else LigayaIcons.failed
-    val glyphTint = if (outcome.confirmed) Color.White else LigayaColors.colorStatusFailed
+    val glyphTint = if (outcome.confirmed) Color.White else LigayaTheme.colors.colorStatusFailed
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(22.dp))
-            .background(LigayaColors.shell)
-            .border(1.dp, LigayaColors.shellEdge, RoundedCornerShape(22.dp))
+            .background(LigayaTheme.colors.shell)
+            .border(1.dp, LigayaTheme.colors.shellEdge, RoundedCornerShape(22.dp))
             .padding(horizontal = 16.dp, vertical = 14.dp)
             .semantics(mergeDescendants = true) { contentDescription = "${outcome.title}. ${outcome.detail}" },
         verticalAlignment = Alignment.CenterVertically,
@@ -173,8 +173,8 @@ private fun OutcomeCard(outcome: Outcome) {
             Icon(glyph, contentDescription = null, tint = glyphTint, modifier = Modifier.size(21.dp))
         }
         Column(modifier = Modifier.padding(start = 14.dp)) {
-            Text(outcome.title, style = LigayaTypography.bubble.copy(fontWeight = FontWeight.SemiBold), color = LigayaColors.cocoaInk)
-            Text(outcome.detail, style = LigayaTypography.chatStatus, color = LigayaColors.taupe, modifier = Modifier.padding(top = 2.dp))
+            Text(outcome.title, style = LigayaTypography.bubble.copy(fontWeight = FontWeight.SemiBold), color = LigayaTheme.colors.cocoaInk)
+            Text(outcome.detail, style = LigayaTypography.chatStatus, color = LigayaTheme.colors.taupe, modifier = Modifier.padding(top = 2.dp))
         }
     }
 }
@@ -193,6 +193,9 @@ private val SPARKLES = listOf(
 /** The design's soft four-point stars around her. Ornament only, and still — nothing here implies activity. */
 @Composable
 private fun Sparkles(modifier: Modifier = Modifier) {
+    // Read here, in composable scope: the draw lambda below is a DrawScope and cannot read the theme.
+    val sparkleColor = LigayaTheme.colors.sparkle
+
     Canvas(modifier = modifier.clearAndSetSemantics { }) {
         val width = size.width
         SPARKLES.forEach { sparkle ->
@@ -208,7 +211,7 @@ private fun Sparkles(modifier: Modifier = Modifier) {
                 quadraticBezierTo(centre.x - waist * 0.4f, centre.y - waist * 0.4f, centre.x, centre.y - r)
                 close()
             }
-            drawPath(path, LigayaColors.sparkle)
+            drawPath(path, sparkleColor)
         }
     }
 }

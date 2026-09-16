@@ -295,6 +295,7 @@ fun LigayaMascot(
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
     val reduceMotion = rememberIsReduceMotionEnabled()
+    val preferences = LocalLigayaMascotPreferences.current
     val poster = remember { MascotPoster.get(context) }
     val ready by controller.isReady
 
@@ -322,8 +323,13 @@ fun LigayaMascot(
     }
 
     LaunchedEffect(frame) { controller.setFrame(frame) }
-    LaunchedEffect(motion, reduceMotion) {
-        controller.setMotion(if (reduceMotion) LigayaMotionMode.Still else motion)
+    LaunchedEffect(preferences.animationSpeed) { controller.setAnimationSpeed(preferences.animationSpeed) }
+    LaunchedEffect(preferences.depthStrength) { controller.setDepthStrength(preferences.depthStrength) }
+    LaunchedEffect(motion, reduceMotion, preferences.motion) {
+        // The phone's reduce-motion setting wins over everything; then the person's own choice in Settings,
+        // which only speaks up when it is something other than System; then whatever this screen asked for.
+        val chosen = if (preferences.motion == LigayaMotionMode.System) motion else preferences.motion
+        controller.setMotion(if (reduceMotion) LigayaMotionMode.Still else chosen)
     }
 
     DisposableEffect(lifecycleOwner) {

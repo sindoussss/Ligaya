@@ -45,14 +45,18 @@ fun LigayaLogo(
         Modifier
     }
 
+    // Read in composable scope, used inside the draw lambda below (which is not composable scope).
+    val petalColor = LigayaTheme.colors.petal
+    val petalDeepColor = LigayaTheme.colors.petalDeep
+
     Canvas(modifier = modifier.then(semanticsModifier)) {
         val radius = min(size.width, size.height) / 2f
         // The soft white halo goes down first, under every petal, so it only shows round the outline.
         for (index in 0 until PETAL_COUNT) {
-            drawPetal(index, center, radius, revealProgress, halo = true)
+            drawPetal(index, center, radius, revealProgress, halo = true, petalColor = petalColor, petalDeepColor = petalDeepColor)
         }
         for (index in 0 until PETAL_COUNT) {
-            drawPetal(index, center, radius, revealProgress, halo = false)
+            drawPetal(index, center, radius, revealProgress, halo = false, petalColor = petalColor, petalDeepColor = petalDeepColor)
         }
     }
 }
@@ -76,7 +80,17 @@ private const val STAGGER_PER_PETAL = 0.11f
 private const val PETAL_REVEAL_WINDOW = 0.56f
 private const val PETAL_START_SCALE = 0.6f
 
-private fun DrawScope.drawPetal(index: Int, centre: Offset, radius: Float, revealProgress: Float, halo: Boolean) {
+// The petal colours are passed in rather than read here: a DrawScope lambda is not composable scope, so it cannot
+// read the theme itself — the composable above reads them once and hands them down.
+private fun DrawScope.drawPetal(
+    index: Int,
+    centre: Offset,
+    radius: Float,
+    revealProgress: Float,
+    halo: Boolean,
+    petalColor: Color,
+    petalDeepColor: Color,
+) {
     val raw = ((revealProgress - index * STAGGER_PER_PETAL) / PETAL_REVEAL_WINDOW).coerceIn(0f, 1f)
     if (raw <= 0f) return
     val eased = LigayaMotion.easingEntrance.transform(raw)
@@ -104,14 +118,14 @@ private fun DrawScope.drawPetal(index: Int, centre: Offset, radius: Float, revea
             }
             drawPath(
                 path = petal,
-                brush = Brush.linearGradient(listOf(LigayaColors.petalDeep, LigayaColors.petal), start = base, end = Offset(x, tipY)),
+                brush = Brush.linearGradient(listOf(petalDeepColor, petalColor), start = base, end = Offset(x, tipY)),
                 alpha = eased,
             )
             // One side of each petal a touch deeper, like the fold in the brand mark.
             drawPath(
                 path = petal,
                 brush = Brush.horizontalGradient(
-                    listOf(LigayaColors.petalDeep.copy(alpha = 0.55f), Color.Transparent),
+                    listOf(petalDeepColor.copy(alpha = 0.55f), Color.Transparent),
                     startX = x - half,
                     endX = x + half * 0.2f,
                 ),
@@ -126,7 +140,7 @@ private fun DrawScope.drawPetal(index: Int, centre: Offset, radius: Float, revea
 @LigayaComponentPreviews
 @Composable
 private fun LigayaLogoPreview() {
-    Box(modifier = Modifier.background(LigayaColors.canvas).padding(LigayaSpacing.lg)) {
+    Box(modifier = Modifier.background(LigayaTheme.colors.canvas).padding(LigayaSpacing.lg)) {
         LigayaLogo(modifier = Modifier.size(96.dp))
     }
 }

@@ -35,7 +35,7 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.lerp
-import com.ligaya.designsystem.LigayaColors
+import com.ligaya.designsystem.LigayaTheme
 import com.ligaya.designsystem.LigayaMotion
 import com.ligaya.designsystem.LigayaShapes
 import com.ligaya.designsystem.LigayaSpacing
@@ -88,7 +88,7 @@ fun OnboardingIntroScreen(
     Column(
         modifier = modifier
             .fillMaxSize()
-            .background(LigayaColors.canvas)
+            .background(LigayaTheme.colors.canvas)
             // Background first, insets second: the canvas fills the whole window (including behind
             // the transparent system bars, which targetSdk 35 forces) while content stays clear of
             // them. Without this the "Skip" affordance sat directly under the status-bar clock.
@@ -98,7 +98,7 @@ fun OnboardingIntroScreen(
         Text(
             text = "Skip",
             style = LigayaTypography.label,
-            color = LigayaColors.inkSoft,
+            color = LigayaTheme.colors.inkSoft,
             modifier = Modifier
                 .align(Alignment.End)
                 .padding(top = LigayaSpacing.md)
@@ -135,7 +135,7 @@ fun OnboardingIntroScreen(
                 Text(
                     text = intro.heading,
                     style = LigayaTypography.introHeading,
-                    color = LigayaColors.ink,
+                    color = LigayaTheme.colors.ink,
                     modifier = Modifier
                         .graphicsLayer {
                             // Heading drifts less than the page itself; body drifts more. That
@@ -149,7 +149,7 @@ fun OnboardingIntroScreen(
                 Text(
                     text = intro.body,
                     style = LigayaTypography.body,
-                    color = LigayaColors.inkSoft,
+                    color = LigayaTheme.colors.inkSoft,
                     modifier = Modifier
                         .graphicsLayer {
                             translationX = depth * size.width * BODY_PARALLAX
@@ -226,7 +226,7 @@ private fun PageIndicator(
                     .height(DOT_SIZE)
                     .width(lerp(DOT_SIZE, DOT_ACTIVE_WIDTH, activeness))
                     .clip(LigayaShapes.pill)
-                    .background(lerp(LigayaColors.blushDeep, LigayaColors.roseDeep, activeness)),
+                    .background(lerp(LigayaTheme.colors.blushDeep, LigayaTheme.colors.roseDeep, activeness)),
             )
         }
     }

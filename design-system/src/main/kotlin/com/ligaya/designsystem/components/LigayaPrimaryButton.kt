@@ -19,7 +19,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.semantics.Role
-import com.ligaya.designsystem.LigayaColors
+import com.ligaya.designsystem.LigayaTheme
 import com.ligaya.designsystem.LigayaMotion
 import com.ligaya.designsystem.LigayaShapes
 import com.ligaya.designsystem.LigayaTypography
@@ -30,7 +30,7 @@ import com.ligaya.designsystem.rememberIsReduceMotionEnabled
  * every screen of the onboarding sequence, so it lives here rather than being re-declared per
  * screen with slightly different padding each time.
  *
- * Filled with [LigayaColors.roseDeep] rather than the softer [LigayaColors.rose] the reference
+ * Filled with [LigayaTheme.colors.roseDeep] rather than the softer [LigayaTheme.colors.rose] the reference
  * mockups suggest — deliberately, and the one place this design knowingly departs from them. A
  * button carries text, and the soft rose cannot hold white text at WCAG AA (see LigayaColors'
  * own ornament-vs-text split); roseDeep is the same family two steps darker and clears 4.95:1.
@@ -57,9 +57,9 @@ fun LigayaPrimaryButton(
     )
     val container by animateColorAsState(
         targetValue = when {
-            !enabled -> LigayaColors.rose
-            pressed -> LigayaColors.ink
-            else -> LigayaColors.roseDeep
+            !enabled -> LigayaTheme.colors.rose
+            pressed -> LigayaTheme.colors.ink
+            else -> LigayaTheme.colors.roseDeep
         },
         animationSpec = tween(LigayaMotion.durationFast, easing = LigayaMotion.easingStandard),
         label = "primaryButtonContainer",
@@ -88,7 +88,7 @@ fun LigayaPrimaryButton(
             ),
         contentAlignment = Alignment.Center,
     ) {
-        Text(text = text, style = LigayaTypography.label, color = LigayaColors.onRoseDeep)
+        Text(text = text, style = LigayaTypography.label, color = LigayaTheme.colors.onRoseDeep)
     }
 }
 

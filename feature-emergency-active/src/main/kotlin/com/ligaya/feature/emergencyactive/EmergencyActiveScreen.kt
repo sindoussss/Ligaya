@@ -30,7 +30,7 @@ import com.ligaya.core.uistate.EmergencyController
 import com.ligaya.core.voice.VoicePipelinePhase
 import com.ligaya.core.uistate.PresentationTone
 import com.ligaya.core.uistate.toPresentation
-import com.ligaya.designsystem.LigayaColors
+import com.ligaya.designsystem.LigayaTheme
 import com.ligaya.designsystem.LigayaDeliveryState
 import com.ligaya.designsystem.LigayaSpacing
 import com.ligaya.designsystem.LigayaTypography
@@ -198,7 +198,7 @@ private fun ActivityLine(subsystems: ConcurrentSubsystemStates) {
     Text(
         text = inProgressLabel ?: "Ligaya is monitoring your emergency",
         style = LigayaTypography.body,
-        color = LigayaColors.onSurface,
+        color = LigayaTheme.colors.onSurface,
         modifier = Modifier.semantics { contentDescription = "Current activity: ${inProgressLabel ?: "monitoring"}" },
     )
 }
@@ -206,13 +206,13 @@ private fun ActivityLine(subsystems: ConcurrentSubsystemStates) {
 @Composable
 private fun SafetyCircleSection(members: List<MemberDeliveryStatus>) {
     Column(verticalArrangement = Arrangement.spacedBy(LigayaSpacing.sm)) {
-        Text(text = "Safety Circle", style = LigayaTypography.headline, color = LigayaColors.onSurface)
+        Text(text = "Safety Circle", style = LigayaTypography.headline, color = LigayaTheme.colors.onSurface)
         if (members.isEmpty()) {
-            Text(text = "No Safety Circle members to notify", style = LigayaTypography.body, color = LigayaColors.onSurface)
+            Text(text = "No Safety Circle members to notify", style = LigayaTypography.body, color = LigayaTheme.colors.onSurface)
         } else {
             members.forEach { member ->
                 Column(modifier = Modifier.padding(vertical = LigayaSpacing.xs)) {
-                    Text(text = member.memberName, style = LigayaTypography.label, color = LigayaColors.onSurface)
+                    Text(text = member.memberName, style = LigayaTypography.label, color = LigayaTheme.colors.onSurface)
                     Column(verticalArrangement = Arrangement.spacedBy(LigayaSpacing.xs)) {
                         member.channelStatuses.filter { it.state == LigayaDeliveryState.FAILED }.forEach { channel ->
                             DeliveryFailedCard(channelLabel = channel.channelLabel)
@@ -238,8 +238,8 @@ private fun ImSafeButton(onClick: () -> Unit) {
             .padding(LigayaSpacing.md)
             .semantics { contentDescription = "I'm safe" },
         colors = ButtonDefaults.buttonColors(
-            containerColor = LigayaColors.colorStatusConfirmed,
-            contentColor = LigayaColors.onStatusConfirmed,
+            containerColor = LigayaTheme.colors.colorStatusConfirmed,
+            contentColor = LigayaTheme.colors.onStatusConfirmed,
         ),
     ) {
         Text(text = "I'm safe", style = LigayaTypography.headline)

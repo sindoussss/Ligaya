@@ -34,7 +34,7 @@ import com.ligaya.core.data.profile.EmergencyContact
 import com.ligaya.core.data.profile.EmergencyProfile
 import com.ligaya.core.data.profile.EmergencyProfileRepository
 import com.ligaya.core.data.profile.MedicalInfo
-import com.ligaya.designsystem.LigayaColors
+import com.ligaya.designsystem.LigayaTheme
 import com.ligaya.designsystem.LigayaSpacing
 import com.ligaya.designsystem.LigayaTypography
 import kotlinx.coroutines.launch
@@ -80,7 +80,7 @@ fun OnboardingScreen(
         Text(
             text = "Step $stepNumber of 2",
             style = LigayaTypography.label,
-            color = LigayaColors.idlePrimary,
+            color = LigayaTheme.colors.idlePrimary,
             modifier = Modifier.semantics { contentDescription = "Onboarding step $stepNumber of 2" },
         )
 
@@ -116,7 +116,7 @@ private fun AccountStep(
     var errorMessage by remember { mutableStateOf<String?>(null) }
     val scope = rememberCoroutineScope()
 
-    Text(text = "Create your account", style = LigayaTypography.headline, color = LigayaColors.onSurface)
+    Text(text = "Create your account", style = LigayaTypography.headline, color = LigayaTheme.colors.onSurface)
 
     OutlinedTextField(
         value = email,
@@ -137,7 +137,7 @@ private fun AccountStep(
     )
 
     errorMessage?.let {
-        Text(text = it, style = LigayaTypography.label, color = LigayaColors.colorStatusFailed)
+        Text(text = it, style = LigayaTypography.label, color = LigayaTheme.colors.colorStatusFailed)
     }
 
     Button(
@@ -176,11 +176,11 @@ private fun ProfileStep(onSave: (EmergencyProfile) -> Unit) {
             .map { (contactName, phone) -> EmergencyContact(name = contactName, phoneNumber = phone.ifBlank { null }) },
     )
 
-    Text(text = "Emergency profile", style = LigayaTypography.headline, color = LigayaColors.onSurface)
+    Text(text = "Emergency profile", style = LigayaTypography.headline, color = LigayaTheme.colors.onSurface)
     Text(
         text = "Every field here is optional — you can skip this or fill in only what you're comfortable sharing.",
         style = LigayaTypography.body,
-        color = LigayaColors.onSurface,
+        color = LigayaTheme.colors.onSurface,
     )
 
     OutlinedTextField(
@@ -198,7 +198,7 @@ private fun ProfileStep(onSave: (EmergencyProfile) -> Unit) {
         modifier = Modifier.fillMaxWidth().testTag("onboardingBloodTypeField"),
     )
 
-    Text(text = "Emergency contacts (optional)", style = LigayaTypography.label, color = LigayaColors.onSurface)
+    Text(text = "Emergency contacts (optional)", style = LigayaTypography.label, color = LigayaTheme.colors.onSurface)
     contacts.forEachIndexed { index, (contactName, phone) ->
         Row(horizontalArrangement = Arrangement.spacedBy(LigayaSpacing.sm)) {
             OutlinedTextField(
@@ -238,8 +238,8 @@ private fun ProfileStep(onSave: (EmergencyProfile) -> Unit) {
         Button(
             modifier = Modifier.weight(1f).testTag("onboardingSaveAndContinue"),
             colors = ButtonDefaults.buttonColors(
-                containerColor = LigayaColors.colorStatusConfirmed,
-                contentColor = LigayaColors.onStatusConfirmed,
+                containerColor = LigayaTheme.colors.colorStatusConfirmed,
+                contentColor = LigayaTheme.colors.onStatusConfirmed,
             ),
             onClick = { onSave(currentProfile()) },
         ) {

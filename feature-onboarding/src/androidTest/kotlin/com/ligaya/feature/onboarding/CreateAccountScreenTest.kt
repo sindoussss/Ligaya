@@ -53,6 +53,7 @@ class CreateAccountScreenTest {
 
         override fun logOut() = Unit
         override fun currentUserId(): String? = null
+        override fun currentUserEmail(): String? = null
     }
 
 

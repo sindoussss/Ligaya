@@ -21,14 +21,14 @@ import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.tooling.preview.Preview
-import com.ligaya.designsystem.LigayaColors
+import com.ligaya.designsystem.LigayaTheme
 import com.ligaya.designsystem.LigayaSpacing
 import com.ligaya.designsystem.LigayaTypography
 
 /**
  * Section 27's screen inventory: "Large, unmistakable, single dominant control; distinct idle
  * vs. pressed vs. activating visual states; must remain usable one-handed under stress." Fixed
- * at [LigayaColors.colorEmergencyActive] regardless of light/dark theme — a safety-critical
+ * at [LigayaTheme.colors.colorEmergencyActive] regardless of light/dark theme — a safety-critical
  * control like this should read identically no matter the system theme, the same reasoning
  * [LigayaColors] already applies by defining it as one absolute token rather than a themed role.
  *
@@ -44,9 +44,9 @@ fun SosControl(
     modifier: Modifier = Modifier,
 ) {
     val background = when (state) {
-        SosControlState.Idle -> LigayaColors.colorEmergencyActive
-        SosControlState.Pressed -> lerp(LigayaColors.colorEmergencyActive, Color.Black, 0.15f)
-        SosControlState.Activating -> LigayaColors.colorEmergencyActive
+        SosControlState.Idle -> LigayaTheme.colors.colorEmergencyActive
+        SosControlState.Pressed -> lerp(LigayaTheme.colors.colorEmergencyActive, Color.Black, 0.15f)
+        SosControlState.Activating -> LigayaTheme.colors.colorEmergencyActive
     }
     val description = when (state) {
         SosControlState.Idle, SosControlState.Pressed -> "Send SOS emergency alert"
@@ -64,7 +64,7 @@ fun SosControl(
     ) {
         if (state == SosControlState.Activating) {
             CircularProgressIndicator(
-                color = LigayaColors.onEmergencyActive,
+                color = LigayaTheme.colors.onEmergencyActive,
                 modifier = Modifier.size(LigayaSpacing.emergencyTouchTarget - LigayaSpacing.lg),
             )
         } else {
@@ -72,13 +72,13 @@ fun SosControl(
                 Icon(
                     imageVector = Icons.Filled.Emergency,
                     contentDescription = null,
-                    tint = LigayaColors.onEmergencyActive,
+                    tint = LigayaTheme.colors.onEmergencyActive,
                     modifier = Modifier.size(LigayaSpacing.xxl),
                 )
                 Text(
                     text = "SOS",
                     style = LigayaTypography.label,
-                    color = LigayaColors.onEmergencyActive,
+                    color = LigayaTheme.colors.onEmergencyActive,
                 )
             }
         }

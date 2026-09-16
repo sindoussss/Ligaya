@@ -60,6 +60,19 @@ sealed class LigayaDestination(val route: String, val title: String) {
     data object FamilyEmergency : LigayaDestination("family_emergency", "Family Emergency")
     data object Paywall : LigayaDestination("paywall", "Ligaya+")
 
+    /**
+     * Settings (visual design, screen 9) and its six destinations, reached from the Profile tab rather than
+     * from Home. Deliberately absent from [all], like [Welcome]: that list builds Home's own navigation
+     * buttons, and these belong behind the tab bar, not on Home.
+     */
+    data object Settings : LigayaDestination("settings", "Settings")
+    data object SettingsGeneral : LigayaDestination("settings/general", "General")
+    data object SettingsAppearance : LigayaDestination("settings/appearance", "Appearance")
+    data object SettingsVoice : LigayaDestination("settings/voice", "Voice & Speech")
+    data object SettingsCharacter : LigayaDestination("settings/character", "Character & Animation")
+    data object SettingsPrivacy : LigayaDestination("settings/privacy", "Privacy & Security")
+    data object SettingsAbout : LigayaDestination("settings/about", "About Ligaya")
+
     companion object {
         // `by lazy` deliberately, not an eagerly-computed val: building this list at class-init
         // time raced against the JVM's static-initializer ordering for the sealed subclasses

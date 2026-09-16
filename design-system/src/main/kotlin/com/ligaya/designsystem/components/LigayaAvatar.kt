@@ -12,7 +12,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.ligaya.designsystem.LigayaColors
+import com.ligaya.designsystem.LigayaTheme
 import com.ligaya.designsystem.R
 
 /**
@@ -29,7 +29,7 @@ fun LigayaAvatar(size: Dp, modifier: Modifier = Modifier) {
         modifier = modifier
             .size(size)
             .clip(CircleShape)
-            .background(LigayaColors.creamDeep)
-            .border(2.dp, LigayaColors.shell, CircleShape),
+            .background(LigayaTheme.colors.creamDeep)
+            .border(2.dp, LigayaTheme.colors.shell, CircleShape),
     )
 }

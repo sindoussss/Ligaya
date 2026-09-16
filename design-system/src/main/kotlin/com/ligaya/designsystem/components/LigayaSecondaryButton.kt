@@ -23,7 +23,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
-import com.ligaya.designsystem.LigayaColors
+import com.ligaya.designsystem.LigayaTheme
 import com.ligaya.designsystem.LigayaMotion
 import com.ligaya.designsystem.LigayaShapes
 import com.ligaya.designsystem.LigayaSpacing
@@ -66,8 +66,8 @@ fun LigayaSecondaryButton(
                 scaleY = scale
             }
             .clip(LigayaShapes.pill)
-            .background(if (pressed) LigayaColors.blush else LigayaColors.surface)
-            .border(width = BORDER_WIDTH, color = LigayaColors.blushDeep, shape = LigayaShapes.pill)
+            .background(if (pressed) LigayaTheme.colors.blush else LigayaTheme.colors.surface)
+            .border(width = BORDER_WIDTH, color = LigayaTheme.colors.blushDeep, shape = LigayaShapes.pill)
             .selectable(
                 selected = false,
                 enabled = enabled,
@@ -83,7 +83,7 @@ fun LigayaSecondaryButton(
             leading()
             Spacer(modifier = Modifier.width(LigayaSpacing.sm))
         }
-        Text(text = text, style = LigayaTypography.label, color = LigayaColors.ink)
+        Text(text = text, style = LigayaTypography.label, color = LigayaTheme.colors.ink)
     }
 }
 

@@ -39,7 +39,7 @@ import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.ligaya.designsystem.LigayaColors
+import com.ligaya.designsystem.LigayaTheme
 import com.ligaya.designsystem.LigayaLogo
 import com.ligaya.designsystem.LigayaTypography
 import com.ligaya.designsystem.components.LigayaEmotion
@@ -78,7 +78,7 @@ fun VoiceSpeakingScreen(
         "This phone has no voice for me, so here's my answer."
     }
 
-    BoxWithConstraints(modifier = modifier.fillMaxSize().background(LigayaColors.cream)) {
+    BoxWithConstraints(modifier = modifier.fillMaxSize().background(LigayaTheme.colors.cream)) {
         val unit = minOf(maxWidth, maxHeight * 0.58f)
         Column(modifier = Modifier.fillMaxSize().statusBarsPadding().navigationBarsPadding()) {
             Row(
@@ -86,7 +86,7 @@ fun VoiceSpeakingScreen(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 LigayaLogo(modifier = Modifier.size(30.dp))
-                Text("Ligaya", style = LigayaTypography.homeBrand, color = LigayaColors.cocoaInk, modifier = Modifier.padding(start = 10.dp))
+                Text("Ligaya", style = LigayaTypography.homeBrand, color = LigayaTheme.colors.cocoaInk, modifier = Modifier.padding(start = 10.dp))
             }
 
             Column(
@@ -97,11 +97,11 @@ fun VoiceSpeakingScreen(
                     .semantics(mergeDescendants = true) { liveRegion = LiveRegionMode.Polite },
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
-                Text(title, style = LigayaTypography.voiceTitle, color = LigayaColors.cocoaInk, textAlign = TextAlign.Center)
+                Text(title, style = LigayaTypography.voiceTitle, color = LigayaTheme.colors.cocoaInk, textAlign = TextAlign.Center)
                 Text(
                     subtitle,
                     style = LigayaTypography.voiceSubtitle,
-                    color = LigayaColors.taupe,
+                    color = LigayaTheme.colors.taupe,
                     textAlign = TextAlign.Center,
                     modifier = Modifier.padding(top = 16.dp),
                 )
@@ -119,7 +119,7 @@ fun VoiceSpeakingScreen(
                         .align(Alignment.BottomCenter)
                         .fillMaxWidth()
                         .fillMaxHeight(0.3f)
-                        .background(Brush.verticalGradient(listOf(Color.Transparent, LigayaColors.cream))),
+                        .background(Brush.verticalGradient(listOf(Color.Transparent, LigayaTheme.colors.cream))),
                 )
             }
 
@@ -136,15 +136,15 @@ fun VoiceSpeakingScreen(
                 Text(
                     text = reply,
                     style = LigayaTypography.bubble,
-                    color = LigayaColors.cocoaInk,
+                    color = LigayaTheme.colors.cocoaInk,
                     textAlign = TextAlign.Center,
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(top = 20.dp)
                         .padding(horizontal = 24.dp)
                         .clip(RoundedCornerShape(22.dp))
-                        .background(LigayaColors.shell)
-                        .border(1.dp, LigayaColors.shellEdge, RoundedCornerShape(22.dp))
+                        .background(LigayaTheme.colors.shell)
+                        .border(1.dp, LigayaTheme.colors.shellEdge, RoundedCornerShape(22.dp))
                         .padding(horizontal = 18.dp, vertical = 16.dp),
                 )
             }
@@ -169,6 +169,8 @@ private fun SpeechWaveform(modifier: Modifier = Modifier) {
         infiniteRepeatable(tween(1100, easing = LinearEasing)),
         label = "speechTime",
     )
+    // Read here, in composable scope: the draw lambda below is a DrawScope and cannot read the theme.
+    val barColor = LigayaTheme.colors.waveBar
     Canvas(modifier = modifier.clearAndSetSemantics { }) {
         val gap = size.width / SPEECH_BARS.size
         val stroke = 2.4.dp.toPx()
@@ -178,7 +180,7 @@ private fun SpeechWaveform(modifier: Modifier = Modifier) {
             val h = shape * sway * size.height
             val x = gap * (i + 0.5f)
             drawLine(
-                color = LigayaColors.waveBar,
+                color = barColor,
                 start = Offset(x, midY - h / 2f),
                 end = Offset(x, midY + h / 2f),
                 strokeWidth = stroke,

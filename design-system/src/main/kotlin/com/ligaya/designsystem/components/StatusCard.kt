@@ -24,7 +24,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
-import com.ligaya.designsystem.LigayaColors
+import com.ligaya.designsystem.LigayaTheme
 import com.ligaya.designsystem.LigayaSpacing
 import com.ligaya.designsystem.LigayaTypography
 
@@ -49,9 +49,9 @@ private data class ToneStyle(val container: Color, val onContainer: Color, val i
 @Composable
 private fun toneStyle(tone: StatusTone): ToneStyle = when (tone) {
     StatusTone.Neutral -> ToneStyle(MaterialTheme.colorScheme.surfaceVariant, MaterialTheme.colorScheme.onSurfaceVariant, null)
-    StatusTone.Pending -> ToneStyle(LigayaColors.colorStatusPending, LigayaColors.onStatusPending, Icons.Filled.Schedule)
-    StatusTone.Success -> ToneStyle(LigayaColors.colorStatusConfirmed, LigayaColors.onStatusConfirmed, Icons.Filled.CheckCircle)
-    StatusTone.Failure -> ToneStyle(LigayaColors.colorStatusFailed, LigayaColors.onStatusFailed, Icons.Filled.ErrorOutline)
+    StatusTone.Pending -> ToneStyle(LigayaTheme.colors.colorStatusPending, LigayaTheme.colors.onStatusPending, Icons.Filled.Schedule)
+    StatusTone.Success -> ToneStyle(LigayaTheme.colors.colorStatusConfirmed, LigayaTheme.colors.onStatusConfirmed, Icons.Filled.CheckCircle)
+    StatusTone.Failure -> ToneStyle(LigayaTheme.colors.colorStatusFailed, LigayaTheme.colors.onStatusFailed, Icons.Filled.ErrorOutline)
 }
 
 @Composable

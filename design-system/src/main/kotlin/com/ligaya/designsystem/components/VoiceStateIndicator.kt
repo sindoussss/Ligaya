@@ -20,7 +20,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
-import com.ligaya.designsystem.LigayaColors
+import com.ligaya.designsystem.LigayaTheme
 import com.ligaya.designsystem.LigayaIcons
 import com.ligaya.designsystem.LigayaMotion
 import com.ligaya.designsystem.LigayaSpacing
@@ -88,7 +88,7 @@ fun VoiceStateIndicator(
         Icon(
             imageVector = requireNotNull(LigayaIcons.voiceState[state]) { "no icon mapped for $state" },
             contentDescription = null,
-            tint = if (state == LigayaVoiceState.IDLE) MaterialTheme.colorScheme.onSurfaceVariant else LigayaColors.idlePrimary,
+            tint = if (state == LigayaVoiceState.IDLE) MaterialTheme.colorScheme.onSurfaceVariant else LigayaTheme.colors.idlePrimary,
         )
     }
 }

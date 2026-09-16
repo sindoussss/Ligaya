@@ -7,17 +7,26 @@ import android.os.Bundle
 import android.provider.Settings
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
-import androidx.core.view.WindowCompat
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
+import androidx.core.view.WindowCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import com.google.android.gms.location.LocationServices
 import com.ligaya.app.navigation.LigayaNavHost
+import com.ligaya.app.screens.settings.LigayaSettings
+import com.ligaya.core.ai.AndroidNetworkStatus
 import com.ligaya.core.ai.CompanionResponseProvider
 import com.ligaya.core.ai.GeminiCompanionResponseProvider
 import com.ligaya.core.ai.GeminiIntentProvider
@@ -39,6 +48,9 @@ import com.ligaya.core.emergencyengine.EmergencyIntentDecision
 import com.ligaya.core.emergencyengine.EmergencySnapshot
 import com.ligaya.core.emergencyengine.EmergencyState
 import com.ligaya.core.emergencyengine.IncidentType
+import com.ligaya.core.location.FusedLocationSource
+import com.ligaya.core.location.LocationFlowCoordinator
+import com.ligaya.core.location.LocationFlowReporter
 import com.ligaya.core.permissions.AndroidPermissionChecker
 import com.ligaya.core.permissions.PermissionRequester
 import com.ligaya.core.permissions.PermissionState
@@ -47,10 +59,6 @@ import com.ligaya.core.places.EmergencyServiceFlowCoordinator
 import com.ligaya.core.places.EmergencyServiceFlowReporter
 import com.ligaya.core.places.GooglePlacesDetailsSource
 import com.ligaya.core.places.GooglePlacesNearbySearchSource
-import com.ligaya.core.location.FusedLocationSource
-import com.ligaya.core.location.LocationFlowCoordinator
-import com.ligaya.core.location.LocationFlowReporter
-import com.ligaya.core.ai.AndroidNetworkStatus
 import com.ligaya.core.voice.AndroidSpeechOutput
 import com.ligaya.core.voice.AndroidSpeechTranscriber
 import com.ligaya.core.voice.BatteryLevelLogger
@@ -61,6 +69,9 @@ import com.ligaya.core.voice.VoiceActivationCoordinator
 import com.ligaya.core.voice.VoiceActivationResult
 import com.ligaya.core.voice.VoiceCaptureCoordinator
 import com.ligaya.core.voice.VoiceEmergencyIntentReporter
+import com.ligaya.designsystem.LigayaTheme
+import com.ligaya.designsystem.LigayaThemeMode
+import com.ligaya.designsystem.components.LocalLigayaMascotPreferences
 import com.ligaya.feature.companion.EmergencyCompanionCoordinator
 import com.ligaya.feature.companion.EmergencySnapshotProvider
 import kotlinx.coroutines.Job
@@ -275,8 +286,8 @@ class MainActivity : ComponentActivity() {
         // that every launch opens straight to Home, so SOS is never behind an extra tap. On that first
         // launch the permission dialogs wait until Get Started, so they don't cover the welcome screen;
         // the wake-word loop below already waits for RECORD_AUDIO on its own.
-        val appPreferences = getSharedPreferences(APP_PREFERENCES, MODE_PRIVATE)
-        val showWelcome = !appPreferences.getBoolean(KEY_WELCOME_COMPLETED, false)
+        val settings = LigayaSettings(getSharedPreferences(LigayaSettings.PREFERENCES_NAME, MODE_PRIVATE))
+        val showWelcome = !settings.welcomeCompleted
         if (!showWelcome) requestStartupPermissions()
 
         // Step 51: every real STT/Gemini/TTS call below is wrapped with a timing decorator
@@ -410,12 +421,25 @@ class MainActivity : ComponentActivity() {
         }
 
         setContent {
-            MaterialTheme {
+            // Appearance is a saved setting, not a session toggle: it has to survive the app being closed, so it
+            // lives in the same preferences file as the welcome flag.
+            val themeMode by settings.themeMode.collectAsState()
+            val setThemeMode: (LigayaThemeMode) -> Unit = settings::setThemeMode
+            // Her animation settings belong to the whole app, not to one screen: every LigayaMascot in the
+            // tree reads them from here, so a choice made in Settings shows on Home and in the chat too.
+            val mascotPreferences by settings.mascot.collectAsState()
+            LigayaTheme(mode = themeMode) {
+                val dark = when (themeMode) {
+                    LigayaThemeMode.Light -> false
+                    LigayaThemeMode.Dark -> true
+                    LigayaThemeMode.System -> isSystemInDarkTheme()
+                }
                 Surface(modifier = Modifier.fillMaxSize()) {
+                  CompositionLocalProvider(LocalLigayaMascotPreferences provides mascotPreferences) {
                     LigayaNavHost(
                         showWelcome = showWelcome,
                         onWelcomeCompleted = {
-                            appPreferences.edit().putBoolean(KEY_WELCOME_COMPLETED, true).apply()
+                            settings.setWelcomeCompleted(true)
                             requestStartupPermissions()
                         },
                         onStartVoiceTurn = startVoiceTurn,
@@ -428,6 +452,13 @@ class MainActivity : ComponentActivity() {
                         },
                         // Screen 8 names being offline as a cause only when the device actually reports it.
                         networkStatus = AndroidNetworkStatus(applicationContext),
+                        themeMode = themeMode,
+                        isDarkTheme = dark,
+                        // The header's button flips between light and dark; Settings can also choose System.
+                        onToggleTheme = { setThemeMode(if (dark) LigayaThemeMode.Light else LigayaThemeMode.Dark) },
+                        onSetThemeMode = setThemeMode,
+                        settings = settings,
+                        appVersionName = BuildConfig.VERSION_NAME,
                         emergencyController = emergencyController,
                         companionCoordinator = companionCoordinator,
                         voicePhase = voiceActivationCoordinator.phase,
@@ -440,6 +471,7 @@ class MainActivity : ComponentActivity() {
                         },
                         onOpenAppSettings = ::openAppSettings,
                     )
+                  }
                 }
             }
         }
@@ -489,6 +521,12 @@ class MainActivity : ComponentActivity() {
                     }
                     if (manualVoiceTurn.value) {
                         manualVoiceTurn.first { !it }
+                        continue
+                    }
+                    // Settings > Voice & Speech. Switched off, this waits rather than spinning: no recognizer
+                    // session is started at all, so the microphone is genuinely idle, not merely ignored.
+                    if (!settings.wakePhraseEnabled.value) {
+                        settings.wakePhraseEnabled.first { it }
                         continue
                     }
                     coroutineScope {
@@ -542,6 +580,7 @@ class MainActivity : ComponentActivity() {
     private companion object {
         const val APP_PREFERENCES = "ligaya_app"
         const val KEY_WELCOME_COMPLETED = "welcome_completed"
+        const val KEY_THEME_MODE = "theme_mode"
         const val RECORD_AUDIO_NOT_GRANTED_RETRY_DELAY_MILLIS = 3_000L
         const val BETWEEN_LISTENING_SESSIONS_DELAY_MILLIS = 300L
         const val RECOGNIZER_HANDOFF_DELAY_MILLIS = 250L

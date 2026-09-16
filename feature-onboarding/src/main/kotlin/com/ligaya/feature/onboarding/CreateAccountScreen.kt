@@ -40,7 +40,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.ligaya.core.backend.auth.AuthRepository
 import com.ligaya.core.backend.auth.AuthResult
-import com.ligaya.designsystem.LigayaColors
+import com.ligaya.designsystem.LigayaTheme
 import com.ligaya.designsystem.LigayaLogo
 import com.ligaya.designsystem.LigayaMotion
 import com.ligaya.designsystem.LigayaShapes
@@ -107,7 +107,7 @@ fun CreateAccountScreen(
     Column(
         modifier = modifier
             .fillMaxSize()
-            .background(LigayaColors.canvas)
+            .background(LigayaTheme.colors.canvas)
             .safeDrawingPadding()
             .verticalScroll(rememberScrollState())
             .padding(horizontal = LigayaSpacing.lg),
@@ -126,7 +126,7 @@ fun CreateAccountScreen(
             Text(
                 text = "LIGAYA",
                 style = LigayaTypography.wordmark.copy(fontSize = LOCKUP_WORDMARK_SIZE, letterSpacing = LOCKUP_TRACKING),
-                color = LigayaColors.ink,
+                color = LigayaTheme.colors.ink,
                 modifier = Modifier.padding(top = LigayaSpacing.sm),
             )
         }
@@ -136,7 +136,7 @@ fun CreateAccountScreen(
         Text(
             text = if (mode == AccountMode.SIGN_UP) "Create your account" else "Welcome back",
             style = LigayaTypography.headline,
-            color = LigayaColors.ink,
+            color = LigayaTheme.colors.ink,
         )
         Text(
             text = if (mode == AccountMode.SIGN_UP) {
@@ -145,7 +145,7 @@ fun CreateAccountScreen(
                 "Log in to pick up where you left off."
             },
             style = LigayaTypography.body,
-            color = LigayaColors.inkSoft,
+            color = LigayaTheme.colors.inkSoft,
             modifier = Modifier.padding(top = LigayaSpacing.xs),
         )
 
@@ -197,7 +197,7 @@ fun CreateAccountScreen(
                 Text(
                     text = if (passwordVisible) "Hide" else "Show",
                     style = LigayaTypography.label,
-                    color = LigayaColors.roseDeep,
+                    color = LigayaTheme.colors.roseDeep,
                     modifier = Modifier
                         .clip(LigayaShapes.pill)
                         .clickable { passwordVisible = !passwordVisible }
@@ -219,7 +219,7 @@ fun CreateAccountScreen(
             Text(
                 text = formError.orEmpty(),
                 style = LigayaTypography.label,
-                color = LigayaColors.colorStatusFailed,
+                color = LigayaTheme.colors.colorStatusFailed,
                 modifier = Modifier.padding(top = LigayaSpacing.sm),
             )
         }
@@ -243,7 +243,7 @@ fun CreateAccountScreen(
                 "New here?  Create an account"
             },
             style = LigayaTypography.label,
-            color = LigayaColors.inkSoft,
+            color = LigayaTheme.colors.inkSoft,
             textAlign = TextAlign.Center,
             modifier = Modifier
                 .fillMaxWidth()
@@ -274,19 +274,19 @@ private fun OrDivider(modifier: Modifier = Modifier) {
             modifier = Modifier
                 .weight(1f)
                 .height(HAIRLINE)
-                .background(LigayaColors.blushDeep),
+                .background(LigayaTheme.colors.blushDeep),
         )
         Text(
             text = "or",
             style = LigayaTypography.label,
-            color = LigayaColors.inkSoft,
+            color = LigayaTheme.colors.inkSoft,
             modifier = Modifier.padding(horizontal = LigayaSpacing.md),
         )
         Box(
             modifier = Modifier
                 .weight(1f)
                 .height(HAIRLINE)
-                .background(LigayaColors.blushDeep),
+                .background(LigayaTheme.colors.blushDeep),
         )
     }
 }

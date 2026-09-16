@@ -14,7 +14,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
-import com.ligaya.designsystem.LigayaColors
+import com.ligaya.designsystem.LigayaTheme
 import com.ligaya.designsystem.LigayaDeliveryState
 import com.ligaya.designsystem.LigayaIcons
 import com.ligaya.designsystem.LigayaSpacing
@@ -26,17 +26,18 @@ import com.ligaya.designsystem.LigayaTypography
  * 21/28), never collapsed into one "notified" badge per §18's family screen requirement.
  *
  * SENT has no color named in [LigayaColors] (Step 33 named only the emergency/pending/confirmed/
- * failed tokens) — it reuses [LigayaColors.idlePrimary] rather than introducing an unreviewed new
+ * failed tokens) — it reuses [LigayaTheme.colors.idlePrimary] rather than introducing an unreviewed new
  * hex value, since "sent, awaiting confirmation" is exactly the calm, non-alarming, in-progress
  * meaning that token already carries.
  */
 private data class DeliveryStateStyle(val container: Color, val onContainer: Color)
 
+@Composable
 private fun styleFor(state: LigayaDeliveryState): DeliveryStateStyle = when (state) {
-    LigayaDeliveryState.PENDING -> DeliveryStateStyle(LigayaColors.colorStatusPending, LigayaColors.onStatusPending)
-    LigayaDeliveryState.SENT -> DeliveryStateStyle(LigayaColors.idlePrimary, LigayaColors.onIdlePrimary)
-    LigayaDeliveryState.CONFIRMED -> DeliveryStateStyle(LigayaColors.colorStatusConfirmed, LigayaColors.onStatusConfirmed)
-    LigayaDeliveryState.FAILED -> DeliveryStateStyle(LigayaColors.colorStatusFailed, LigayaColors.onStatusFailed)
+    LigayaDeliveryState.PENDING -> DeliveryStateStyle(LigayaTheme.colors.colorStatusPending, LigayaTheme.colors.onStatusPending)
+    LigayaDeliveryState.SENT -> DeliveryStateStyle(LigayaTheme.colors.idlePrimary, LigayaTheme.colors.onIdlePrimary)
+    LigayaDeliveryState.CONFIRMED -> DeliveryStateStyle(LigayaTheme.colors.colorStatusConfirmed, LigayaTheme.colors.onStatusConfirmed)
+    LigayaDeliveryState.FAILED -> DeliveryStateStyle(LigayaTheme.colors.colorStatusFailed, LigayaTheme.colors.onStatusFailed)
 }
 
 private fun labelFor(state: LigayaDeliveryState): String = when (state) {

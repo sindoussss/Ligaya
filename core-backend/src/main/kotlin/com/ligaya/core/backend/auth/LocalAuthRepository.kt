@@ -50,6 +50,7 @@ class LocalAuthRepository(context: Context) : AuthRepository {
         preferences.edit()
             .putString(accountKey(normalised), encodeRecord(salt, derive(password, salt), userId))
             .putString(SESSION_KEY, userId)
+            .putString(SESSION_EMAIL_KEY, normalised)
             .apply()
         return AuthResult.Success(userId)
     }
@@ -64,17 +65,25 @@ class LocalAuthRepository(context: Context) : AuthRepository {
         if (!MessageDigest.isEqual(derive(password, salt), storedHash)) {
             return AuthResult.Failure(INVALID_CREDENTIALS)
         }
-        preferences.edit().putString(SESSION_KEY, userId).apply()
+        preferences.edit()
+            .putString(SESSION_KEY, userId)
+            .putString(SESSION_EMAIL_KEY, normalise(email))
+            .apply()
         return AuthResult.Success(userId)
     }
 
     override fun logOut() {
         // Clears the session only. Removing the account records here would mean logging out
         // silently deleted the account, which is not what logging out means anywhere else.
-        preferences.edit().remove(SESSION_KEY).apply()
+        preferences.edit().remove(SESSION_KEY).remove(SESSION_EMAIL_KEY).apply()
     }
 
     override fun currentUserId(): String? = preferences.getString(SESSION_KEY, null)
+
+    /** Stored with the session rather than derived: the account records are keyed BY email, so finding it
+     *  otherwise would mean scanning every stored account. */
+    override fun currentUserEmail(): String? =
+        preferences.getString(SESSION_KEY, null)?.let { preferences.getString(SESSION_EMAIL_KEY, null) }
 
     private fun derive(password: String, salt: ByteArray): ByteArray {
         val spec = PBEKeySpec(password.toCharArray(), salt, ITERATIONS, KEY_LENGTH_BITS)
@@ -103,6 +112,10 @@ class LocalAuthRepository(context: Context) : AuthRepository {
         const val PREFERENCES_NAME = "ligaya_local_auth"
         const val ACCOUNT_KEY_PREFIX = "account:"
         const val SESSION_KEY = "session_user_id"
+
+        /** The signed-in account's email, kept beside the session so Settings can show it: the account records
+         *  are keyed BY email, so there is otherwise no way to find it without scanning them all. */
+        const val SESSION_EMAIL_KEY = "session_email"
         const val RECORD_SEPARATOR = ":"
         const val ALGORITHM = "PBKDF2WithHmacSHA256"
         const val ITERATIONS = 120_000

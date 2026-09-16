@@ -19,7 +19,7 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
-import com.ligaya.designsystem.LigayaColors
+import com.ligaya.designsystem.LigayaTheme
 import com.ligaya.designsystem.LigayaIcons
 import com.ligaya.designsystem.LigayaTypography
 
@@ -44,12 +44,12 @@ fun LigayaTabBar(
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .background(LigayaColors.shell)
+            .background(LigayaTheme.colors.shell)
             .padding(vertical = 6.dp),
     ) {
         LigayaTab.entries.forEach { tab ->
             val isSelected = tab == selected
-            val tint = if (isSelected) LigayaColors.cocoa else LigayaColors.taupe
+            val tint = if (isSelected) LigayaTheme.colors.cocoa else LigayaTheme.colors.taupe
             Column(
                 modifier = Modifier
                     .weight(1f)

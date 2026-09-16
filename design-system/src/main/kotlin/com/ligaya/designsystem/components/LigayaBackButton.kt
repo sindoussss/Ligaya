@@ -12,7 +12,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
-import com.ligaya.designsystem.LigayaColors
+import com.ligaya.designsystem.LigayaTheme
 import com.ligaya.designsystem.LigayaIcons
 import com.ligaya.designsystem.LigayaSpacing
 
@@ -39,7 +39,7 @@ fun LigayaBackButton(
         Icon(
             imageVector = LigayaIcons.back,
             contentDescription = null,
-            tint = LigayaColors.ink,
+            tint = LigayaTheme.colors.ink,
             modifier = Modifier.size(ICON_SIZE),
         )
     }

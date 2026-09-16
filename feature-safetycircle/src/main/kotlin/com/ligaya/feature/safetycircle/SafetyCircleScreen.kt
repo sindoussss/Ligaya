@@ -28,7 +28,7 @@ import androidx.compose.ui.semantics.semantics
 import com.ligaya.core.backend.household.SafetyCircleRepository
 import com.ligaya.core.data.entity.FamilyMemberEntity
 import com.ligaya.core.data.entity.FamilyMemberStatus
-import com.ligaya.designsystem.LigayaColors
+import com.ligaya.designsystem.LigayaTheme
 import com.ligaya.designsystem.LigayaSpacing
 import com.ligaya.designsystem.LigayaTypography
 import com.ligaya.designsystem.components.StatusChip
@@ -84,10 +84,10 @@ fun SafetyCircleScreen(
             .padding(LigayaSpacing.lg),
         verticalArrangement = Arrangement.spacedBy(LigayaSpacing.md),
     ) {
-        Text(text = "Safety Circle", style = LigayaTypography.headline, color = LigayaColors.onSurface)
+        Text(text = "Safety Circle", style = LigayaTypography.headline, color = LigayaTheme.colors.onSurface)
 
         if (isLoading) {
-            Text(text = "Loading…", style = LigayaTypography.body, color = LigayaColors.onSurface)
+            Text(text = "Loading…", style = LigayaTypography.body, color = LigayaTheme.colors.onSurface)
         } else if (isOwner) {
             RosterSection(
                 members = members,
@@ -112,9 +112,9 @@ fun SafetyCircleScreen(
 @Composable
 private fun RosterSection(members: List<FamilyMemberEntity>, onRemove: (userId: String) -> Unit) {
     Column(verticalArrangement = Arrangement.spacedBy(LigayaSpacing.sm)) {
-        Text(text = "Members", style = LigayaTypography.label, color = LigayaColors.onSurface)
+        Text(text = "Members", style = LigayaTypography.label, color = LigayaTheme.colors.onSurface)
         if (members.isEmpty()) {
-            Text(text = "No members yet", style = LigayaTypography.body, color = LigayaColors.onSurface)
+            Text(text = "No members yet", style = LigayaTypography.body, color = LigayaTheme.colors.onSurface)
         }
         members.forEach { member ->
             Row(
@@ -125,15 +125,15 @@ private fun RosterSection(members: List<FamilyMemberEntity>, onRemove: (userId: 
                 horizontalArrangement = Arrangement.spacedBy(LigayaSpacing.sm),
             ) {
                 Column(modifier = Modifier.weight(1f)) {
-                    Text(text = member.relationship, style = LigayaTypography.body, color = LigayaColors.onSurface)
-                    Text(text = member.userId, style = LigayaTypography.label, color = LigayaColors.onSurface)
+                    Text(text = member.relationship, style = LigayaTypography.body, color = LigayaTheme.colors.onSurface)
+                    Text(text = member.userId, style = LigayaTypography.label, color = LigayaTheme.colors.onSurface)
                 }
                 StatusChip(text = statusLabel(member.status), tone = statusTone(member.status))
                 Button(
                     modifier = Modifier.testTag("safetyCircleRemove_${member.userId}"),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = LigayaColors.colorStatusFailed,
-                        contentColor = LigayaColors.onStatusFailed,
+                        containerColor = LigayaTheme.colors.colorStatusFailed,
+                        contentColor = LigayaTheme.colors.onStatusFailed,
                     ),
                     onClick = { onRemove(member.userId) },
                 ) {
@@ -150,7 +150,7 @@ private fun InviteSection(onInvite: (userId: String, relationship: String) -> Un
     var relationship by remember { mutableStateOf("") }
 
     Column(verticalArrangement = Arrangement.spacedBy(LigayaSpacing.sm)) {
-        Text(text = "Invite a member", style = LigayaTypography.label, color = LigayaColors.onSurface)
+        Text(text = "Invite a member", style = LigayaTypography.label, color = LigayaTheme.colors.onSurface)
         OutlinedTextField(
             value = userId,
             onValueChange = { userId = it },
@@ -186,14 +186,14 @@ private fun OwnMembershipSection(
     onLeave: () -> Unit,
 ) {
     if (membership == null) {
-        Text(text = "You're not a member of this Safety Circle.", style = LigayaTypography.body, color = LigayaColors.onSurface)
+        Text(text = "You're not a member of this Safety Circle.", style = LigayaTypography.body, color = LigayaTheme.colors.onSurface)
         return
     }
 
     Text(
         text = "You're the ${membership.relationship} in this Safety Circle.",
         style = LigayaTypography.body,
-        color = LigayaColors.onSurface,
+        color = LigayaTheme.colors.onSurface,
     )
     StatusChip(text = statusLabel(membership.status), tone = statusTone(membership.status))
 
@@ -207,8 +207,8 @@ private fun OwnMembershipSection(
         FamilyMemberStatus.ACTIVE -> Button(
             modifier = Modifier.testTag("safetyCircleLeave"),
             colors = ButtonDefaults.buttonColors(
-                containerColor = LigayaColors.colorStatusFailed,
-                contentColor = LigayaColors.onStatusFailed,
+                containerColor = LigayaTheme.colors.colorStatusFailed,
+                contentColor = LigayaTheme.colors.onStatusFailed,
             ),
             onClick = onLeave,
         ) {

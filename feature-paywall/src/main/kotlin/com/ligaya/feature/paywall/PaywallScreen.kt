@@ -26,7 +26,7 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import com.ligaya.core.billing.EntitlementRepository
 import com.ligaya.core.billing.PurchaseOutcome
-import com.ligaya.designsystem.LigayaColors
+import com.ligaya.designsystem.LigayaTheme
 import com.ligaya.designsystem.LigayaSpacing
 import com.ligaya.designsystem.LigayaTypography
 import kotlinx.coroutines.launch
@@ -70,20 +70,20 @@ fun PaywallScreen(
             .padding(LigayaSpacing.lg),
         verticalArrangement = Arrangement.spacedBy(LigayaSpacing.md),
     ) {
-        Text(text = "Ligaya+", style = LigayaTypography.display, color = LigayaColors.onSurface)
+        Text(text = "Ligaya+", style = LigayaTypography.display, color = LigayaTheme.colors.onSurface)
         Text(
             text = "Ligaya+ unlocks expanded Safety Circle features. Every core emergency " +
                 "feature — SOS, voice activation, 911 calling, and the Emergency Companion — " +
                 "is always free and never gated.",
             style = LigayaTypography.body,
-            color = LigayaColors.onSurface,
+            color = LigayaTheme.colors.onSurface,
         )
 
         if (isSubscribed) {
             Text(
                 text = "You're subscribed to Ligaya+.",
                 style = LigayaTypography.headline,
-                color = LigayaColors.resolved,
+                color = LigayaTheme.colors.resolved,
                 modifier = Modifier.semantics { contentDescription = "You're subscribed to Ligaya+" },
             )
         } else if (isBusy) {
@@ -136,7 +136,7 @@ fun PaywallScreen(
             Text(
                 text = it,
                 style = LigayaTypography.label,
-                color = LigayaColors.colorStatusFailed,
+                color = LigayaTheme.colors.colorStatusFailed,
                 modifier = Modifier.semantics { contentDescription = "Paywall status: $it" },
             )
         }

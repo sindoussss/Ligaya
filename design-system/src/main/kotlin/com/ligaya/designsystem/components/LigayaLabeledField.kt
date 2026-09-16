@@ -6,7 +6,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import com.ligaya.designsystem.LigayaColors
+import com.ligaya.designsystem.LigayaTheme
 import com.ligaya.designsystem.LigayaSpacing
 import com.ligaya.designsystem.LigayaTypography
 
@@ -34,7 +34,7 @@ fun LigayaLabeledField(
         Text(
             text = label,
             style = LigayaTypography.label,
-            color = LigayaColors.inkSoft,
+            color = LigayaTheme.colors.inkSoft,
             modifier = Modifier.padding(bottom = LigayaSpacing.xs, start = LigayaSpacing.xs),
         )
         LigayaTextField(

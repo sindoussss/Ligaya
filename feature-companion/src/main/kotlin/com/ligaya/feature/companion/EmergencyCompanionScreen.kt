@@ -72,7 +72,7 @@ import androidx.compose.ui.unit.dp
 import com.ligaya.core.ai.CompanionTurn
 import com.ligaya.core.ai.GeminiCompanionResponseProvider
 import com.ligaya.core.voice.VoicePipelinePhase
-import com.ligaya.designsystem.LigayaColors
+import com.ligaya.designsystem.LigayaTheme
 import com.ligaya.designsystem.LigayaIcons
 import com.ligaya.designsystem.LigayaTypography
 import com.ligaya.designsystem.components.LigayaAvatar
@@ -139,7 +139,7 @@ fun EmergencyCompanionScreen(
     Column(
         modifier = modifier
             .fillMaxSize()
-            .background(LigayaColors.cream)
+            .background(LigayaTheme.colors.cream)
             .statusBarsPadding()
             .windowInsetsPadding(WindowInsets.navigationBars.union(WindowInsets.ime)),
     ) {
@@ -202,14 +202,14 @@ private fun ChatHeader(
         VoicePipelinePhase.SPEAKING -> "Speaking…"
         VoicePipelinePhase.IDLE -> if (limited) "Limited replies" else "Online"
     }
-    val dot = if (limited && phase == VoicePipelinePhase.IDLE) LigayaColors.colorStatusPending else LigayaColors.online
+    val dot = if (limited && phase == VoicePipelinePhase.IDLE) LigayaTheme.colors.colorStatusPending else LigayaTheme.colors.online
 
     Row(
         modifier = Modifier.fillMaxWidth().padding(start = 4.dp, end = 8.dp, top = 8.dp, bottom = 6.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         IconButton(onClick = onBack) {
-            Icon(LigayaIcons.chevronBack, contentDescription = "Back", tint = LigayaColors.cocoaInk, modifier = Modifier.size(20.dp))
+            Icon(LigayaIcons.chevronBack, contentDescription = "Back", tint = LigayaTheme.colors.cocoaInk, modifier = Modifier.size(20.dp))
         }
         LigayaAvatar(size = 46.dp)
         Column(
@@ -218,10 +218,10 @@ private fun ChatHeader(
                 .padding(start = 12.dp)
                 .semantics(mergeDescendants = true) {},
         ) {
-            Text("Ligaya", style = LigayaTypography.chatTitle, color = LigayaColors.cocoaInk)
+            Text("Ligaya", style = LigayaTypography.chatTitle, color = LigayaTheme.colors.cocoaInk)
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Box(Modifier.size(8.dp).clip(CircleShape).background(dot))
-                Text(status, style = LigayaTypography.chatStatus, color = LigayaColors.taupe, modifier = Modifier.padding(start = 6.dp))
+                Text(status, style = LigayaTypography.chatStatus, color = LigayaTheme.colors.taupe, modifier = Modifier.padding(start = 6.dp))
             }
         }
         var menuOpen by remember { mutableStateOf(false) }
@@ -231,21 +231,21 @@ private fun ChatHeader(
                     modifier = Modifier
                         .size(40.dp)
                         .clip(CircleShape)
-                        .background(LigayaColors.shell)
-                        .border(1.dp, LigayaColors.shellEdge, CircleShape),
+                        .background(LigayaTheme.colors.shell)
+                        .border(1.dp, LigayaTheme.colors.shellEdge, CircleShape),
                     contentAlignment = Alignment.Center,
                 ) {
-                    Icon(LigayaIcons.moreOptions, contentDescription = "More options", tint = LigayaColors.cocoaInk)
+                    Icon(LigayaIcons.moreOptions, contentDescription = "More options", tint = LigayaTheme.colors.cocoaInk)
                 }
             }
             DropdownMenu(
                 expanded = menuOpen,
                 onDismissRequest = { menuOpen = false },
                 shape = RoundedCornerShape(16.dp),
-                containerColor = LigayaColors.shell,
+                containerColor = LigayaTheme.colors.shell,
             ) {
                 DropdownMenuItem(
-                    text = { Text("Talk to Ligaya", style = LigayaTypography.chipLabel, color = LigayaColors.cocoaInk) },
+                    text = { Text("Talk to Ligaya", style = LigayaTypography.chipLabel, color = LigayaTheme.colors.cocoaInk) },
                     onClick = {
                         menuOpen = false
                         onStartVoice()
@@ -253,7 +253,7 @@ private fun ChatHeader(
                 )
                 if (onSos != null) {
                     DropdownMenuItem(
-                        text = { Text("Emergency SOS", style = LigayaTypography.chipLabel, color = LigayaColors.colorEmergencyActive) },
+                        text = { Text("Emergency SOS", style = LigayaTypography.chipLabel, color = LigayaTheme.colors.colorEmergencyActive) },
                         onClick = {
                             menuOpen = false
                             onSos()
@@ -270,12 +270,12 @@ private fun LimitedRepliesNotice() {
     Text(
         text = "Smart replies are off right now, so Ligaya's answers will be basic. SOS and emergency calling still work.",
         style = LigayaTypography.chatStatus,
-        color = LigayaColors.cocoaInk,
+        color = LigayaTheme.colors.cocoaInk,
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 4.dp)
             .clip(RoundedCornerShape(12.dp))
-            .background(LigayaColors.colorStatusPending.copy(alpha = 0.2f))
+            .background(LigayaTheme.colors.colorStatusPending.copy(alpha = 0.2f))
             .padding(horizontal = 12.dp, vertical = 8.dp),
     )
 }
@@ -295,16 +295,16 @@ private fun LigayaMessage(text: String, time: String?) {
             Text(
                 text = text,
                 style = LigayaTypography.bubble,
-                color = LigayaColors.cocoaInk,
+                color = LigayaTheme.colors.cocoaInk,
                 modifier = Modifier
-                    .shadow(2.dp, BubbleShape, ambientColor = LigayaColors.cocoa.copy(alpha = 0.15f), spotColor = LigayaColors.cocoa.copy(alpha = 0.15f))
+                    .shadow(2.dp, BubbleShape, ambientColor = LigayaTheme.colors.cocoa.copy(alpha = 0.15f), spotColor = LigayaTheme.colors.cocoa.copy(alpha = 0.15f))
                     .clip(BubbleShape)
-                    .background(LigayaColors.bubbleLigaya)
-                    .border(1.dp, LigayaColors.bubbleLigayaEdge, BubbleShape)
+                    .background(LigayaTheme.colors.bubbleLigaya)
+                    .border(1.dp, LigayaTheme.colors.bubbleLigayaEdge, BubbleShape)
                     .padding(horizontal = 16.dp, vertical = 12.dp),
             )
             if (time != null) {
-                Text(time, style = LigayaTypography.messageTime, color = LigayaColors.taupe, modifier = Modifier.padding(start = 6.dp, top = 4.dp))
+                Text(time, style = LigayaTypography.messageTime, color = LigayaTheme.colors.taupe, modifier = Modifier.padding(start = 6.dp, top = 4.dp))
             }
         }
         Spacer(Modifier.size(40.dp))
@@ -325,19 +325,19 @@ private fun UserMessage(text: String, time: String?, answered: Boolean) {
             Text(
                 text = text,
                 style = LigayaTypography.bubble,
-                color = LigayaColors.cocoaInk,
+                color = LigayaTheme.colors.cocoaInk,
                 modifier = Modifier
                     .clip(BubbleShape)
-                    .background(LigayaColors.bubbleUser)
+                    .background(LigayaTheme.colors.bubbleUser)
                     .padding(horizontal = 16.dp, vertical = 12.dp),
             )
             Row(modifier = Modifier.padding(top = 4.dp, end = 6.dp), verticalAlignment = Alignment.CenterVertically) {
-                if (time != null) Text(time, style = LigayaTypography.messageTime, color = LigayaColors.taupe)
+                if (time != null) Text(time, style = LigayaTypography.messageTime, color = LigayaTheme.colors.taupe)
                 if (answered) {
                     Icon(
                         LigayaIcons.answered,
                         contentDescription = "Answered by Ligaya",
-                        tint = LigayaColors.online,
+                        tint = LigayaTheme.colors.online,
                         modifier = Modifier.padding(start = 6.dp).size(16.dp),
                     )
                 }
@@ -361,14 +361,14 @@ private fun TypingIndicator() {
             modifier = Modifier
                 .padding(start = 10.dp)
                 .clip(BubbleShape)
-                .background(LigayaColors.bubbleLigaya)
-                .border(1.dp, LigayaColors.bubbleLigayaEdge, BubbleShape)
+                .background(LigayaTheme.colors.bubbleLigaya)
+                .border(1.dp, LigayaTheme.colors.bubbleLigayaEdge, BubbleShape)
                 .padding(horizontal = 18.dp, vertical = 16.dp),
             horizontalArrangement = Arrangement.spacedBy(6.dp),
         ) {
             repeat(3) { i ->
                 val lit = !reduceMotion && phase.toInt() == i
-                Box(Modifier.size(8.dp).alpha(if (reduceMotion || lit) 0.9f else 0.35f).clip(CircleShape).background(LigayaColors.taupe))
+                Box(Modifier.size(8.dp).alpha(if (reduceMotion || lit) 0.9f else 0.35f).clip(CircleShape).background(LigayaTheme.colors.taupe))
             }
         }
     }
@@ -379,7 +379,7 @@ private fun ConversationNote(text: String) {
     Text(
         text = text,
         style = LigayaTypography.chatStatus,
-        color = LigayaColors.taupe,
+        color = LigayaTheme.colors.taupe,
         textAlign = TextAlign.Center,
         modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp),
     )
@@ -399,10 +399,10 @@ private fun ChatInput(onSend: (String) -> Unit) {
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp)
-            .shadow(8.dp, shape, ambientColor = LigayaColors.cocoa.copy(alpha = 0.2f), spotColor = LigayaColors.cocoa.copy(alpha = 0.2f))
+            .shadow(8.dp, shape, ambientColor = LigayaTheme.colors.cocoa.copy(alpha = 0.2f), spotColor = LigayaTheme.colors.cocoa.copy(alpha = 0.2f))
             .clip(shape)
-            .background(LigayaColors.shell)
-            .border(1.dp, LigayaColors.shellEdge, shape)
+            .background(LigayaTheme.colors.shell)
+            .border(1.dp, LigayaTheme.colors.shellEdge, shape)
             .padding(start = 22.dp, end = 6.dp, top = 6.dp, bottom = 6.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -410,14 +410,14 @@ private fun ChatInput(onSend: (String) -> Unit) {
             value = text,
             onValueChange = { text = it },
             maxLines = 4,
-            textStyle = LigayaTypography.askField.copy(color = LigayaColors.cocoaInk),
-            cursorBrush = SolidColor(LigayaColors.berry),
+            textStyle = LigayaTypography.askField.copy(color = LigayaTheme.colors.cocoaInk),
+            cursorBrush = SolidColor(LigayaTheme.colors.berry),
             keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences, imeAction = ImeAction.Send),
             keyboardActions = KeyboardActions(onSend = { send() }),
             modifier = Modifier.weight(1f).testTag("companionTextInput"),
             decorationBox = { field ->
                 Box(contentAlignment = Alignment.CenterStart) {
-                    if (text.isEmpty()) Text("Type a message...", style = LigayaTypography.askField, color = LigayaColors.taupe)
+                    if (text.isEmpty()) Text("Type a message...", style = LigayaTypography.askField, color = LigayaTheme.colors.taupe)
                     field()
                 }
             },
@@ -429,13 +429,13 @@ private fun ChatInput(onSend: (String) -> Unit) {
                 .size(48.dp)
                 .clip(CircleShape)
                 // Solid in both states, as the design draws it; an empty message simply isn't sent.
-                .background(LigayaColors.berry)
+                .background(LigayaTheme.colors.berry)
                 .clickable(enabled = canSend, role = Role.Button) { send() }
                 .semantics { contentDescription = "Send message" }
                 .testTag("companionSendButton"),
             contentAlignment = Alignment.Center,
         ) {
-            Icon(LigayaIcons.send, contentDescription = null, tint = LigayaColors.onBerry, modifier = Modifier.size(22.dp).rotate(-35f))
+            Icon(LigayaIcons.send, contentDescription = null, tint = LigayaTheme.colors.onBerry, modifier = Modifier.size(22.dp).rotate(-35f))
         }
     }
 }

@@ -11,6 +11,10 @@ interface AuthRepository {
     suspend fun logIn(email: String, password: String): AuthResult
     fun logOut()
     fun currentUserId(): String?
+
+    /** The signed-in account's email address, or null when nobody is signed in. Settings shows it on the profile
+     *  card; there is no other way to reach it, since [currentUserId] is an opaque id. */
+    fun currentUserEmail(): String?
 }
 
 sealed interface AuthResult {

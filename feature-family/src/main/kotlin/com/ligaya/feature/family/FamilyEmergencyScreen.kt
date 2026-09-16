@@ -17,7 +17,7 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import com.ligaya.core.data.family.FamilyEmergencyLocation
 import com.ligaya.core.data.family.FamilyEmergencyView
-import com.ligaya.designsystem.LigayaColors
+import com.ligaya.designsystem.LigayaTheme
 import com.ligaya.designsystem.LigayaDeliveryState
 import com.ligaya.designsystem.LigayaIcons
 import com.ligaya.designsystem.LigayaIncidentType
@@ -81,10 +81,10 @@ private fun IncidentTypeHeader(incidentType: String) {
             Icon(
                 imageVector = requireNotNull(LigayaIcons.incidentType[it]) { "no icon mapped for $it" },
                 contentDescription = null,
-                tint = LigayaColors.onSurface,
+                tint = LigayaTheme.colors.onSurface,
             )
         }
-        Text(text = label, style = LigayaTypography.display, color = LigayaColors.onSurface)
+        Text(text = label, style = LigayaTypography.display, color = LigayaTheme.colors.onSurface)
     }
 }
 
@@ -96,7 +96,7 @@ private fun TimeLine(timeEpochMillis: Long) {
     Text(
         text = formatted,
         style = LigayaTypography.body,
-        color = LigayaColors.onSurface,
+        color = LigayaTheme.colors.onSurface,
         modifier = Modifier.semantics { contentDescription = "Time: $formatted" },
     )
 }
@@ -104,12 +104,12 @@ private fun TimeLine(timeEpochMillis: Long) {
 @Composable
 private fun AlertStateSection(alertState: String?) {
     Column(verticalArrangement = Arrangement.spacedBy(LigayaSpacing.xs)) {
-        Text(text = "Alert Status", style = LigayaTypography.label, color = LigayaColors.onSurface)
+        Text(text = "Alert Status", style = LigayaTypography.label, color = LigayaTheme.colors.onSurface)
         when (val ligayaState = alertState?.toLigayaDeliveryStateOrNull()) {
             null -> Text(
                 text = alertState ?: "Not sent yet",
                 style = LigayaTypography.body,
-                color = LigayaColors.onSurface,
+                color = LigayaTheme.colors.onSurface,
                 modifier = Modifier.semantics { contentDescription = "Alert status: ${alertState ?: "not sent yet"}" },
             )
             else -> DeliveryStateBadge(state = ligayaState)
@@ -120,13 +120,13 @@ private fun AlertStateSection(alertState: String?) {
 @Composable
 private fun LocationSection(location: FamilyEmergencyLocation?) {
     Column(verticalArrangement = Arrangement.spacedBy(LigayaSpacing.xs)) {
-        Text(text = "Location", style = LigayaTypography.label, color = LigayaColors.onSurface)
+        Text(text = "Location", style = LigayaTypography.label, color = LigayaTheme.colors.onSurface)
         val message = location?.let { "%.5f, %.5f".format(it.latitude, it.longitude) }
             ?: "Location not shared"
         Text(
             text = message,
             style = LigayaTypography.body,
-            color = LigayaColors.onSurface,
+            color = LigayaTheme.colors.onSurface,
             modifier = Modifier.semantics { contentDescription = "Location: $message" },
         )
     }

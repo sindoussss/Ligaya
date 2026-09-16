@@ -63,7 +63,7 @@ import androidx.compose.ui.unit.dp
 import com.ligaya.core.uistate.EmergencyController
 import com.ligaya.core.uistate.SosResult
 import com.ligaya.core.voice.VoicePipelinePhase
-import com.ligaya.designsystem.LigayaColors
+import com.ligaya.designsystem.LigayaTheme
 import com.ligaya.designsystem.LigayaIcons
 import com.ligaya.designsystem.LigayaLogo
 import com.ligaya.designsystem.LigayaSpacing
@@ -110,6 +110,8 @@ fun HomeScreen(
     onNavigateToTools: () -> Unit = {},
     onNavigateToProfile: () -> Unit = {},
     onToggleTheme: () -> Unit = {},
+    /** Whether the app is currently painted dark, so the header's button shows the theme in force. */
+    isDarkTheme: Boolean = false,
 ) {
     val phase by voicePhase.collectAsState()
     val aiUnavailable by voiceAiUnavailable.collectAsState()
@@ -120,7 +122,7 @@ fun HomeScreen(
     Box(
         modifier = modifier
             .fillMaxSize()
-            .background(Brush.verticalGradient(listOf(LigayaColors.cream, LigayaColors.creamDeep))),
+            .background(Brush.verticalGradient(listOf(LigayaTheme.colors.cream, LigayaTheme.colors.creamDeep))),
     ) {
         Column(modifier = Modifier.fillMaxSize().statusBarsPadding().navigationBarsPadding()) {
             HomeHeader(
@@ -130,30 +132,31 @@ fun HomeScreen(
                 onNavigateToSafetyCircle = onNavigateToSafetyCircle,
                 onNavigateToRoute = onNavigateToRoute,
                 onToggleTheme = onToggleTheme,
+                isDarkTheme = isDarkTheme,
             )
 
             Column(modifier = Modifier.fillMaxWidth().padding(horizontal = LigayaSpacing.lg).padding(top = 26.dp)) {
-                Text(text = "Magandang araw,", style = LigayaTypography.homeGreeting, color = LigayaColors.cocoaInk)
+                Text(text = "Magandang araw,", style = LigayaTypography.homeGreeting, color = LigayaTheme.colors.cocoaInk)
                 Text(
                     text = "${userName?.trim()?.takeIf { it.isNotEmpty() } ?: "kaibigan"}!",
                     style = LigayaTypography.homeName,
-                    color = LigayaColors.cocoaInk,
+                    color = LigayaTheme.colors.cocoaInk,
                 )
                 Text(
                     text = "I'm Ligaya. I'm here to help, answer your questions, and make your day a little easier.",
                     style = LigayaTypography.homeIntro,
-                    color = LigayaColors.taupe,
+                    color = LigayaTheme.colors.taupe,
                     modifier = Modifier.padding(top = 8.dp).widthIn(max = 222.dp),
                 )
                 if (aiUnavailable) {
                     Text(
                         text = "Voice assistant unavailable right now — use the SOS button instead.",
                         style = LigayaTypography.chipLabel,
-                        color = LigayaColors.cocoaInk,
+                        color = LigayaTheme.colors.cocoaInk,
                         modifier = Modifier
                             .padding(top = 10.dp)
                             .clip(RoundedCornerShape(12.dp))
-                            .background(LigayaColors.colorStatusPending.copy(alpha = 0.22f))
+                            .background(LigayaTheme.colors.colorStatusPending.copy(alpha = 0.22f))
                             .padding(horizontal = 12.dp, vertical = 8.dp),
                     )
                 }
@@ -172,7 +175,7 @@ fun HomeScreen(
                         .align(Alignment.BottomCenter)
                         .fillMaxWidth()
                         .fillMaxHeight(0.3f)
-                        .background(Brush.verticalGradient(listOf(Color.Transparent, LigayaColors.cream))),
+                        .background(Brush.verticalGradient(listOf(Color.Transparent, LigayaTheme.colors.cream))),
                 )
                 Doodles(Modifier.fillMaxSize())
                 if (phase != VoicePipelinePhase.IDLE) {
@@ -205,6 +208,7 @@ private fun HomeHeader(
     onNavigateToSafetyCircle: () -> Unit,
     onNavigateToRoute: (String) -> Unit,
     onToggleTheme: () -> Unit,
+    isDarkTheme: Boolean,
 ) {
     Row(
         modifier = Modifier.fillMaxWidth().padding(start = LigayaSpacing.lg, end = LigayaSpacing.sm, top = 6.dp),
@@ -214,24 +218,31 @@ private fun HomeHeader(
         Text(
             text = "Ligaya",
             style = LigayaTypography.homeBrand,
-            color = LigayaColors.cocoaInk,
+            color = LigayaTheme.colors.cocoaInk,
             modifier = Modifier.padding(start = 10.dp),
         )
         Spacer(Modifier.weight(1f))
         SosPill(emergencyController = emergencyController, onSosActivated = onSosActivated)
+        // The icon shows the theme in force (a sun by day, a moon at night, as the reference draws it); the
+        // description says what tapping it does, which is what a screen reader needs.
         IconButton(onClick = onToggleTheme) {
-            Icon(LigayaIcons.lightMode, contentDescription = "Switch to dark mode", tint = LigayaColors.cocoa, modifier = Modifier.size(28.dp))
+            Icon(
+                imageVector = if (isDarkTheme) LigayaIcons.darkMode else LigayaIcons.lightMode,
+                contentDescription = if (isDarkTheme) "Switch to light mode" else "Switch to dark mode",
+                tint = LigayaTheme.colors.cocoa,
+                modifier = Modifier.size(28.dp),
+            )
         }
         var menuOpen by remember { mutableStateOf(false) }
         Box {
             IconButton(onClick = { menuOpen = true }) {
-                Icon(LigayaIcons.menu, contentDescription = "Menu", tint = LigayaColors.cocoa, modifier = Modifier.size(28.dp))
+                Icon(LigayaIcons.menu, contentDescription = "Menu", tint = LigayaTheme.colors.cocoa, modifier = Modifier.size(28.dp))
             }
             DropdownMenu(
                 expanded = menuOpen,
                 onDismissRequest = { menuOpen = false },
                 shape = RoundedCornerShape(16.dp),
-                containerColor = LigayaColors.shell,
+                containerColor = LigayaTheme.colors.shell,
             ) {
                 DropdownMenuItem(
                     text = { Text("Safety Circle", style = LigayaTypography.chipLabel) },
@@ -286,17 +297,17 @@ private fun SosPill(emergencyController: EmergencyController, onSosActivated: ()
             modifier = Modifier
                 .height(34.dp)
                 .clip(CircleShape)
-                .background(LigayaColors.colorEmergencyActive)
+                .background(LigayaTheme.colors.colorEmergencyActive)
                 .padding(horizontal = 12.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(5.dp),
         ) {
             if (activating) {
-                CircularProgressIndicator(color = LigayaColors.onEmergencyActive, strokeWidth = 2.dp, modifier = Modifier.size(14.dp))
+                CircularProgressIndicator(color = LigayaTheme.colors.onEmergencyActive, strokeWidth = 2.dp, modifier = Modifier.size(14.dp))
             } else {
-                Icon(LigayaIcons.emergency, contentDescription = null, tint = LigayaColors.onEmergencyActive, modifier = Modifier.size(16.dp))
+                Icon(LigayaIcons.emergency, contentDescription = null, tint = LigayaTheme.colors.onEmergencyActive, modifier = Modifier.size(16.dp))
             }
-            Text(text = "SOS", style = LigayaTypography.chipLabel, color = LigayaColors.onEmergencyActive)
+            Text(text = "SOS", style = LigayaTypography.chipLabel, color = LigayaTheme.colors.onEmergencyActive)
         }
     }
 }
@@ -319,10 +330,10 @@ private fun AskBar(onAskText: (String) -> Unit, onStartVoice: () -> Unit) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .shadow(10.dp, RoundedCornerShape(30.dp), ambientColor = LigayaColors.cocoa.copy(alpha = 0.25f), spotColor = LigayaColors.cocoa.copy(alpha = 0.25f))
+                .shadow(10.dp, RoundedCornerShape(30.dp), ambientColor = LigayaTheme.colors.cocoa.copy(alpha = 0.25f), spotColor = LigayaTheme.colors.cocoa.copy(alpha = 0.25f))
                 .clip(RoundedCornerShape(30.dp))
-                .background(LigayaColors.shell)
-                .border(1.dp, LigayaColors.shellEdge, RoundedCornerShape(30.dp))
+                .background(LigayaTheme.colors.shell)
+                .border(1.dp, LigayaTheme.colors.shellEdge, RoundedCornerShape(30.dp))
                 .padding(start = 22.dp, end = 8.dp, top = 8.dp, bottom = 8.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
@@ -330,15 +341,15 @@ private fun AskBar(onAskText: (String) -> Unit, onStartVoice: () -> Unit) {
                 value = text,
                 onValueChange = { text = it },
                 singleLine = true,
-                textStyle = LigayaTypography.askField.copy(color = LigayaColors.cocoaInk),
-                cursorBrush = SolidColor(LigayaColors.berry),
+                textStyle = LigayaTypography.askField.copy(color = LigayaTheme.colors.cocoaInk),
+                cursorBrush = SolidColor(LigayaTheme.colors.berry),
                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Send),
                 keyboardActions = KeyboardActions(onSend = { submit() }),
                 modifier = Modifier.weight(1f).focusRequester(focus),
                 decorationBox = { field ->
                     Box(contentAlignment = Alignment.CenterStart) {
                         if (text.isEmpty()) {
-                            Text("Ask me anything...", style = LigayaTypography.askField, color = LigayaColors.taupe)
+                            Text("Ask me anything...", style = LigayaTypography.askField, color = LigayaTheme.colors.taupe)
                         }
                         field()
                     }
@@ -349,12 +360,12 @@ private fun AskBar(onAskText: (String) -> Unit, onStartVoice: () -> Unit) {
                 modifier = Modifier
                     .size(52.dp)
                     .clip(CircleShape)
-                    .background(LigayaColors.berry)
+                    .background(LigayaTheme.colors.berry)
                     .clickable(role = Role.Button) { if (typing) submit() else onStartVoice() }
                     .semantics { contentDescription = if (typing) "Send to Ligaya" else "Talk to Ligaya" },
                 contentAlignment = Alignment.Center,
             ) {
-                Icon(if (typing) LigayaIcons.send else LigayaIcons.mic, contentDescription = null, tint = LigayaColors.onBerry)
+                Icon(if (typing) LigayaIcons.send else LigayaIcons.mic, contentDescription = null, tint = LigayaTheme.colors.onBerry)
             }
         }
 
@@ -377,14 +388,14 @@ private fun ShortcutChip(icon: ImageVector, label: String, modifier: Modifier, o
         modifier = modifier
             .height(LigayaSpacing.minTouchTarget)
             .clip(RoundedCornerShape(24.dp))
-            .background(LigayaColors.shell)
-            .border(1.dp, LigayaColors.shellEdge, RoundedCornerShape(24.dp))
+            .background(LigayaTheme.colors.shell)
+            .border(1.dp, LigayaTheme.colors.shellEdge, RoundedCornerShape(24.dp))
             .clickable(role = Role.Button, onClick = onClick),
         horizontalArrangement = Arrangement.Center,
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Icon(icon, contentDescription = null, tint = LigayaColors.berry, modifier = Modifier.size(20.dp))
-        Text(label, style = LigayaTypography.chipLabel, color = LigayaColors.cocoaInk, modifier = Modifier.padding(start = 8.dp))
+        Icon(icon, contentDescription = null, tint = LigayaTheme.colors.berry, modifier = Modifier.size(20.dp))
+        Text(label, style = LigayaTypography.chipLabel, color = LigayaTheme.colors.cocoaInk, modifier = Modifier.padding(start = 8.dp))
     }
 }
 
@@ -394,18 +405,21 @@ private fun VoiceCaption(phase: VoicePipelinePhase, modifier: Modifier = Modifie
     Row(
         modifier = modifier
             .clip(CircleShape)
-            .background(LigayaColors.shell.copy(alpha = 0.92f))
+            .background(LigayaTheme.colors.shell.copy(alpha = 0.92f))
             .padding(start = 6.dp, end = 14.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         VoiceStateIndicator(state = phase.toLigayaVoiceState())
-        Text(text = voiceStateLabel(phase), style = LigayaTypography.chipLabel, color = LigayaColors.cocoaInk)
+        Text(text = voiceStateLabel(phase), style = LigayaTypography.chipLabel, color = LigayaTheme.colors.cocoaInk)
     }
 }
 
 /** The little hand-drawn marks around Ligaya: a burst of strokes on her left, a heart on her right. */
 @Composable
 private fun Doodles(modifier: Modifier = Modifier) {
+    // Read here, in composable scope: the draw lambda below is a DrawScope and cannot read the theme.
+    val doodle = LigayaTheme.colors.doodle
+
     Canvas(modifier.clearAndSetSemantics { }) {
         val stroke = 1.8.dp.toPx()
         val w = size.width
@@ -414,7 +428,7 @@ private fun Doodles(modifier: Modifier = Modifier) {
         val burst = Offset(w * 0.17f, h * 0.44f)
         listOf(Offset(-0.05f, -0.05f), Offset(-0.06f, 0.02f)).forEach { d ->
             drawLine(
-                color = LigayaColors.doodle,
+                color = doodle,
                 start = Offset(burst.x + d.x * w * 0.4f, burst.y + d.y * h * 0.4f),
                 end = Offset(burst.x + d.x * w, burst.y + d.y * h),
                 strokeWidth = stroke,
@@ -430,8 +444,8 @@ private fun Doodles(modifier: Modifier = Modifier) {
             cubicTo(cx - s * 1.3f, cy, cx - s * 0.6f, cy - s * 0.9f, cx, cy - s * 0.25f)
             cubicTo(cx + s * 0.6f, cy - s * 0.9f, cx + s * 1.3f, cy, cx, cy + s * 0.9f)
         }
-        drawPath(heart, LigayaColors.doodle, style = Stroke(width = stroke, cap = StrokeCap.Round))
-        drawLine(LigayaColors.doodle, Offset(cx + s * 0.4f, cy - s * 1.4f), Offset(cx + s * 0.2f, cy - s * 2.6f), stroke, StrokeCap.Round)
+        drawPath(heart, doodle, style = Stroke(width = stroke, cap = StrokeCap.Round))
+        drawLine(doodle, Offset(cx + s * 0.4f, cy - s * 1.4f), Offset(cx + s * 0.2f, cy - s * 2.6f), stroke, StrokeCap.Round)
     }
 }
 

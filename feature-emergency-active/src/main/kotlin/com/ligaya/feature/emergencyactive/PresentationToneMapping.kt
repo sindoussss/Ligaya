@@ -4,7 +4,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import com.ligaya.core.uistate.PresentationTone
-import com.ligaya.designsystem.LigayaColors
+import com.ligaya.designsystem.LigayaTheme
 import com.ligaya.designsystem.components.StatusTone
 
 /**
@@ -15,21 +15,21 @@ import com.ligaya.designsystem.components.StatusTone
 @Composable
 fun PresentationTone.containerColor(): Color = when (this) {
     PresentationTone.NEUTRAL -> MaterialTheme.colorScheme.surfaceVariant
-    PresentationTone.PENDING -> LigayaColors.colorStatusPending
-    PresentationTone.IN_PROGRESS -> LigayaColors.idlePrimary
-    PresentationTone.SUCCESS -> LigayaColors.colorStatusConfirmed
-    PresentationTone.FAILURE -> LigayaColors.colorStatusFailed
-    PresentationTone.EMERGENCY -> LigayaColors.colorEmergencyActive
+    PresentationTone.PENDING -> LigayaTheme.colors.colorStatusPending
+    PresentationTone.IN_PROGRESS -> LigayaTheme.colors.idlePrimary
+    PresentationTone.SUCCESS -> LigayaTheme.colors.colorStatusConfirmed
+    PresentationTone.FAILURE -> LigayaTheme.colors.colorStatusFailed
+    PresentationTone.EMERGENCY -> LigayaTheme.colors.colorEmergencyActive
 }
 
 @Composable
 fun PresentationTone.contentColor(): Color = when (this) {
     PresentationTone.NEUTRAL -> MaterialTheme.colorScheme.onSurfaceVariant
-    PresentationTone.PENDING -> LigayaColors.onStatusPending
-    PresentationTone.IN_PROGRESS -> LigayaColors.onIdlePrimary
-    PresentationTone.SUCCESS -> LigayaColors.onStatusConfirmed
-    PresentationTone.FAILURE -> LigayaColors.onStatusFailed
-    PresentationTone.EMERGENCY -> LigayaColors.onEmergencyActive
+    PresentationTone.PENDING -> LigayaTheme.colors.onStatusPending
+    PresentationTone.IN_PROGRESS -> LigayaTheme.colors.onIdlePrimary
+    PresentationTone.SUCCESS -> LigayaTheme.colors.onStatusConfirmed
+    PresentationTone.FAILURE -> LigayaTheme.colors.onStatusFailed
+    PresentationTone.EMERGENCY -> LigayaTheme.colors.onEmergencyActive
 }
 
 /** design-system's StatusCard/StatusChip (Step 34) only have four tones — IN_PROGRESS folds into
