@@ -17,6 +17,12 @@
          but was previously unable to succeed at all since :app never declared it. -->
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
 
+    <!-- Visual design screen 8 ("Oops..."): that screen names why a turn failed, and section 21 lists
+         "Internet unavailable" as its own failure row, separate from a Gemini outage. Without this the app
+         cannot tell the two apart and would have to guess at the cause — which sections 21/23 forbid. Read
+         only: NetworkStatus (core-ai) queries ConnectivityManager, it never opens or changes a connection. -->
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+
     <!-- Step 52's own finding: the Room database this app ships (LigayaDatabase, core-data)
          stores location history, household/family-member contacts, and emergency event/state
          records — exactly the personal-safety data a Play Store compliance review most scrutinizes

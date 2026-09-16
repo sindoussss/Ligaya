@@ -135,6 +135,11 @@ object LigayaColors {
     val thinkingDot = Color(0xFF4F2226)
     val thinkingDotLight = Color(0xFFEBCBBF)
 
+    // --- Visual design: trouble ("Oops...") ---------------------------------------------------
+
+    /** The rose-red disc behind the "!" on a failure card. Carries white glyphs only, never text. */
+    val troubleDisc = Color(0xFFB95667)
+
     // --- Visual design: resolved ("That's great!") --------------------------------------------
 
     /** The soft sage disc behind a confirmed outcome's tick. Carries white glyphs only, never text. */

@@ -50,6 +50,9 @@ sealed class LigayaDestination(val route: String, val title: String) {
 
     /** Visual design screen 7: her reply being read out loud. Follows [Thinking]; excluded from [all]. */
     data object Speaking : LigayaDestination("speaking", "Speaking")
+
+    /** Visual design screen 8: a turn that couldn't be answered, with the reason named. Excluded from [all]. */
+    data object Trouble : LigayaDestination("trouble", "Trouble")
     data object Sos : LigayaDestination("sos", "SOS")
     data object EmergencyActive : LigayaDestination("emergency_active", "Emergency Active")
     data object EmergencyCompanion : LigayaDestination("companion", "Emergency Companion")

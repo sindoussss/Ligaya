@@ -34,9 +34,12 @@ import com.ligaya.feature.companion.EmergencyCompanionCoordinator
 import com.ligaya.feature.companion.EmergencyCompanionScreen
 import com.ligaya.feature.companion.ListeningState
 import com.ligaya.core.ai.CompanionTurn
+import com.ligaya.core.ai.NetworkStatus
 import com.ligaya.feature.companion.VoiceListeningScreen
+import com.ligaya.feature.companion.TroubleReason
 import com.ligaya.feature.companion.VoiceSpeakingScreen
 import com.ligaya.feature.companion.VoiceThinkingScreen
+import com.ligaya.feature.companion.VoiceTroubleScreen
 import com.ligaya.feature.emergencyactive.EmergencyActiveScreen
 import com.ligaya.feature.emergencyactive.EmergencyResolvedScreen
 import com.ligaya.feature.home.HomeScreen
@@ -90,6 +93,9 @@ fun LigayaNavHost(
     voiceTurnActive: StateFlow<Boolean>,
     onCancelVoiceTurn: () -> Unit,
     isMicPermitted: () -> Boolean,
+    /** Read when a turn fails, so screen 8 can name being offline as the cause only when that is actually true
+     *  (section 21 lists it as its own failure row; section 23 forbids stating a cause nothing established). */
+    networkStatus: NetworkStatus,
     navController: NavHostController = rememberNavController(),
 ) {
     val scope = rememberCoroutineScope()
@@ -353,6 +359,37 @@ fun LigayaNavHost(
                 },
             )
         }
+        composable(LigayaDestination.Trouble.route) {
+            // Visual design screen 8. The reason is established, never guessed: offline only when the device says
+            // so, a blocked reply when that is what came back, otherwise her assistant could not be reached.
+            val lastResult by companionCoordinator.lastResult.collectAsState()
+            val transcript by companionCoordinator.transcript.collectAsState()
+            // A reply that is only the safe fallback means Gemini never really answered, which is the same story
+            // for the user as not reaching it at all — so both land on AssistantUnavailable.
+            val reason = remember(lastResult, networkStatus) {
+                when {
+                    !networkStatus.isOnline() -> TroubleReason.Offline
+                    lastResult is CompanionTurnResult.ResponseBlocked -> TroubleReason.ReplyBlocked
+                    else -> TroubleReason.AssistantUnavailable
+                }
+            }
+            val leaveForChat = {
+                navController.navigate(LigayaDestination.EmergencyCompanion.route) {
+                    popUpTo(LigayaDestination.Trouble.route) { inclusive = true }
+                    launchSingleTop = true
+                }
+            }
+            BackHandler { leaveForChat() }
+            VoiceTroubleScreen(
+                reason = reason,
+                onTryAgain = {
+                    navController.navigate(LigayaDestination.Listening.route) {
+                        popUpTo(LigayaDestination.Trouble.route) { inclusive = true }
+                        launchSingleTop = true
+                    }
+                },
+            )
+        }
         composable(LigayaDestination.Speaking.route) {
             // Visual design screen 7. The reply itself comes from the transcript — it is appended just before she
             // starts speaking — but whether the phone actually said it out loud is only known once the turn ends.
@@ -389,16 +426,17 @@ fun LigayaNavHost(
             // the reason there isn't one appears. Back cancels the turn. What was said has already gone to the
             // emergency engine as well, and cancelling doesn't undo that.
             val phase by companionCoordinator.phase.collectAsState()
+            val lastThinkingResult by companionCoordinator.lastResult.collectAsState()
             var leaving by remember { mutableStateOf(false) }
             LaunchedEffect(phase) {
                 if (phase != VoicePipelinePhase.PROCESSING && !leaving) {
                     leaving = true
-                    // She has an answer: screen 7 reads it out. Anything else (blocked, or an ended turn with no
-                    // reply) goes straight to Chat, where the reason is written.
-                    val next = if (phase == VoicePipelinePhase.SPEAKING) {
-                        LigayaDestination.Speaking.route
-                    } else {
-                        LigayaDestination.EmergencyCompanion.route
+                    // She has an answer: screen 7 reads it out. A reply that was blocked has a reason worth
+                    // showing, so that goes to screen 8; anything else continues in Chat.
+                    val next = when {
+                        phase == VoicePipelinePhase.SPEAKING -> LigayaDestination.Speaking.route
+                        lastThinkingResult is CompanionTurnResult.ResponseBlocked -> LigayaDestination.Trouble.route
+                        else -> LigayaDestination.EmergencyCompanion.route
                     }
                     navController.navigate(next) {
                         popUpTo(LigayaDestination.Thinking.route) { inclusive = true }

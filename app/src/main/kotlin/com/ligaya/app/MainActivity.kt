@@ -50,6 +50,7 @@ import com.ligaya.core.places.GooglePlacesNearbySearchSource
 import com.ligaya.core.location.FusedLocationSource
 import com.ligaya.core.location.LocationFlowCoordinator
 import com.ligaya.core.location.LocationFlowReporter
+import com.ligaya.core.ai.AndroidNetworkStatus
 import com.ligaya.core.voice.AndroidSpeechOutput
 import com.ligaya.core.voice.AndroidSpeechTranscriber
 import com.ligaya.core.voice.BatteryLevelLogger
@@ -425,6 +426,8 @@ class MainActivity : ComponentActivity() {
                         isMicPermitted = {
                             permissionChecker.currentState(Manifest.permission.RECORD_AUDIO) == PermissionState.Granted
                         },
+                        // Screen 8 names being offline as a cause only when the device actually reports it.
+                        networkStatus = AndroidNetworkStatus(applicationContext),
                         emergencyController = emergencyController,
                         companionCoordinator = companionCoordinator,
                         voicePhase = voiceActivationCoordinator.phase,

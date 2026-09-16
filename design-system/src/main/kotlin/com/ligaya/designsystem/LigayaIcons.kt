@@ -19,6 +19,7 @@ import androidx.compose.material.icons.filled.GridView
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.PriorityHigh
 import androidx.compose.material.icons.outlined.ChatBubbleOutline
 import androidx.compose.material.icons.outlined.GridView
 import androidx.compose.material.icons.outlined.Home
@@ -98,6 +99,9 @@ object LigayaIcons {
     // --- Resolved (visual design, screen 6) ---
     val confirmed: ImageVector = Icons.Filled.Check
     val failed: ImageVector = Icons.Filled.ErrorOutline
+
+    // --- Trouble (visual design, screen 8): the "!" on a failure card, filled to read on its rose disc. ---
+    val trouble: ImageVector = Icons.Filled.PriorityHigh
 
     val incidentType: Map<LigayaIncidentType, ImageVector> = mapOf(
         LigayaIncidentType.FIRE to Icons.Filled.LocalFireDepartment,
