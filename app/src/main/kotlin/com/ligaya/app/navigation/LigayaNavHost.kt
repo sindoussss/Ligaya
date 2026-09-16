@@ -38,6 +38,7 @@ import com.ligaya.core.backend.auth.AuthRepository
 import com.ligaya.core.backend.auth.AuthResult
 import com.ligaya.core.data.profile.EmergencyProfileRepository
 import com.ligaya.core.places.EmergencyServiceLookupResult
+import com.ligaya.feature.safetycircle.QuickActionsScreen
 import com.ligaya.feature.safetycircle.SafetyCircleHomeScreen
 import com.ligaya.feature.paywall.PaywallScreen
 import com.ligaya.core.data.profile.EmergencyContact
@@ -136,6 +137,9 @@ fun LigayaNavHost(
     /** Screen 14 (§16): the nearest-service lookup's own result for the current episode, session-only —
      *  see MainActivity's own comment on why this is not part of emergencyController's persisted snapshot. */
     emergencyServiceResult: StateFlow<EmergencyServiceLookupResult?>,
+    /** Safety Circle > Quick actions: real, needs no backend — see MainActivity's own doc comment. Returns
+     *  whether a location was actually found and shared. */
+    onShareLocation: suspend () -> Boolean,
     navController: NavHostController = rememberNavController(),
 ) {
     val scope = rememberCoroutineScope()
@@ -633,6 +637,7 @@ fun LigayaNavHost(
                 householdBackendConfigured = false,
                 onSignIn = { navController.navigate(LigayaDestination.CreateAccount.route) },
                 onEditContacts = openProfile,
+                onOpenQuickActions = { navController.navigate(LigayaDestination.QuickActions.route) },
                 onOpenLigayaPlus = { navController.navigate(LigayaDestination.Paywall.route) },
                 onSelectTab = { tab ->
                     when (tab) {
@@ -646,8 +651,25 @@ fun LigayaNavHost(
                 },
             )
         }
+        composable(LigayaDestination.QuickActions.route) {
+            QuickActionsScreen(
+                onBack = { navController.popBackStack() },
+                // The same deterministic-engine SOS trigger every other control in the app uses (see
+                // this route's onSos above) — never a second, ad-hoc dial path.
+                onCallSos = {
+                    scope.launch {
+                        when (emergencyController.triggerSos()) {
+                            is SosResult.Activated, is SosResult.AlreadyInProgress ->
+                                navController.navigate(LigayaDestination.EmergencyActive.route) { launchSingleTop = true }
+                        }
+                    }
+                },
+                circleAlertsConfigured = false,
+                onShareLocation = onShareLocation,
+            )
+        }
         composable(LigayaDestination.Paywall.route) {
-            PaywallScreen(entitlementRepository = entitlementRepository)
+            PaywallScreen(entitlementRepository = entitlementRepository, onBack = { navController.popBackStack() })
         }
         composable(LigayaDestination.Onboarding.route) {
             // Visual design screen 2. Both exits pop back for now: the real hand-off into the

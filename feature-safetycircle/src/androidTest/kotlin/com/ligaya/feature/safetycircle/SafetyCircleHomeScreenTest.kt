@@ -43,6 +43,7 @@ class SafetyCircleHomeScreenTest {
                     householdBackendConfigured = false,
                     onSignIn = {},
                     onEditContacts = {},
+                    onOpenQuickActions = {},
                     onOpenLigayaPlus = {},
                 )
             }
@@ -70,6 +71,7 @@ class SafetyCircleHomeScreenTest {
                     householdBackendConfigured = false,
                     onSignIn = {},
                     onEditContacts = {},
+                    onOpenQuickActions = {},
                     onOpenLigayaPlus = {},
                 )
             }
@@ -96,6 +98,7 @@ class SafetyCircleHomeScreenTest {
                     householdBackendConfigured = false,
                     onSignIn = {},
                     onEditContacts = {},
+                    onOpenQuickActions = {},
                     onOpenLigayaPlus = {},
                 )
             }
@@ -111,6 +114,7 @@ class SafetyCircleHomeScreenTest {
     fun signedOutItOffersTheWayInAndTheEmptyContactsLeadToTheProfile() {
         var signIn = false
         var editContacts = false
+        var quickActions = false
         var ligayaPlus = false
         composeTestRule.setContent {
             LigayaTheme(mode = LigayaThemeMode.Light) {
@@ -120,6 +124,7 @@ class SafetyCircleHomeScreenTest {
                     householdBackendConfigured = false,
                     onSignIn = { signIn = true },
                     onEditContacts = { editContacts = true },
+                    onOpenQuickActions = { quickActions = true },
                     onOpenLigayaPlus = { ligayaPlus = true },
                 )
             }
@@ -127,10 +132,79 @@ class SafetyCircleHomeScreenTest {
 
         composeTestRule.onNodeWithText("Sign in to set up your Safety Circle").performScrollTo().performClick()
         composeTestRule.onNodeWithText("No emergency contacts yet").performScrollTo().performClick()
+        composeTestRule.onNodeWithText("Quick actions").performScrollTo().performClick()
         composeTestRule.onNodeWithText("Family plan").performScrollTo().performClick()
 
         assertTrue(signIn)
         assertTrue(editContacts)
+        assertTrue(quickActions)
         assertTrue(ligayaPlus)
+    }
+
+    @Test
+    fun theEmergencyContactsSummaryRowShowsTheRealCountAndLeadsToTheSameEditorAsFamilyAndFriends() {
+        var editContacts = 0
+        composeTestRule.setContent {
+            LigayaTheme(mode = LigayaThemeMode.Light) {
+                SafetyCircleHomeScreen(
+                    signedIn = true,
+                    contacts = contacts,
+                    householdBackendConfigured = false,
+                    onSignIn = {},
+                    onEditContacts = { editContacts++ },
+                    onOpenQuickActions = {},
+                    onOpenLigayaPlus = {},
+                )
+            }
+        }
+
+        composeTestRule.onNodeWithContentDescription("Emergency contacts. 2 added").performScrollTo().performClick()
+
+        assertTrue("the summary row's own count must reflect the real contact list", editContacts == 1)
+    }
+
+    @Test
+    fun quickActionsRowHandsOff() {
+        var opened = false
+        composeTestRule.setContent {
+            LigayaTheme(mode = LigayaThemeMode.Light) {
+                SafetyCircleHomeScreen(
+                    signedIn = true,
+                    contacts = contacts,
+                    householdBackendConfigured = false,
+                    onSignIn = {},
+                    onEditContacts = {},
+                    onOpenQuickActions = { opened = true },
+                    onOpenLigayaPlus = {},
+                )
+            }
+        }
+
+        composeTestRule.onNodeWithText("Quick actions").performScrollTo().performClick()
+
+        assertTrue(opened)
+    }
+
+    @Test
+    fun familyAndFriendsShowsEachContactsInitialAsItsAvatar() {
+        composeTestRule.setContent {
+            LigayaTheme(mode = LigayaThemeMode.Light) {
+                SafetyCircleHomeScreen(
+                    signedIn = true,
+                    contacts = contacts,
+                    householdBackendConfigured = false,
+                    onSignIn = {},
+                    onEditContacts = {},
+                    onOpenQuickActions = {},
+                    onOpenLigayaPlus = {},
+                )
+            }
+        }
+
+        composeTestRule.onNodeWithText("FAMILY & FRIENDS").performScrollTo().assertIsDisplayed()
+        // No real photo exists for a locally-saved contact, so the avatar is honestly a letter, not a
+        // placeholder headshot.
+        composeTestRule.onNodeWithText("M").performScrollTo().assertIsDisplayed()
+        composeTestRule.onNodeWithText("A").performScrollTo().assertIsDisplayed()
     }
 }

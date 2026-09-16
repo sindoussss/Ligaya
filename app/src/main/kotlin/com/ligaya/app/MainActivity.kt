@@ -460,6 +460,31 @@ class MainActivity : ComponentActivity() {
             LocationFlowReporter(emergencyController::reportLocationFlow),
         )
 
+        // Safety Circle > Quick actions: "share your location" — real, and independent of every
+        // backend/API-key gate elsewhere in this file. It needs nothing but the device's own
+        // location permission and Android's own share sheet, so unlike the Places/Gemini/
+        // RevenueCat flows this one is never "unconfigured," only "no fix available right now" —
+        // returns false rather than throwing either way, same never-hang rule as the rest of this
+        // file's Android-facing calls.
+        val shareCurrentLocation: suspend () -> Boolean = {
+            if (permissionChecker.currentState(Manifest.permission.ACCESS_FINE_LOCATION) != PermissionState.Granted) {
+                false
+            } else {
+                val fix = fusedLocationSource.getCurrentLocation() ?: fusedLocationSource.getLastKnownLocation()
+                if (fix == null) {
+                    false
+                } else {
+                    val mapsUrl = "https://maps.google.com/?q=${fix.latitude},${fix.longitude}"
+                    val sendIntent = Intent(Intent.ACTION_SEND).apply {
+                        type = "text/plain"
+                        putExtra(Intent.EXTRA_TEXT, "Here's my current location: $mapsUrl")
+                    }
+                    startActivity(Intent.createChooser(sendIntent, "Share your location"))
+                    true
+                }
+            }
+        }
+
         // Screen 14 (§16): the actual nearest-service result — name, distance, public contact —
         // for whatever later reads it, kept separate from emergencyController's own persisted
         // snapshot (see EmergencyServiceFlowCoordinator's own doc on why). Session-only, like
@@ -536,6 +561,7 @@ class MainActivity : ComponentActivity() {
                         },
                         onOpenAppSettings = ::openAppSettings,
                         emergencyServiceResult = emergencyServiceResult.asStateFlow(),
+                        onShareLocation = shareCurrentLocation,
                     )
                   }
                 }

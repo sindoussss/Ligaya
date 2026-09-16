@@ -25,9 +25,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.ligaya.core.data.profile.EmergencyContact
 import com.ligaya.designsystem.ligayaButtonElevation
@@ -49,8 +51,12 @@ import com.ligaya.designsystem.components.LigayaTabBar
  * anyone would be alerted. So this screen says so in plain words instead of showing an empty roster that
  * looks like a working feature nobody has used yet.
  *
- * It also says what does not depend on any of that: SOS, 911 and the companion (section 13's independence
- * rule), so nobody reads "family alerts unavailable" as "the app cannot help me".
+ * "Quick actions" leads to [QuickActionsScreen] rather than doing three things on one tap the way its own
+ * subtitle here reads at a glance ("call 911, alert your circle, and share your location — all in one tap"):
+ * one of those three is genuinely one-tap-real (911), one is real but independent (share location), and one
+ * cannot do anything without the same backend project this whole screen is honest about not having (alert
+ * your circle) — collapsing them into a single combined action would mean either skipping the one that
+ * cannot run or silently doing less than the label promises. Each gets its own honest state instead.
  */
 @Composable
 fun SafetyCircleHomeScreen(
@@ -60,6 +66,7 @@ fun SafetyCircleHomeScreen(
     householdBackendConfigured: Boolean,
     onSignIn: () -> Unit,
     onEditContacts: () -> Unit,
+    onOpenQuickActions: () -> Unit,
     onOpenLigayaPlus: () -> Unit,
     onSelectTab: (LigayaTab) -> Unit = {},
     modifier: Modifier = Modifier,
@@ -81,6 +88,15 @@ fun SafetyCircleHomeScreen(
         Column(
             modifier = Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(horizontal = 18.dp),
         ) {
+            CircleCard {
+                CircleFact(
+                    label = "Your safety matters",
+                    value = "Set up your circle for faster help in emergencies.",
+                )
+            }
+
+            Spacer(Modifier.height(18.dp))
+
             if (!signedIn) {
                 CircleCard {
                     CircleAction(
@@ -93,7 +109,25 @@ fun SafetyCircleHomeScreen(
                 Spacer(Modifier.height(18.dp))
             }
 
-            SectionHeading("PEOPLE ON THIS PHONE")
+            CircleCard {
+                CircleAction(
+                    icon = LigayaIcons.circle,
+                    label = "Emergency contacts",
+                    detail = if (contacts.isEmpty()) "None added yet" else "${contacts.size} added",
+                    onClick = onEditContacts,
+                )
+                CircleDivider()
+                CircleAction(
+                    icon = LigayaIcons.quickActions,
+                    label = "Quick actions",
+                    detail = "Call 911, alert your circle, and share your location.",
+                    onClick = onOpenQuickActions,
+                )
+            }
+
+            Spacer(Modifier.height(18.dp))
+
+            SectionHeading("FAMILY & FRIENDS")
             CircleCard {
                 if (contacts.isEmpty()) {
                     CircleAction(
@@ -106,13 +140,13 @@ fun SafetyCircleHomeScreen(
                         if (index > 0) CircleDivider()
                         ContactRow(contact)
                     }
-                    CircleDivider()
-                    CircleAction(
-                        label = "Edit emergency contacts",
-                        detail = "In your emergency profile.",
-                        onClick = onEditContacts,
-                    )
                 }
+                CircleDivider()
+                CircleAction(
+                    label = "Add contact",
+                    detail = "In your emergency profile.",
+                    onClick = onEditContacts,
+                )
             }
 
             Spacer(Modifier.height(18.dp))
@@ -168,7 +202,7 @@ private fun SectionHeading(text: String) {
 }
 
 @Composable
-private fun CircleCard(content: @Composable () -> Unit) {
+internal fun CircleCard(content: @Composable () -> Unit) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -182,7 +216,7 @@ private fun CircleCard(content: @Composable () -> Unit) {
 }
 
 @Composable
-private fun CircleDivider() {
+internal fun CircleDivider() {
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -192,6 +226,9 @@ private fun CircleDivider() {
     )
 }
 
+/** The avatar reads a name where the reference draws a photo: this app has no photo to show for a
+ *  locally-saved contact, and a placeholder headshot would look like a real one. The initial is
+ *  honestly what it is — a letter, not a picture — while still giving each row its own identity. */
 @Composable
 private fun ContactRow(contact: EmergencyContact) {
     // A missing number is the thing worth saying: a contact with a relationship and no number looked
@@ -201,20 +238,19 @@ private fun ContactRow(contact: EmergencyContact) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .heightIn(min = 56.dp)
+            .heightIn(min = 60.dp)
             .semantics { contentDescription = "${contact.name}. $detail" }
             .padding(horizontal = 16.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Box(
-            modifier = Modifier.size(36.dp).clip(CircleShape).background(LigayaTheme.colors.blush),
+            modifier = Modifier.size(44.dp).clip(CircleShape).background(LigayaTheme.colors.blush),
             contentAlignment = Alignment.Center,
         ) {
-            Icon(
-                imageVector = LigayaIcons.circle,
-                contentDescription = null,
-                tint = LigayaTheme.colors.accentInk,
-                modifier = Modifier.size(20.dp),
+            Text(
+                text = contact.name.trim().firstOrNull()?.uppercaseChar()?.toString() ?: "?",
+                style = LigayaTypography.settingsRow.copy(fontWeight = FontWeight.SemiBold),
+                color = LigayaTheme.colors.accentInk,
             )
         }
         Column(modifier = Modifier.weight(1f).padding(start = 14.dp)) {
@@ -230,7 +266,7 @@ private fun ContactRow(contact: EmergencyContact) {
 }
 
 @Composable
-private fun CircleFact(label: String, value: String) {
+internal fun CircleFact(label: String, value: String) {
     Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp)) {
         Text(label, style = LigayaTypography.settingsRow, color = LigayaTheme.colors.cocoaInk)
         Text(
@@ -243,7 +279,7 @@ private fun CircleFact(label: String, value: String) {
 }
 
 @Composable
-private fun CircleAction(label: String, detail: String, onClick: () -> Unit) {
+internal fun CircleAction(label: String, detail: String, onClick: () -> Unit, icon: ImageVector? = null) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -253,6 +289,14 @@ private fun CircleAction(label: String, detail: String, onClick: () -> Unit) {
             .padding(horizontal = 16.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
+        if (icon != null) {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                tint = LigayaTheme.colors.cocoaInk,
+                modifier = Modifier.size(22.dp).padding(end = 14.dp),
+            )
+        }
         Column(modifier = Modifier.weight(1f)) {
             Text(label, style = LigayaTypography.settingsRow, color = LigayaTheme.colors.cocoaInk)
             Text(

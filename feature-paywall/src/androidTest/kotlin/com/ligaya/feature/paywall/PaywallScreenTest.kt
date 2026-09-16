@@ -6,10 +6,14 @@ import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.ligaya.core.billing.EntitlementRepository
 import com.ligaya.core.billing.PurchaseOutcome
 import com.ligaya.core.billing.RevenueCatEntitlementRepository
+import com.ligaya.core.billing.SubscriptionTier
+import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -41,7 +45,7 @@ class PaywallScreenTest {
 
     private class FakeEntitlementRepository(private val subscribed: Boolean) : EntitlementRepository {
         override suspend fun isSubscribed(): Boolean = subscribed
-        override suspend fun purchase(activity: Activity): PurchaseOutcome = PurchaseOutcome.Success
+        override suspend fun purchase(activity: Activity, tier: SubscriptionTier): PurchaseOutcome = PurchaseOutcome.Success
         override suspend fun restorePurchases(): PurchaseOutcome = PurchaseOutcome.Success
     }
 
@@ -59,7 +63,8 @@ class PaywallScreenTest {
             composeTestRule.onAllNodesWithContentDescription("You're subscribed to Ligaya+")
                 .fetchSemanticsNodes().isEmpty()
         }
-        composeTestRule.onNodeWithTag("paywallSubscribe").assertIsDisplayed()
+        composeTestRule.onNodeWithTag("paywallSubscribeMonthly").assertIsDisplayed()
+        composeTestRule.onNodeWithTag("paywallSubscribeYearly").assertIsDisplayed()
     }
 
     @Test
@@ -73,5 +78,68 @@ class PaywallScreenTest {
                 .fetchSemanticsNodes().isNotEmpty()
         }
         composeTestRule.onNodeWithContentDescription("You're subscribed to Ligaya+").assertIsDisplayed()
+    }
+
+    private class RecordingEntitlementRepository : EntitlementRepository {
+        var lastPurchaseTier: SubscriptionTier? = null
+            private set
+
+        override suspend fun isSubscribed(): Boolean = false
+        override suspend fun purchase(activity: Activity, tier: SubscriptionTier): PurchaseOutcome {
+            lastPurchaseTier = tier
+            return PurchaseOutcome.Success
+        }
+        override suspend fun restorePurchases(): PurchaseOutcome = PurchaseOutcome.Success
+    }
+
+    @Test
+    fun tappingTheMonthlyCardsSubscribeButtonPurchasesMonthlyNotWhicheverPackageComesFirst() {
+        val repository = RecordingEntitlementRepository()
+        composeTestRule.setContent { PaywallScreen(entitlementRepository = repository) }
+
+        composeTestRule.onNodeWithTag("paywallSubscribeMonthly").performClick()
+        composeTestRule.waitUntil(timeoutMillis = 10_000) { repository.lastPurchaseTier != null }
+
+        assertEquals(SubscriptionTier.MONTHLY, repository.lastPurchaseTier)
+    }
+
+    @Test
+    fun tappingTheYearlyCardsSubscribeButtonPurchasesYearlyNotMonthly() {
+        // The bug this pins: before SubscriptionTier existed, this button bought whatever
+        // RevenueCat's offerings listed first, regardless of which card it was under.
+        val repository = RecordingEntitlementRepository()
+        composeTestRule.setContent { PaywallScreen(entitlementRepository = repository) }
+
+        composeTestRule.onNodeWithTag("paywallSubscribeYearly").performClick()
+        composeTestRule.waitUntil(timeoutMillis = 10_000) { repository.lastPurchaseTier != null }
+
+        assertEquals(SubscriptionTier.YEARLY, repository.lastPurchaseTier)
+    }
+
+    @Test
+    fun theChecklistShowsWhatLigayaPlusActuallyUnlocksNotTheReferencesInaccurateOne() {
+        // Section 8: core emergency functionality (conversations, voice, character animation) is
+        // never gated behind Ligaya+ — only family/household-scoped features are. The reference
+        // design's own checklist names things this app never actually paywalls; these four do.
+        composeTestRule.setContent {
+            PaywallScreen(entitlementRepository = FakeEntitlementRepository(subscribed = false))
+        }
+
+        composeTestRule.onNodeWithText("Your Safety Circle").assertIsDisplayed()
+        composeTestRule.onNodeWithText("Family safety status & check-ins").assertIsDisplayed()
+        composeTestRule.onNodeWithText("Location sharing with your circle").assertIsDisplayed()
+        composeTestRule.onNodeWithText("Family emergency alerts").assertIsDisplayed()
+    }
+
+    @Test
+    fun theBackButtonHandsOff() {
+        var backCount = 0
+        composeTestRule.setContent {
+            PaywallScreen(entitlementRepository = FakeEntitlementRepository(subscribed = false), onBack = { backCount++ })
+        }
+
+        composeTestRule.onNodeWithContentDescription("Back").performClick()
+
+        assertEquals(1, backCount)
     }
 }

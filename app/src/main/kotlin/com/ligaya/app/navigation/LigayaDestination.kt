@@ -60,6 +60,7 @@ sealed class LigayaDestination(val route: String, val title: String) {
     data object EmergencyActive : LigayaDestination("emergency_active", "Emergency Active")
     data object EmergencyCompanion : LigayaDestination("companion", "Emergency Companion")
     data object SafetyCircle : LigayaDestination("safety_circle", "Safety Circle")
+    data object QuickActions : LigayaDestination("quick_actions", "Quick actions")
     data object FamilyEmergency : LigayaDestination("family_emergency", "Family Emergency")
     data object Paywall : LigayaDestination("paywall", "Ligaya+")
 

@@ -8,6 +8,7 @@ import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.automirrored.filled.VolumeUp
 import androidx.compose.material.icons.automirrored.outlined.ArrowForward
 import androidx.compose.material.icons.automirrored.outlined.ArrowForwardIos
+import androidx.compose.material.icons.filled.Call
 import androidx.compose.material.icons.filled.ChatBubble
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.CheckCircle
@@ -30,10 +31,12 @@ import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.PriorityHigh
 import androidx.compose.material.icons.filled.Schedule
+import androidx.compose.material.icons.filled.Shield
 import androidx.compose.material.icons.filled.Sync
 import androidx.compose.material.icons.outlined.ChatBubbleOutline
 import androidx.compose.material.icons.outlined.DarkMode
 import androidx.compose.material.icons.outlined.Face
+import androidx.compose.material.icons.outlined.Bolt
 import androidx.compose.material.icons.outlined.GridView
 import androidx.compose.material.icons.outlined.Group
 import androidx.compose.material.icons.outlined.Home
@@ -100,6 +103,11 @@ object LigayaIcons {
     /** The Safety Circle tab: the people around you, not a grid of features. */
     val circleSelected: ImageVector = Icons.Filled.Group
     val circle: ImageVector = Icons.Outlined.Group
+
+    // --- Safety Circle: Quick actions ---
+    val quickActions: ImageVector = Icons.Outlined.Bolt
+    val callPhone: ImageVector = Icons.Filled.Call
+    val shareLocation: ImageVector = Icons.Filled.LocationOn
     val profileSelected: ImageVector = Icons.Filled.Person
     val profile: ImageVector = Icons.Outlined.Person
 
@@ -128,6 +136,9 @@ object LigayaIcons {
 
     // --- Trouble (visual design, screen 8): the "!" on a failure card, filled to read on its rose disc. ---
     val trouble: ImageVector = Icons.Filled.PriorityHigh
+
+    // --- Ligaya+ (screen: subscription) ---
+    val ligayaPlus: ImageVector = Icons.Filled.Shield
 
     val incidentType: Map<LigayaIncidentType, ImageVector> = mapOf(
         LigayaIncidentType.FIRE to Icons.Filled.LocalFireDepartment,

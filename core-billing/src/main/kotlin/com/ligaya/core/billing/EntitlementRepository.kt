@@ -1,6 +1,7 @@
 package com.ligaya.core.billing
 
 import android.app.Activity
+import com.revenuecat.purchases.PackageType
 import com.revenuecat.purchases.Purchases
 import com.revenuecat.purchases.PurchaseParams
 import com.revenuecat.purchases.PurchasesException
@@ -27,9 +28,23 @@ import com.revenuecat.purchases.awaitRestore
  */
 interface EntitlementRepository {
     suspend fun isSubscribed(): Boolean
-    suspend fun purchase(activity: Activity): PurchaseOutcome
+
+    /**
+     * [tier] matters: the paywall shows two real, separately priced plans, and this must buy the
+     * one actually tapped. Before this parameter existed, every "Subscribe" button on the paywall
+     * — whichever plan it was under — bought RevenueCat's first available package regardless,
+     * a real bug found by checking rather than a hypothetical one: a person could tap "Yearly"
+     * and be charged for Monthly instead the moment a real RevenueCat project existed.
+     */
+    suspend fun purchase(activity: Activity, tier: SubscriptionTier): PurchaseOutcome
     suspend fun restorePurchases(): PurchaseOutcome
 }
+
+/** The two plans the paywall actually shows. Maps onto RevenueCat's own [PackageType] where it
+ *  matters ([RevenueCatEntitlementRepository]); this app never needs RevenueCat's other package
+ *  types (weekly, lifetime, custom), so the domain type stays this small rather than mirroring
+ *  all of them. */
+enum class SubscriptionTier { MONTHLY, YEARLY }
 
 sealed interface PurchaseOutcome {
     data object Success : PurchaseOutcome
@@ -54,10 +69,17 @@ class RevenueCatEntitlementRepository(
         Purchases.sharedInstance.awaitCustomerInfo().entitlements[entitlementId]?.isActive == true
     }.getOrDefault(false)
 
-    override suspend fun purchase(activity: Activity): PurchaseOutcome = runCatching {
+    override suspend fun purchase(activity: Activity, tier: SubscriptionTier): PurchaseOutcome = runCatching {
+        val wantedType = when (tier) {
+            SubscriptionTier.MONTHLY -> PackageType.MONTHLY
+            SubscriptionTier.YEARLY -> PackageType.ANNUAL
+        }
         val offerings = Purchases.sharedInstance.awaitOfferings()
-        val packageToPurchase = offerings.current?.availablePackages?.firstOrNull()
-            ?: return PurchaseOutcome.Failure("No Ligaya+ package is currently available.")
+        val packageToPurchase = offerings.current?.availablePackages?.firstOrNull { it.packageType == wantedType }
+            ?: return PurchaseOutcome.Failure(
+                "The ${if (tier == SubscriptionTier.MONTHLY) "monthly" else "yearly"} Ligaya+ plan " +
+                    "isn't available right now.",
+            )
         Purchases.sharedInstance.awaitPurchase(PurchaseParams.Builder(activity, packageToPurchase).build())
         PurchaseOutcome.Success
     }.getOrElse { e -> PurchaseOutcome.Failure(purchaseFailureMessage(e)) }
