@@ -205,7 +205,7 @@ fun PaywallScreen(
                         color = LigayaTheme.colors.cocoaInk,
                     )
                     Text(
-                        text = "Get the best experience with advanced features and priority access.",
+                        text = "Look after the people closest to you, wherever they are.",
                         style = LigayaTypography.chatStatus,
                         color = LigayaTheme.colors.taupe,
                         modifier = Modifier.padding(top = 6.dp),

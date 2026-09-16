@@ -158,7 +158,7 @@ fun LocationPermissionScreen(
                 // would be a button that visibly does nothing.
                 text = "Location is currently blocked for Ligaya, so we can't ask again from here. " +
                     "You can turn it on in Settings. Without it, an emergency still starts and still " +
-                    "calls 911 — we just can't share where you are.",
+                    "calls 911. We just cannot share where you are.",
                 style = LigayaTypography.label,
                 color = LigayaTheme.colors.colorStatusPending,
             )

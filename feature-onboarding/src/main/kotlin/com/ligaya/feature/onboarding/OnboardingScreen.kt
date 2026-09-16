@@ -178,7 +178,7 @@ private fun ProfileStep(onSave: (EmergencyProfile) -> Unit) {
 
     Text(text = "Emergency profile", style = LigayaTypography.headline, color = LigayaTheme.colors.onSurface)
     Text(
-        text = "Every field here is optional — you can skip this or fill in only what you're comfortable sharing.",
+        text = "Every field here is optional. Skip it, or fill in only what you are comfortable sharing.",
         style = LigayaTypography.body,
         color = LigayaTheme.colors.onSurface,
     )

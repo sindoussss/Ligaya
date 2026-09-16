@@ -162,7 +162,7 @@ fun HomeScreen(
                 )
                 if (aiUnavailable) {
                     Text(
-                        text = "Voice assistant unavailable right now — use the SOS button instead.",
+                        text = "Voice assistant unavailable right now. Use the SOS button instead.",
                         style = LigayaTypography.chipLabel,
                         color = LigayaTheme.colors.cocoaInk,
                         modifier = Modifier

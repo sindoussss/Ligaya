@@ -196,7 +196,7 @@ class HomeScreenTest {
             )
         }
 
-        composeTestRule.onNodeWithText("Magandang umaga,").assertExists()
+        composeTestRule.onNodeWithText("Good morning,").assertExists()
         composeTestRule.onNodeWithText("kaibigan!").assertExists()
 
         name.value = "John Daniel"
@@ -288,7 +288,7 @@ class HomeScreenTest {
         val aiUnavailable = MutableStateFlow(false)
         setHome(voiceAiUnavailable = aiUnavailable)
 
-        val bannerText = "Voice assistant unavailable right now — use the SOS button instead."
+        val bannerText = "Voice assistant unavailable right now. Use the SOS button instead."
         composeTestRule.onNodeWithText(bannerText).assertDoesNotExist()
 
         aiUnavailable.value = true
@@ -318,7 +318,7 @@ class HomeScreenTest {
             )
         }
 
-        composeTestRule.onNodeWithText("Magandang gabi,").assertExists()
+        composeTestRule.onNodeWithText("Good evening,").assertExists()
         composeTestRule.onNodeWithText("John Daniel!").assertExists()
         composeTestRule.onNodeWithText("Rest well. I'm always here when you need me.").assertExists()
         // SOS is on screen at night exactly as it is by day. Asked for by the header pill's own

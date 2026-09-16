@@ -69,7 +69,7 @@ object LigayaTypography {
     /** Home header: "Ligaya" beside the flower mark. */
     val homeBrand = TextStyle(fontFamily = LigayaFonts.sans, fontSize = 22.sp, lineHeight = 28.sp, fontWeight = FontWeight.Medium)
 
-    /** Home greeting's first line, "Magandang araw,". */
+    /** Home greeting's first line, e.g. "Good morning,". */
     val homeGreeting = TextStyle(fontFamily = LigayaFonts.sans, fontSize = 25.sp, lineHeight = 32.sp, fontWeight = FontWeight.Medium)
 
     /** Home greeting's second line, the user's name. */

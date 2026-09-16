@@ -93,7 +93,7 @@ fun QuickActionsScreen(
         ) {
             Spacer(Modifier.height(4.dp))
             Text(
-                text = "Each of these works on its own — nothing here waits on the others.",
+                text = "Each one works on its own.",
                 style = LigayaTypography.chatStatus,
                 color = LigayaTheme.colors.taupe,
             )
@@ -104,7 +104,7 @@ fun QuickActionsScreen(
                 ActionRow(
                     icon = LigayaIcons.callPhone,
                     label = "Call 911",
-                    detail = "Starts an emergency and opens the dialer, pre-filled with 911.",
+                    detail = "Starts an emergency and opens your dialer with 911 ready to call.",
                     onClick = onCallSos,
                 )
             }
@@ -116,13 +116,12 @@ fun QuickActionsScreen(
                 // active (section 17) — there is no "send one right now" action anywhere in this app's own
                 // architecture to wire a tap to, configured backend or not.
                 CircleFact(
-                    label = if (circleAlertsConfigured) "Alert your circle" else "Alert your circle — not set up on this build",
+                    label = if (circleAlertsConfigured) "Alert your circle" else "Alert your circle (not available yet)",
                     value = if (circleAlertsConfigured) {
-                        "Your Safety Circle is alerted with your location automatically once an emergency " +
-                            "starts — nothing to tap here ahead of time."
+                        "Your circle is alerted with your location the moment an emergency starts. " +
+                            "There is nothing to send by hand."
                     } else {
-                        "This needs the same Ligaya backend project the Safety Circle tab already explains " +
-                            "is missing. Nobody would be alerted, so this is not a button here."
+                        "Ligaya cannot reach your circle yet, so nothing would be sent."
                     },
                 )
             }
@@ -133,7 +132,7 @@ fun QuickActionsScreen(
                 ActionRow(
                     icon = LigayaIcons.shareLocation,
                     label = "Share your location",
-                    detail = "Opens your phone's own share sheet with a map link to where you are right now.",
+                    detail = "Sends a map link showing where you are right now.",
                     busy = sharingLocation,
                     onClick = {
                         sharingLocation = true
@@ -142,8 +141,8 @@ fun QuickActionsScreen(
                             val shared = onShareLocation()
                             sharingLocation = false
                             if (!shared) {
-                                shareResultMessage = "Location isn't available right now — check that " +
-                                    "location access is on for Ligaya and try again."
+                                shareResultMessage = "Could not find your location. Check that location " +
+                                    "access is on for Ligaya, then try again."
                             }
                         }
                     },

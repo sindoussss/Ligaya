@@ -58,10 +58,9 @@ class QuickActionsScreenTest {
             }
         }
 
-        composeTestRule.onNodeWithText("Alert your circle — not set up on this build").assertIsDisplayed()
+        composeTestRule.onNodeWithText("Alert your circle (not available yet)").assertIsDisplayed()
         composeTestRule.onNodeWithText(
-            "This needs the same Ligaya backend project the Safety Circle tab already explains is " +
-                "missing. Nobody would be alerted, so this is not a button here.",
+            "Ligaya cannot reach your circle yet, so nothing would be sent.",
         ).assertIsDisplayed()
     }
 
@@ -82,8 +81,8 @@ class QuickActionsScreenTest {
         }
 
         composeTestRule.onNodeWithText(
-            "Your Safety Circle is alerted with your location automatically once an emergency starts " +
-                "— nothing to tap here ahead of time.",
+            "Your circle is alerted with your location the moment an emergency starts. There is " +
+                "nothing to send by hand.",
         ).assertIsDisplayed()
     }
 
@@ -104,7 +103,7 @@ class QuickActionsScreenTest {
         composeTestRule.waitForIdle()
 
         composeTestRule.onNodeWithText(
-            "Location isn't available right now — check that location access is on for Ligaya and try again.",
+            "Could not find your location. Check that location access is on for Ligaya, then try again.",
             substring = true,
         ).assertDoesNotExist()
     }
@@ -126,8 +125,8 @@ class QuickActionsScreenTest {
         composeTestRule.waitForIdle()
 
         composeTestRule.onNodeWithContentDescription(
-            "Share location: Location isn't available right now — check that location access is on for " +
-                "Ligaya and try again.",
+            "Share location: Could not find your location. Check that location access is on for " +
+                "Ligaya, then try again.",
         ).assertIsDisplayed()
     }
 

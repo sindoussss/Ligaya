@@ -107,8 +107,8 @@ fun SafetyCircleHomeScreen(
                 CircleCard {
                     CircleAction(
                         label = "Sign in to set up your Safety Circle",
-                        detail = "A circle belongs to an account, so the people in it can be reached from more " +
-                            "than this one phone.",
+                        detail = "Your circle is saved to your account, so the people in it can be reached " +
+                            "from any phone, not just this one.",
                         onClick = onSignIn,
                     )
                 }
@@ -142,7 +142,7 @@ fun SafetyCircleHomeScreen(
                 if (contacts.isEmpty()) {
                     CircleAction(
                         label = "No emergency contacts yet",
-                        detail = "Add the people Ligaya should try to reach for you.",
+                        detail = "Add the people Ligaya should reach for you.",
                         onClick = onEditContacts,
                     )
                 } else {
@@ -165,21 +165,20 @@ fun SafetyCircleHomeScreen(
             SectionHeading("Family alerts")
             CircleCard {
                 CircleFact(
-                    label = if (householdBackendConfigured) "Ready" else "Not set up on this build",
+                    label = if (householdBackendConfigured) "Ready" else "Not available yet",
                     value = if (householdBackendConfigured) {
-                        "When an emergency starts, your circle is sent an alert, and each one shows whether it " +
-                            "was sent, delivered, or failed."
+                        "When an emergency starts, everyone in your circle is sent an alert, and each one " +
+                            "shows whether it was sent, delivered, or failed."
                     } else {
-                        "Inviting family and alerting them runs through the Ligaya backend, and no backend " +
-                            "project is configured in this build. Nobody would be alerted, so the app does not " +
-                            "offer to invite anyone yet."
+                        "Inviting family and alerting them needs an account, and accounts are not switched " +
+                            "on yet. Nobody would be reached, so Ligaya does not offer to invite anyone for now."
                     },
                 )
                 CircleDivider()
                 CircleFact(
-                    label = "What this does not affect",
-                    value = "SOS, calling 911 and Ligaya staying with you through an emergency do not go " +
-                        "through any of this, and keep working either way.",
+                    label = "What still works",
+                    value = "SOS, calling 911, and Ligaya staying with you through an emergency do not " +
+                        "depend on any of this.",
                 )
             }
 
@@ -190,8 +189,8 @@ fun SafetyCircleHomeScreen(
                 CircleAction(
                     icon = LigayaIcons.ligayaPlus,
                     label = "Family plan",
-                    detail = "The circle, family alerts and shared status are the paid part. Your own SOS, " +
-                        "911 and emergency profile are not.",
+                    detail = "Your circle, family alerts, and shared status are the paid features. Your own " +
+                        "SOS, 911, and emergency profile are always free.",
                     onClick = onOpenLigayaPlus,
                 )
             }
@@ -286,7 +285,7 @@ internal fun CircleDivider() {
 private fun ContactRow(contact: EmergencyContact) {
     // A missing number is the thing worth saying: a contact with a relationship and no number looked
     // perfectly complete, while Ligaya has no way to reach them at all.
-    val reach = contact.phoneNumber ?: "no number saved, so Ligaya cannot reach them"
+    val reach = contact.phoneNumber ?: "no number saved, so Ligaya cannot reach them yet"
     val detail = listOfNotNull(contact.relationship, reach).joinToString(" · ")
     Row(
         modifier = Modifier

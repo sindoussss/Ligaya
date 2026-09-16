@@ -164,13 +164,13 @@ fun VoiceSettingsScreen(
         }
         if (wakePhraseEnabled && !micPermitted) {
             SettingsNote(
-                "She is not listening right now: the microphone permission has not been granted on this phone.",
+                "She is not listening right now, because Ligaya does not have microphone access on this phone.",
             )
         }
         if (wakePhraseEnabled && !smartRepliesConfigured) {
             SettingsNote(
-                "She hears you, but smart replies are not configured on this build, so she cannot work out " +
-                    "what a spoken phrase means. She says so out loud rather than going quiet.",
+                "She hears you, but smart replies are switched off, so she cannot work out what a spoken " +
+                    "phrase means. She will tell you out loud instead of going quiet.",
             )
         }
 

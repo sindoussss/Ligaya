@@ -308,7 +308,7 @@ private val INTRO_PAGES = listOf(
     ),
     IntroPage(
         heading = "Your voice\nstarts the call\nfor help.",
-        body = "Say \"Ligaya, tulong\" and the emergency begins — no unlocking, no searching for a button.",
+        body = "Say \"Ligaya, tulong\" and the emergency begins. No unlocking, no searching for a button.",
         emotion = LigayaEmotion.Attentive,
     ),
     IntroPage(

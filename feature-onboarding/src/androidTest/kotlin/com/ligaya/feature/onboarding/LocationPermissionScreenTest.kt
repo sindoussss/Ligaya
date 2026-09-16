@@ -96,7 +96,7 @@ class LocationPermissionScreenTest {
         composeTestRule.onNodeWithText(
             "Location is currently blocked for Ligaya, so we can't ask again from here. " +
                 "You can turn it on in Settings. Without it, an emergency still starts and still " +
-                "calls 911 — we just can't share where you are.",
+                "calls 911. We just cannot share where you are.",
         ).assertExists()
     }
 

@@ -49,11 +49,10 @@ class SafetyCircleHomeScreenTest {
             }
         }
 
-        composeTestRule.onNodeWithText("Not set up on this build").performScrollTo().assertIsDisplayed()
+        composeTestRule.onNodeWithText("Not available yet").performScrollTo().assertIsDisplayed()
         composeTestRule.onNodeWithText(
-            "Inviting family and alerting them runs through the Ligaya backend, and no backend project is " +
-                "configured in this build. Nobody would be alerted, so the app does not offer to invite " +
-                "anyone yet.",
+            "Inviting family and alerting them needs an account, and accounts are not switched on yet. " +
+                "Nobody would be reached, so Ligaya does not offer to invite anyone for now.",
         ).performScrollTo().assertIsDisplayed()
 
         // A control that cannot do anything must not be on the screen at all.
@@ -82,7 +81,7 @@ class SafetyCircleHomeScreenTest {
         // No number saved means Ligaya genuinely cannot reach her, and the row says that rather than
         // showing a name that looks ready to be contacted.
         composeTestRule.onNodeWithContentDescription(
-            "Ana Reyes. Sister · no number saved, so Ligaya cannot reach them",
+            "Ana Reyes. Sister · no number saved, so Ligaya cannot reach them yet",
         ).performScrollTo().assertIsDisplayed()
     }
 
@@ -105,8 +104,8 @@ class SafetyCircleHomeScreenTest {
         }
 
         composeTestRule.onNodeWithText(
-            "SOS, calling 911 and Ligaya staying with you through an emergency do not go through any of " +
-                "this, and keep working either way.",
+            "SOS, calling 911, and Ligaya staying with you through an emergency do not depend on any " +
+                "of this.",
         ).performScrollTo().assertIsDisplayed()
     }
 

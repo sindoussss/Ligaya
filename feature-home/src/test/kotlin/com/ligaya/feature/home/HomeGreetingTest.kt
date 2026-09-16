@@ -12,19 +12,19 @@ class HomeGreetingTest {
 
     @Test
     fun eachPartOfTheDayHasItsOwnGreeting() {
-        assertEquals("Magandang umaga,", greetingAt(5).salutation)
-        assertEquals("Magandang umaga,", greetingAt(11).salutation)
-        assertEquals("Magandang hapon,", greetingAt(12).salutation)
-        assertEquals("Magandang hapon,", greetingAt(17).salutation)
-        assertEquals("Magandang gabi,", greetingAt(18).salutation)
-        assertEquals("Magandang gabi,", greetingAt(23).salutation)
+        assertEquals("Good morning,", greetingAt(5).salutation)
+        assertEquals("Good morning,", greetingAt(11).salutation)
+        assertEquals("I'm here,", greetingAt(12).salutation)
+        assertEquals("I'm here,", greetingAt(17).salutation)
+        assertEquals("Good evening,", greetingAt(18).salutation)
+        assertEquals("Good evening,", greetingAt(23).salutation)
     }
 
     @Test
     fun thePartOfTheNightBeforeDawnIsStillEvening() {
         // Midnight to before five: "good morning" would be wrong, and so would offering to help with the day.
         for (hour in 0..4) {
-            assertEquals("Magandang gabi,", greetingAt(hour).salutation)
+            assertEquals("Good evening,", greetingAt(hour).salutation)
             assertEquals("Rest well. I'm always here when you need me.", greetingAt(hour).intro)
         }
     }
@@ -42,7 +42,7 @@ class HomeGreetingTest {
     fun everyHourOfTheDayIsCovered() {
         for (hour in 0..23) {
             val greeting = greetingAt(hour)
-            assert(greeting.salutation.startsWith("Magandang")) { "hour $hour: ${greeting.salutation}" }
+            assert(greeting.salutation.isNotBlank()) { "hour $hour has no greeting" }
             assert(greeting.intro.isNotBlank()) { "hour $hour has no line under the greeting" }
         }
     }

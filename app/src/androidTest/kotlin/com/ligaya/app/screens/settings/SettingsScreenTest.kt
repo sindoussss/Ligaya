@@ -120,7 +120,7 @@ class SettingsScreenTest {
 
         // On, but the microphone was never granted: the screen has to say she is not listening.
         composeTestRule.onNodeWithText(
-            "She is not listening right now: the microphone permission has not been granted on this phone.",
+            "She is not listening right now, because Ligaya does not have microphone access on this phone.",
         ).assertIsDisplayed()
         composeTestRule.onNodeWithContentDescription(
             "Listen for the wake phrase. While Ligaya is open, she listens so you can speak without touching " +
@@ -175,8 +175,7 @@ class SettingsScreenTest {
 
         composeTestRule.onNodeWithText("0.1.0").assertIsDisplayed()
         composeTestRule.onNodeWithText(
-            "Not configured on this build. Ligaya still listens and answers simply, and says when a reply " +
-                "is basic.",
+            "Off. Ligaya still listens and answers simply, and tells you when a reply is basic.",
         ).assertIsDisplayed()
     }
 
@@ -195,7 +194,7 @@ class SettingsScreenTest {
         }
 
         composeTestRule.onNodeWithText(
-            "Nothing. Smart replies are not configured on this build, so nothing is sent to Gemini.",
+            "Nothing. Smart replies are switched off, so nothing is sent to Gemini.",
         ).assertIsDisplayed()
 
         // Nobody is signed in, so there is nothing to sign out of and no row offering it.

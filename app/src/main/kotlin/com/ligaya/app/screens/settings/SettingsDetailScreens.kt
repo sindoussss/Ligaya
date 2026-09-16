@@ -220,7 +220,7 @@ fun PrivacySettingsScreen(
                     "What you say or type to Ligaya is sent to Google Gemini to be answered. Nothing else is " +
                         "sent anywhere."
                 } else {
-                    "Nothing. Smart replies are not configured on this build, so nothing is sent to Gemini."
+                    "Nothing. Smart replies are switched off, so nothing is sent to Gemini."
                 },
             )
             SettingsDivider()
@@ -266,10 +266,9 @@ fun AboutSettingsScreen(
             SettingsFact(
                 label = "Smart replies",
                 value = if (smartRepliesConfigured) {
-                    "Configured. Ligaya can answer freely, and says so when an answer is limited."
+                    "On. Ligaya can answer freely, and says so when an answer is limited."
                 } else {
-                    "Not configured on this build. Ligaya still listens and answers simply, and says when a " +
-                        "reply is basic."
+                    "Off. Ligaya still listens and answers simply, and tells you when a reply is basic."
                 },
             )
             SettingsDivider()
