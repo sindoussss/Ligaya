@@ -36,6 +36,7 @@ import com.ligaya.designsystem.LigayaThemeMode
 import com.ligaya.designsystem.components.LigayaTab
 import com.ligaya.core.backend.auth.AuthRepository
 import com.ligaya.core.data.profile.EmergencyProfileRepository
+import com.ligaya.core.places.EmergencyServiceLookupResult
 import com.ligaya.feature.safetycircle.SafetyCircleHomeScreen
 import com.ligaya.feature.paywall.PaywallScreen
 import com.ligaya.core.data.profile.EmergencyContact
@@ -124,6 +125,9 @@ fun LigayaNavHost(
     appVersionName: String,
     /** Ligaya+ entitlement. Reports "not subscribed" rather than crashing when RevenueCat is unconfigured. */
     entitlementRepository: EntitlementRepository,
+    /** Screen 14 (§16): the nearest-service lookup's own result for the current episode, session-only —
+     *  see MainActivity's own comment on why this is not part of emergencyController's persisted snapshot. */
+    emergencyServiceResult: StateFlow<EmergencyServiceLookupResult?>,
     navController: NavHostController = rememberNavController(),
 ) {
     val scope = rememberCoroutineScope()
@@ -258,6 +262,7 @@ fun LigayaNavHost(
                 emergencyController = emergencyController,
                 safetyCircleDeliveryStatus = emptyList(),
                 voicePipelinePhase = companionCoordinator.phase,
+                emergencyServiceResult = emergencyServiceResult,
                 // Only called once the engine has accepted "I'm safe" (see EmergencyActiveScreen), so screen 6 can
                 // state it as fact. The emergency screen itself is left behind, not returnable-to.
                 onMarkedSafe = {

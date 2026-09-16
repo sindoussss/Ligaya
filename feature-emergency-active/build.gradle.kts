@@ -46,6 +46,9 @@ dependencies {
     // see its own doc comment) — no longer reachable transitively through :feature-companion's
     // own `implementation`-scoped dependency on it, so this module needs the edge directly now.
     implementation(project(":core-voice"))
+    // Screen 14 (§16): EmergencyServiceLookupResult, the nearest-service result this screen shows
+    // alongside (not instead of) the bare subsystem status core-ui-state already carries.
+    implementation(project(":core-places"))
 
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.compose.ui)

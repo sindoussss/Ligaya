@@ -43,6 +43,13 @@ class EmergencyServiceFlowCoordinatorTest {
         override suspend fun getDetails(placeId: String): PlaceDetails? = details
     }
 
+    private class RecordingResultReporter : EmergencyServiceResultReporter {
+        val results = mutableListOf<EmergencyServiceLookupResult?>()
+        override suspend fun reportEmergencyServiceResult(result: EmergencyServiceLookupResult?) {
+            results += result
+        }
+    }
+
     private fun engineAt(state: EmergencyState) = EmergencyStateMachine(initial = EmergencySnapshot(state = state))
 
     private fun reporterFor(engine: EmergencyStateMachine) =
@@ -182,5 +189,57 @@ class EmergencyServiceFlowCoordinatorTest {
         // phone-number field at all, so there is no code path here that could fabricate one.
         assertEquals(EmergencyServiceFlowState.Succeeded, engine.snapshot.subsystems.emergencyService)
         assertNull(noNumberDetails.phoneNumber)
+    }
+
+
+    @Test
+    fun `a successful lookup reports the place's real name, address, phone and distance`() = runTest {
+        val engine = engineAt(EmergencyState.EMERGENCY_ACTIVE)
+        val search = RecordingNearbySearchSource(listOf(PlaceCandidate("p1", near)))
+        val details = FixedPlaceDetailsSource(PlaceDetails(phoneNumber = "0917 123 4567", name = "Barangay Health Center", address = "123 Rizal St"))
+        val results = RecordingResultReporter()
+        val coordinator = EmergencyServiceFlowCoordinator(search, details, reporterFor(engine), results)
+
+        coordinator.run(IncidentType.FIRE, near)
+
+        val result = results.results.single()
+        assertEquals("Barangay Health Center", result?.name)
+        assertEquals("123 Rizal St", result?.address)
+        assertEquals("0917 123 4567", result?.phoneNumber)
+        assertTrue("distance must be a real, non-negative measurement", (result?.distanceMeters ?: -1.0) >= 0.0)
+    }
+
+    @Test
+    fun `a place with no phone number reports that absence, not a fabricated one`() = runTest {
+        val engine = engineAt(EmergencyState.EMERGENCY_ACTIVE)
+        val search = RecordingNearbySearchSource(listOf(PlaceCandidate("p1", near)))
+        val details = FixedPlaceDetailsSource(PlaceDetails(phoneNumber = null, name = "Barangay Health Center"))
+        val results = RecordingResultReporter()
+        val coordinator = EmergencyServiceFlowCoordinator(search, details, reporterFor(engine), results)
+
+        coordinator.run(IncidentType.FIRE, near)
+
+        val result = results.results.single()
+        assertEquals("Barangay Health Center", result?.name)
+        assertNull(result?.phoneNumber)
+    }
+
+    @Test
+    fun `every LookupFailed path reports a null result rather than leaving a stale one implied`() = runTest {
+        val engine = engineAt(EmergencyState.EMERGENCY_ACTIVE)
+        val results = RecordingResultReporter()
+
+        // Issue I fallback: no Places category applies.
+        EmergencyServiceFlowCoordinator(FailingNearbySearchSource(), FixedPlaceDetailsSource(PlaceDetails("123")), reporterFor(engine), results)
+            .run(IncidentType.OTHER, near)
+        // No candidates found.
+        EmergencyServiceFlowCoordinator(RecordingNearbySearchSource(emptyList()), FixedPlaceDetailsSource(PlaceDetails("123")), reporterFor(engine), results)
+            .run(IncidentType.FIRE, near)
+        // Details lookup itself fails.
+        EmergencyServiceFlowCoordinator(RecordingNearbySearchSource(listOf(PlaceCandidate("p1", near))), FixedPlaceDetailsSource(null), reporterFor(engine), results)
+            .run(IncidentType.FIRE, near)
+
+        assertEquals(3, results.results.size)
+        assertTrue("every failure path must report null, never a partial or stale result", results.results.all { it == null })
     }
 }

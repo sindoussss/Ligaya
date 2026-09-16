@@ -58,6 +58,8 @@ import com.ligaya.core.permissions.PermissionState
 import com.ligaya.core.permissions.SharedPrefsPermissionRequestHistory
 import com.ligaya.core.places.EmergencyServiceFlowCoordinator
 import com.ligaya.core.places.EmergencyServiceFlowReporter
+import com.ligaya.core.places.EmergencyServiceLookupResult
+import com.ligaya.core.places.EmergencyServiceResultReporter
 import com.ligaya.core.places.GooglePlacesDetailsSource
 import com.ligaya.core.places.GooglePlacesNearbySearchSource
 import com.ligaya.core.voice.AndroidSpeechOutput
@@ -410,6 +412,14 @@ class MainActivity : ComponentActivity() {
             LocationFlowReporter(emergencyController::reportLocationFlow),
         )
 
+        // Screen 14 (§16): the actual nearest-service result — name, distance, public contact —
+        // for whatever later reads it, kept separate from emergencyController's own persisted
+        // snapshot (see EmergencyServiceFlowCoordinator's own doc on why). Session-only, like
+        // aiUnavailableNotice below: this is display detail about the current episode, not
+        // safety-critical state a crash needs to recover, so a plain in-memory flow is enough —
+        // reset to null the moment a new episode starts, not carried over from the last one.
+        val emergencyServiceResult = MutableStateFlow<EmergencyServiceLookupResult?>(null)
+
         // Step 48: the real Emergency-Service (Places) flow — only constructed when a key is
         // configured, so an empty key never fires a request guaranteed to fail (see
         // app/build.gradle.kts' own comment on placesApiKey).
@@ -418,6 +428,7 @@ class MainActivity : ComponentActivity() {
                 GooglePlacesNearbySearchSource(key),
                 GooglePlacesDetailsSource(key),
                 EmergencyServiceFlowReporter(emergencyController::reportEmergencyServiceFlow),
+                EmergencyServiceResultReporter { emergencyServiceResult.value = it },
             )
         }
 
@@ -474,6 +485,7 @@ class MainActivity : ComponentActivity() {
                             locationRequester.request(Manifest.permission.ACCESS_FINE_LOCATION)
                         },
                         onOpenAppSettings = ::openAppSettings,
+                        emergencyServiceResult = emergencyServiceResult.asStateFlow(),
                     )
                   }
                 }
@@ -491,6 +503,9 @@ class MainActivity : ComponentActivity() {
                     .distinctUntilChanged { old, new -> old?.state == new?.state }
                     .filter { it?.state == EmergencyState.EMERGENCY_ACTIVE }
                     .collect {
+                        // A fresh episode; any place found for a previous, already-resolved one must not
+                        // still be showing when this one's own lookup hasn't reported anything yet.
+                        emergencyServiceResult.value = null
                         launch {
                             val locationResult = locationCoordinator.run()
                             val locationSucceeded = locationResult.getOrNull()

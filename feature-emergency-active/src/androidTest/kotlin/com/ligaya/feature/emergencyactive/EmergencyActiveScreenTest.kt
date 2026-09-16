@@ -13,6 +13,7 @@ import com.ligaya.core.emergencyengine.EmergencyState
 import com.ligaya.core.emergencyengine.FamilyAlertFlowState
 import com.ligaya.core.emergencyengine.LocationFlowState
 import com.ligaya.core.emergencyengine.Unified911FlowState
+import com.ligaya.core.places.EmergencyServiceLookupResult
 import com.ligaya.core.uistate.EmergencyController
 import com.ligaya.core.uistate.SosResult
 import com.ligaya.core.voice.VoicePipelinePhase
@@ -157,5 +158,102 @@ class EmergencyActiveScreenTest {
 
         assertTrue(markedSafe)
         assertEquals(1, fake.markSafeCallCount)
+    }
+
+
+    @Test
+    fun aSucceededLookupWithAPhoneNumberShowsTheRealNameDistanceAndContactHonestly() {
+        val snapshotFlow = MutableStateFlow<EmergencySnapshot?>(
+            EmergencySnapshot(
+                state = EmergencyState.EMERGENCY_ACTIVE,
+                subsystems = ConcurrentSubsystemStates(
+                    unified911 = Unified911FlowState.Succeeded,
+                    emergencyService = EmergencyServiceFlowState.Succeeded,
+                ),
+            ),
+        )
+        val fake = FakeEmergencyController(snapshotFlow)
+        val result = MutableStateFlow<EmergencyServiceLookupResult?>(
+            EmergencyServiceLookupResult(
+                name = "Barangay Health Center",
+                address = "123 Rizal St",
+                phoneNumber = "0917 123 4567",
+                distanceMeters = 450.0,
+            ),
+        )
+
+        composeTestRule.setContent {
+            EmergencyActiveScreen(
+                emergencyController = fake,
+                safetyCircleDeliveryStatus = emptyList(),
+                voicePipelinePhase = MutableStateFlow(VoicePipelinePhase.IDLE),
+                onMarkedSafe = {},
+                emergencyServiceResult = result,
+            )
+        }
+
+        // The real place, its real distance, and a phone number described as a public contact —
+        // never "verified" or "dispatch" (section 16) — with 911 shown separately, above it.
+        composeTestRule.onNodeWithContentDescription(
+            "Nearby Emergency Service: Barangay Health Center, 450 m away. " +
+                "Public contact available: 0917 123 4567.",
+        ).assertIsDisplayed()
+        composeTestRule.onNodeWithContentDescription("911: Connected to 911").assertIsDisplayed()
+    }
+
+    @Test
+    fun aSucceededLookupWithNoPhoneNumberNeverInventsOneAndPointsBackTo911() {
+        val snapshotFlow = MutableStateFlow<EmergencySnapshot?>(
+            EmergencySnapshot(
+                state = EmergencyState.EMERGENCY_ACTIVE,
+                subsystems = ConcurrentSubsystemStates(emergencyService = EmergencyServiceFlowState.Succeeded),
+            ),
+        )
+        val fake = FakeEmergencyController(snapshotFlow)
+        val result = MutableStateFlow<EmergencyServiceLookupResult?>(
+            EmergencyServiceLookupResult(name = "Barangay Health Center", address = null, phoneNumber = null, distanceMeters = 900.0),
+        )
+
+        composeTestRule.setContent {
+            EmergencyActiveScreen(
+                emergencyController = fake,
+                safetyCircleDeliveryStatus = emptyList(),
+                voicePipelinePhase = MutableStateFlow(VoicePipelinePhase.IDLE),
+                onMarkedSafe = {},
+                emergencyServiceResult = result,
+            )
+        }
+
+        // Succeeded is still the true engine state (a place was found), but with nothing to call,
+        // this must read as "no number," never as an invented one and never as a plain success card.
+        composeTestRule.onNodeWithContentDescription(
+            "No phone number available for this service. Please call 911 directly.",
+        ).assertIsDisplayed()
+    }
+
+    @Test
+    fun aSucceededLookupWithNoResultYetFallsBackToTheGenericStatusRatherThanCrashing() {
+        // The theoretical gap between the state flipping to Succeeded and the separate result flow
+        // catching up (see MainActivity's own ordering comment on why this should not happen in
+        // practice) — the screen must still render something true, not null-pointer.
+        val snapshotFlow = MutableStateFlow<EmergencySnapshot?>(
+            EmergencySnapshot(
+                state = EmergencyState.EMERGENCY_ACTIVE,
+                subsystems = ConcurrentSubsystemStates(emergencyService = EmergencyServiceFlowState.Succeeded),
+            ),
+        )
+        val fake = FakeEmergencyController(snapshotFlow)
+
+        composeTestRule.setContent {
+            EmergencyActiveScreen(
+                emergencyController = fake,
+                safetyCircleDeliveryStatus = emptyList(),
+                voicePipelinePhase = MutableStateFlow(VoicePipelinePhase.IDLE),
+                onMarkedSafe = {},
+                emergencyServiceResult = MutableStateFlow(null),
+            )
+        }
+
+        composeTestRule.onNodeWithContentDescription("Nearby Emergency Service: Nearby service found").assertIsDisplayed()
     }
 }

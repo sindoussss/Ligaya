@@ -26,6 +26,7 @@ import com.ligaya.core.emergencyengine.ConcurrentSubsystemStates
 import com.ligaya.core.emergencyengine.EmergencyServiceFlowState
 import com.ligaya.core.emergencyengine.LocationFlowState
 import com.ligaya.core.emergencyengine.Unified911FlowState
+import com.ligaya.core.places.EmergencyServiceLookupResult
 import com.ligaya.core.uistate.EmergencyController
 import com.ligaya.core.voice.VoicePipelinePhase
 import com.ligaya.core.uistate.PresentationTone
@@ -42,7 +43,9 @@ import com.ligaya.designsystem.components.LookupFailedCard
 import com.ligaya.designsystem.components.LookupFailureReason
 import com.ligaya.designsystem.components.OfflineDegradedBanner
 import com.ligaya.designsystem.components.StatusCard
+import com.ligaya.designsystem.components.StatusTone
 import com.ligaya.designsystem.components.VoiceStateIndicator
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
@@ -78,12 +81,13 @@ import kotlinx.coroutines.launch
  * only for callers (previews, tests) that have no real controller action to give it. GEMINI_FAILED
  * and "phone number missing" (the checklist's other two rows) still have no live signal reaching
  * this screen at all — [com.ligaya.core.emergencyengine.EmergencyCompanionState] has no failure
- * sub-state (see its own doc comment) and phone-number availability is a core-places PlaceDetails
- * property never threaded into [ConcurrentSubsystemStates] — so both stay design-system-only
- * components, proven directly by FailureStateComponentsTest rather than live here. Unlike the
- * retry gap, fixing this would mean changing what core-emergency-engine itself tracks (a settled,
- * already-tested Step 9/13 data shape used everywhere), not just connecting existing pieces — a
- * design decision, not a wiring bug.
+ * sub-state (see its own doc comment), so GEMINI_FAILED still has no live signal reaching this
+ * screen. Phone-number availability *is* now live: [emergencyServiceResult] carries the actual
+ * place [EmergencyServiceFlowCoordinator][com.ligaya.core.places.EmergencyServiceFlowCoordinator]
+ * found (kept separate from [ConcurrentSubsystemStates] itself — see that class's own doc for
+ * why), and a `Succeeded` lookup whose result has no [EmergencyServiceLookupResult.phoneNumber]
+ * now renders [LookupFailedCard] with [LookupFailureReason.PHONE_NUMBER_MISSING], the exact
+ * scenario that component was built for.
  */
 @Composable
 fun EmergencyActiveScreen(
@@ -92,10 +96,15 @@ fun EmergencyActiveScreen(
     voicePipelinePhase: StateFlow<VoicePipelinePhase>,
     onMarkedSafe: () -> Unit,
     onRetryCall: () -> Unit = {},
+    // Screen 14 (§16). Defaulted so every existing caller of this screen — this module's own
+    // tests included — keeps compiling unchanged; only LigayaNavHost's real call site needs to
+    // pass the live one.
+    emergencyServiceResult: StateFlow<EmergencyServiceLookupResult?> = MutableStateFlow(null),
     modifier: Modifier = Modifier,
 ) {
     val snapshot by emergencyController.observeSnapshot().collectAsState(initial = null)
     val phase by voicePipelinePhase.collectAsState()
+    val nearestService by emergencyServiceResult.collectAsState()
     val scope = rememberCoroutineScope()
 
     Column(modifier = modifier.fillMaxSize()) {
@@ -132,14 +141,26 @@ fun EmergencyActiveScreen(
             }
             // "Optional, clearly secondary to 911" — same precedence as before, deliberately last
             // among the subsystem cards and given no special emphasis of its own.
-            if (subsystems.emergencyService == EmergencyServiceFlowState.LookupFailed) {
-                LookupFailedCard(reason = LookupFailureReason.SERVICE_NOT_FOUND)
-            } else {
-                StatusCard(
-                    title = "Nearby Emergency Service",
-                    message = subsystems.emergencyService.toPresentation().label,
-                    tone = subsystems.emergencyService.toPresentation().tone.toStatusTone(),
-                )
+            when {
+                subsystems.emergencyService == EmergencyServiceFlowState.LookupFailed ->
+                    LookupFailedCard(reason = LookupFailureReason.SERVICE_NOT_FOUND)
+                // Succeeded, but the place itself had no listed phone number — section 16's own
+                // valid "do not invent a number" outcome, shown with the component built for
+                // exactly this, not as a happy success card offering a number that doesn't exist.
+                subsystems.emergencyService == EmergencyServiceFlowState.Succeeded && nearestService?.phoneNumber == null && nearestService != null ->
+                    LookupFailedCard(reason = LookupFailureReason.PHONE_NUMBER_MISSING)
+                subsystems.emergencyService == EmergencyServiceFlowState.Succeeded && nearestService != null ->
+                    StatusCard(
+                        title = "Nearby Emergency Service",
+                        message = nearestService!!.toDisplayMessage(),
+                        tone = StatusTone.Success,
+                    )
+                else ->
+                    StatusCard(
+                        title = "Nearby Emergency Service",
+                        message = subsystems.emergencyService.toPresentation().label,
+                        tone = subsystems.emergencyService.toPresentation().tone.toStatusTone(),
+                    )
             }
 
             SafetyCircleSection(safetyCircleDeliveryStatus)
@@ -244,4 +265,23 @@ private fun ImSafeButton(onClick: () -> Unit) {
     ) {
         Text(text = "I'm safe", style = LigayaTypography.headline)
     }
+}
+
+/**
+ * Screen 14 (§16). Deliberately never says "dispatch" or "verified" — a Places phone number is
+ * place information, not proof of an emergency line (section 16's own wording), so this reads as
+ * "a public contact," and 911 (shown in its own card, above this one) stays the sentence that
+ * follows, not this one's job to repeat.
+ */
+private fun EmergencyServiceLookupResult.toDisplayMessage(): String {
+    val subject = name?.takeIf { it.isNotBlank() } ?: "A nearby emergency service"
+    val distance = formatDistance(distanceMeters)
+    val contact = phoneNumber?.let { "Public contact available: $it." } ?: "No public contact number listed."
+    return "$subject, $distance away. $contact"
+}
+
+private fun formatDistance(meters: Double): String = if (meters < 1000) {
+    "${meters.toInt()} m"
+} else {
+    "%.1f km".format(meters / 1000.0)
 }
