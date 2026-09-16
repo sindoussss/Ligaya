@@ -201,7 +201,7 @@ class SafetyCircleHomeScreenTest {
             }
         }
 
-        composeTestRule.onNodeWithText("FAMILY & FRIENDS").performScrollTo().assertIsDisplayed()
+        composeTestRule.onNodeWithText("Family & Friends").performScrollTo().assertIsDisplayed()
         // No real photo exists for a locally-saved contact, so the avatar is honestly a letter, not a
         // placeholder headshot.
         composeTestRule.onNodeWithText("M").performScrollTo().assertIsDisplayed()

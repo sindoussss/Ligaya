@@ -58,6 +58,7 @@ fun SettingsScreen(
     onOpenSection: (SettingsSection) -> Unit,
     onOpenProfile: () -> Unit,
     onSelectTab: (LigayaTab) -> Unit = {},
+    onSos: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -117,7 +118,7 @@ fun SettingsScreen(
             Spacer(Modifier.height(24.dp))
         }
 
-        LigayaTabBar(selected = LigayaTab.Profile, onSelect = onSelectTab)
+        LigayaTabBar(selected = LigayaTab.Profile, onSelect = onSelectTab, onSos = onSos)
     }
 }
 

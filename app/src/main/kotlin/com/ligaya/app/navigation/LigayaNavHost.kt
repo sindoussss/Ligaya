@@ -176,6 +176,17 @@ fun LigayaNavHost(
     val openSettings = {
         navController.navigate(LigayaDestination.Settings.route) { launchSingleTop = true }
     }
+    // The tab bar's SOS button, on every screen that shows one. Same single path as Home's own SOS
+    // pill and Chat's — trigger the emergency, then show the Emergency screen.
+    val triggerSosAndGo: () -> Unit = {
+        scope.launch {
+            when (emergencyController.triggerSos()) {
+                is SosResult.Activated, is SosResult.AlreadyInProgress ->
+                    navController.navigate(LigayaDestination.EmergencyActive.route) { launchSingleTop = true }
+            }
+        }
+        Unit
+    }
     NavHost(
         navController = navController,
         startDestination = if (showWelcome) LigayaDestination.Welcome.route else LigayaDestination.Home.route,
@@ -417,6 +428,7 @@ fun LigayaNavHost(
                         LigayaTab.Profile -> openSettings()
                     }
                 },
+                onSos = triggerSosAndGo,
             )
         }
         composable(LigayaDestination.Trouble.route) {
@@ -550,6 +562,7 @@ fun LigayaNavHost(
                         LigayaTab.Profile -> Unit
                     }
                 },
+                onSos = triggerSosAndGo,
             )
         }
         composable(LigayaDestination.SettingsGeneral.route) {
@@ -639,6 +652,7 @@ fun LigayaNavHost(
                 onEditContacts = openProfile,
                 onOpenQuickActions = { navController.navigate(LigayaDestination.QuickActions.route) },
                 onOpenLigayaPlus = { navController.navigate(LigayaDestination.Paywall.route) },
+                onSos = triggerSosAndGo,
                 onSelectTab = { tab ->
                     when (tab) {
                         LigayaTab.Home -> if (!navController.popBackStack(LigayaDestination.Home.route, inclusive = false)) {

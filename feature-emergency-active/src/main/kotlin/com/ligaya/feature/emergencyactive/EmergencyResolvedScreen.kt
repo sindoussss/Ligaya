@@ -69,6 +69,7 @@ import com.ligaya.designsystem.components.rememberLigayaMascotController
 fun EmergencyResolvedScreen(
     emergencyController: EmergencyController,
     onSelectTab: (LigayaTab) -> Unit = {},
+    onSos: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     val snapshot by emergencyController.observeSnapshot().collectAsState(initial = null)
@@ -149,7 +150,12 @@ fun EmergencyResolvedScreen(
             outcomes.forEach { OutcomeCard(it) }
         }
 
-        LigayaTabBar(selected = LigayaTab.Home, onSelect = onSelectTab, modifier = Modifier.padding(top = 14.dp))
+        LigayaTabBar(
+            selected = LigayaTab.Home,
+            onSelect = onSelectTab,
+            onSos = onSos,
+            modifier = Modifier.padding(top = 14.dp),
+        )
     }
 }
 

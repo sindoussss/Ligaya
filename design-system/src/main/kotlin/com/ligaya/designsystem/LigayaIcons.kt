@@ -8,6 +8,7 @@ import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.automirrored.filled.VolumeUp
 import androidx.compose.material.icons.automirrored.outlined.ArrowForward
 import androidx.compose.material.icons.automirrored.outlined.ArrowForwardIos
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Call
 import androidx.compose.material.icons.filled.ChatBubble
 import androidx.compose.material.icons.filled.Check
@@ -108,6 +109,8 @@ object LigayaIcons {
     val quickActions: ImageVector = Icons.Outlined.Bolt
     val callPhone: ImageVector = Icons.Filled.Call
     val shareLocation: ImageVector = Icons.Filled.LocationOn
+    /** The reference's "+" chip that ends the Family & Friends list. */
+    val addContact: ImageVector = Icons.Filled.Add
     val profileSelected: ImageVector = Icons.Filled.Person
     val profile: ImageVector = Icons.Outlined.Person
 

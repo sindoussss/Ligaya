@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -68,6 +69,7 @@ fun SafetyCircleHomeScreen(
     onEditContacts: () -> Unit,
     onOpenQuickActions: () -> Unit,
     onOpenLigayaPlus: () -> Unit,
+    onSos: () -> Unit = {},
     onSelectTab: (LigayaTab) -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
@@ -80,22 +82,17 @@ fun SafetyCircleHomeScreen(
     ) {
         Text(
             text = "Safety Circle",
-            style = LigayaTypography.settingsTitle,
+            style = LigayaTypography.chatTitle,
             color = LigayaTheme.colors.cocoaInk,
-            modifier = Modifier.padding(start = 18.dp, top = 14.dp, bottom = 10.dp),
+            modifier = Modifier.padding(start = 18.dp, top = 16.dp, bottom = 12.dp),
         )
 
         Column(
             modifier = Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(horizontal = 18.dp),
         ) {
-            CircleCard {
-                CircleFact(
-                    label = "Your safety matters",
-                    value = "Set up your circle for faster help in emergencies.",
-                )
-            }
+            IntroRow()
 
-            Spacer(Modifier.height(18.dp))
+            Spacer(Modifier.height(16.dp))
 
             if (!signedIn) {
                 CircleCard {
@@ -106,7 +103,7 @@ fun SafetyCircleHomeScreen(
                         onClick = onSignIn,
                     )
                 }
-                Spacer(Modifier.height(18.dp))
+                Spacer(Modifier.height(12.dp))
             }
 
             CircleCard {
@@ -116,7 +113,11 @@ fun SafetyCircleHomeScreen(
                     detail = if (contacts.isEmpty()) "None added yet" else "${contacts.size} added",
                     onClick = onEditContacts,
                 )
-                CircleDivider()
+            }
+
+            Spacer(Modifier.height(12.dp))
+
+            CircleCard {
                 CircleAction(
                     icon = LigayaIcons.quickActions,
                     label = "Quick actions",
@@ -127,7 +128,7 @@ fun SafetyCircleHomeScreen(
 
             Spacer(Modifier.height(18.dp))
 
-            SectionHeading("FAMILY & FRIENDS")
+            SectionHeading("Family & Friends")
             CircleCard {
                 if (contacts.isEmpty()) {
                     CircleAction(
@@ -143,6 +144,7 @@ fun SafetyCircleHomeScreen(
                 }
                 CircleDivider()
                 CircleAction(
+                    icon = LigayaIcons.addContact,
                     label = "Add contact",
                     detail = "In your emergency profile.",
                     onClick = onEditContacts,
@@ -151,7 +153,7 @@ fun SafetyCircleHomeScreen(
 
             Spacer(Modifier.height(18.dp))
 
-            SectionHeading("FAMILY ALERTS")
+            SectionHeading("Family alerts")
             CircleCard {
                 CircleFact(
                     label = if (householdBackendConfigured) "Ready" else "Not set up on this build",
@@ -174,9 +176,10 @@ fun SafetyCircleHomeScreen(
 
             Spacer(Modifier.height(18.dp))
 
-            SectionHeading("LIGAYA+")
+            SectionHeading("Ligaya+")
             CircleCard {
                 CircleAction(
+                    icon = LigayaIcons.ligayaPlus,
                     label = "Family plan",
                     detail = "The circle, family alerts and shared status are the paid part. Your own SOS, " +
                         "911 and emergency profile are not.",
@@ -187,7 +190,44 @@ fun SafetyCircleHomeScreen(
             Spacer(Modifier.height(24.dp))
         }
 
-        LigayaTabBar(selected = LigayaTab.Circle, onSelect = onSelectTab)
+        LigayaTabBar(selected = LigayaTab.Circle, onSelect = onSelectTab, onSos = onSos)
+    }
+}
+
+/** The reference's own opening line, drawn the way it draws it: an icon beside the text rather than
+ *  a card, so the first card on the screen is something you can actually act on. */
+@Composable
+private fun IntroRow() {
+    Row(
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        IconBadge(LigayaIcons.ligayaPlus)
+        Column(modifier = Modifier.weight(1f).padding(start = 14.dp)) {
+            Text("Your safety matters", style = LigayaTypography.settingsRow, color = LigayaTheme.colors.cocoaInk)
+            Text(
+                text = "Set up your circle for faster help in emergencies.",
+                style = LigayaTypography.chatStatus,
+                color = LigayaTheme.colors.taupe,
+                modifier = Modifier.padding(top = 2.dp),
+            )
+        }
+    }
+}
+
+/** The reference's circular tinted icon chip, used for every row that leads somewhere. */
+@Composable
+private fun IconBadge(icon: ImageVector) {
+    Box(
+        modifier = Modifier.size(44.dp).clip(CircleShape).background(LigayaTheme.colors.blush),
+        contentAlignment = Alignment.Center,
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            tint = LigayaTheme.colors.berry,
+            modifier = Modifier.size(21.dp),
+        )
     }
 }
 
@@ -197,7 +237,7 @@ private fun SectionHeading(text: String) {
         text = text,
         style = LigayaTypography.chatStatus,
         color = LigayaTheme.colors.taupe,
-        modifier = Modifier.padding(start = 4.dp, bottom = 6.dp),
+        modifier = Modifier.padding(start = 4.dp, bottom = 8.dp),
     )
 }
 
@@ -290,12 +330,8 @@ internal fun CircleAction(label: String, detail: String, onClick: () -> Unit, ic
         verticalAlignment = Alignment.CenterVertically,
     ) {
         if (icon != null) {
-            Icon(
-                imageVector = icon,
-                contentDescription = null,
-                tint = LigayaTheme.colors.cocoaInk,
-                modifier = Modifier.size(22.dp).padding(end = 14.dp),
-            )
+            IconBadge(icon)
+            Spacer(Modifier.width(14.dp))
         }
         Column(modifier = Modifier.weight(1f)) {
             Text(label, style = LigayaTypography.settingsRow, color = LigayaTheme.colors.cocoaInk)

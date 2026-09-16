@@ -321,8 +321,9 @@ class HomeScreenTest {
         composeTestRule.onNodeWithText("Magandang gabi,").assertExists()
         composeTestRule.onNodeWithText("John Daniel!").assertExists()
         composeTestRule.onNodeWithText("Rest well. I'm always here when you need me.").assertExists()
-        // SOS is on screen at night exactly as it is by day.
-        composeTestRule.onNodeWithText("SOS").assertExists()
+        // SOS is on screen at night exactly as it is by day. Asked for by the header pill's own
+        // description rather than the word "SOS", which the tab bar's SOS button also shows.
+        composeTestRule.onNodeWithContentDescription("Send SOS emergency alert").assertExists()
     }
 
 }

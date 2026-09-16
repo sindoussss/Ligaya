@@ -42,6 +42,7 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.ligaya.core.billing.EntitlementRepository
 import com.ligaya.core.billing.PurchaseOutcome
@@ -202,7 +203,8 @@ fun PaywallScreen(
 
                 PricingCard(
                     title = "Monthly",
-                    priceLine = "₱99 / month",
+                    price = "₱99",
+                    period = "/ month",
                     badge = "Most Popular",
                     emphasized = true,
                     buttonBusy = isBusy,
@@ -212,7 +214,8 @@ fun PaywallScreen(
                 Spacer(Modifier.height(12.dp))
                 PricingCard(
                     title = "Yearly",
-                    priceLine = "₱999 / year",
+                    price = "₱999",
+                    period = "/ year",
                     badge = "Save 17%",
                     emphasized = false,
                     buttonBusy = isBusy,
@@ -225,6 +228,7 @@ fun PaywallScreen(
                     text = "Cancel anytime. No hidden fees.",
                     style = LigayaTypography.chatStatus,
                     color = LigayaTheme.colors.taupe,
+                    textAlign = TextAlign.Center,
                     modifier = Modifier.fillMaxWidth(),
                 )
 
@@ -236,17 +240,18 @@ fun PaywallScreen(
                     )
                 }
 
-                Text(
-                    text = "Restore Purchases",
-                    style = LigayaTypography.label,
-                    color = LigayaTheme.colors.taupe,
-                    modifier = Modifier
-                        .padding(top = 18.dp)
-                        .clip(LigayaShapes.pill)
-                        .clickable(role = Role.Button, onClick = ::restore)
-                        .testTag("paywallRestore")
-                        .padding(vertical = LigayaSpacing.sm),
-                )
+                Box(modifier = Modifier.fillMaxWidth().padding(top = 14.dp), contentAlignment = Alignment.Center) {
+                    Text(
+                        text = "Restore Purchases",
+                        style = LigayaTypography.label,
+                        color = LigayaTheme.colors.taupe,
+                        modifier = Modifier
+                            .clip(LigayaShapes.pill)
+                            .clickable(role = Role.Button, onClick = ::restore)
+                            .testTag("paywallRestore")
+                            .padding(horizontal = LigayaSpacing.md, vertical = LigayaSpacing.sm),
+                    )
+                }
             }
 
             statusMessage?.let {
@@ -281,7 +286,7 @@ private fun FeatureChecklist() {
                 Icon(
                     imageVector = LigayaIcons.confirmed,
                     contentDescription = null,
-                    tint = LigayaTheme.colors.colorStatusConfirmed,
+                    tint = LigayaTheme.colors.berry,
                     modifier = Modifier.size(18.dp),
                 )
                 Text(
@@ -298,7 +303,8 @@ private fun FeatureChecklist() {
 @Composable
 private fun PricingCard(
     title: String,
-    priceLine: String,
+    price: String,
+    period: String,
     badge: String,
     emphasized: Boolean,
     buttonBusy: Boolean,
@@ -319,20 +325,42 @@ private fun PricingCard(
             )
             .padding(LigayaSpacing.md),
     ) {
-        Text(
-            text = badge,
-            style = LigayaTypography.chatStatus.copy(fontWeight = FontWeight.SemiBold),
-            color = if (emphasized) LigayaTheme.colors.onBerry else LigayaTheme.colors.colorStatusConfirmed,
-            modifier = Modifier
-                .clip(LigayaShapes.pill)
-                .background(if (emphasized) LigayaTheme.colors.berry else LigayaTheme.colors.colorStatusConfirmed.copy(alpha = 0.16f))
-                .padding(horizontal = 10.dp, vertical = 3.dp),
-        )
+        // The reference hangs the highlighted plan's badge on the left and the saving on the right.
+        Box(
+            modifier = Modifier.fillMaxWidth(),
+            contentAlignment = if (emphasized) Alignment.CenterStart else Alignment.CenterEnd,
+        ) {
+            Text(
+                text = badge,
+                style = LigayaTypography.chatStatus.copy(fontWeight = FontWeight.SemiBold),
+                color = if (emphasized) LigayaTheme.colors.onBerry else LigayaTheme.colors.berry,
+                modifier = Modifier
+                    .clip(LigayaShapes.pill)
+                    .background(if (emphasized) LigayaTheme.colors.berry else LigayaTheme.colors.blush)
+                    .padding(horizontal = 10.dp, vertical = 3.dp),
+            )
+        }
         Spacer(Modifier.height(10.dp))
         Row(verticalAlignment = Alignment.CenterVertically) {
             Column(modifier = Modifier.weight(1f)) {
-                Text(text = title, style = LigayaTypography.settingsRow, color = LigayaTheme.colors.cocoaInk)
-                Text(text = priceLine, style = LigayaTypography.chatStatus, color = LigayaTheme.colors.taupe)
+                Text(
+                    text = title,
+                    style = LigayaTypography.settingsRow.copy(fontWeight = FontWeight.SemiBold),
+                    color = LigayaTheme.colors.cocoaInk,
+                )
+                Row(verticalAlignment = Alignment.Bottom, modifier = Modifier.padding(top = 2.dp)) {
+                    Text(
+                        text = price,
+                        style = LigayaTypography.settingsRow.copy(fontWeight = FontWeight.Bold),
+                        color = LigayaTheme.colors.cocoaInk,
+                    )
+                    Text(
+                        text = period,
+                        style = LigayaTypography.chatStatus,
+                        color = LigayaTheme.colors.taupe,
+                        modifier = Modifier.padding(start = 4.dp, bottom = 1.dp),
+                    )
+                }
             }
             SubscribeButton(busy = buttonBusy, emphasized = emphasized, onClick = onSubscribe, modifier = buttonModifier)
         }

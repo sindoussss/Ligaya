@@ -123,6 +123,7 @@ fun HomeScreen(
     val phase by voicePhase.collectAsState()
     val aiUnavailable by voiceAiUnavailable.collectAsState()
     val ligaya = rememberLigayaMascotController()
+    val tabSosScope = rememberCoroutineScope()
 
     LaunchedEffect(phase, aiUnavailable) { ligaya.reflectVoice(phase, aiUnavailable) }
 
@@ -203,6 +204,14 @@ fun HomeScreen(
                         LigayaTab.Circle -> onNavigateToSafetyCircleTab()
                         LigayaTab.Profile -> onNavigateToProfile()
                         LigayaTab.Home -> Unit
+                    }
+                },
+                // The same one-tap path the header's SOS pill takes, not a second one.
+                onSos = {
+                    tabSosScope.launch {
+                        when (emergencyController.triggerSos()) {
+                            is SosResult.Activated, is SosResult.AlreadyInProgress -> onSosActivated()
+                        }
                     }
                 },
                 modifier = Modifier.padding(top = 12.dp),

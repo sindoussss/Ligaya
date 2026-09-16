@@ -177,7 +177,12 @@ fun EmergencyCompanionScreen(
         if (WindowInsets.isImeVisible) {
             Spacer(Modifier.height(8.dp))
         } else {
-            LigayaTabBar(selected = LigayaTab.Chat, onSelect = onSelectTab, modifier = Modifier.padding(top = 12.dp))
+            LigayaTabBar(
+                selected = LigayaTab.Chat,
+                onSelect = onSelectTab,
+                onSos = { onSos?.invoke() },
+                modifier = Modifier.padding(top = 12.dp),
+            )
         }
     }
 }
