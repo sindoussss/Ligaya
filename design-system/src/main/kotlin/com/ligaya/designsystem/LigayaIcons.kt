@@ -23,6 +23,7 @@ import androidx.compose.material.icons.filled.PriorityHigh
 import androidx.compose.material.icons.outlined.ChatBubbleOutline
 import androidx.compose.material.icons.outlined.GridView
 import androidx.compose.material.icons.outlined.Home
+import androidx.compose.material.icons.automirrored.outlined.ArrowForward
 import androidx.compose.material.icons.automirrored.outlined.ArrowForwardIos
 import androidx.compose.material.icons.outlined.DarkMode
 import androidx.compose.material.icons.outlined.Face
@@ -118,6 +119,8 @@ object LigayaIcons {
     val settingsCharacter: ImageVector = Icons.Outlined.Face
     val settingsPrivacy: ImageVector = Icons.Outlined.Lock
     val settingsAbout: ImageVector = Icons.Outlined.Info
+    /** A full arrow, for a button that moves you on ("Next"). Mirrors itself in right-to-left layouts. */
+    val arrowForward: ImageVector = Icons.AutoMirrored.Outlined.ArrowForward
     val chevronForward: ImageVector = Icons.AutoMirrored.Outlined.ArrowForwardIos
 
     // --- Trouble (visual design, screen 8): the "!" on a failure card, filled to read on its rose disc. ---

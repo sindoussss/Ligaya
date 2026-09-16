@@ -7,9 +7,13 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.selection.selectable
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -18,10 +22,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.semantics.Role
-import com.ligaya.designsystem.LigayaTheme
+import androidx.compose.ui.unit.dp
 import com.ligaya.designsystem.LigayaMotion
 import com.ligaya.designsystem.LigayaShapes
+import com.ligaya.designsystem.LigayaTheme
 import com.ligaya.designsystem.LigayaTypography
 import com.ligaya.designsystem.rememberIsReduceMotionEnabled
 
@@ -45,6 +51,8 @@ fun LigayaPrimaryButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
+    /** An arrow or similar mark after the label. Decorative: the label alone has to say where this goes. */
+    trailingIcon: ImageVector? = null,
 ) {
     val interactionSource = remember { MutableInteractionSource() }
     val pressed by interactionSource.collectIsPressedAsState()
@@ -88,7 +96,17 @@ fun LigayaPrimaryButton(
             ),
         contentAlignment = Alignment.Center,
     ) {
-        Text(text = text, style = LigayaTypography.label, color = LigayaTheme.colors.onRoseDeep)
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(text = text, style = LigayaTypography.label, color = LigayaTheme.colors.onRoseDeep)
+            if (trailingIcon != null) {
+                Icon(
+                    imageVector = trailingIcon,
+                    contentDescription = null,
+                    tint = LigayaTheme.colors.onRoseDeep,
+                    modifier = Modifier.padding(start = 8.dp).size(18.dp),
+                )
+            }
+        }
     }
 }
 
