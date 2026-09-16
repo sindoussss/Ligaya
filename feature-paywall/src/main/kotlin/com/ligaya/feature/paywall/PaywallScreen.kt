@@ -165,9 +165,9 @@ fun PaywallScreen(
         }
 
         Column(
-            modifier = Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(horizontal = 18.dp),
+            modifier = Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(horizontal = 22.dp),
         ) {
-            Spacer(Modifier.height(4.dp))
+            Spacer(Modifier.height(14.dp))
             Text(
                 text = "Unlock more with Ligaya+",
                 style = LigayaTypography.headline,
@@ -177,10 +177,10 @@ fun PaywallScreen(
                 text = "Get the best experience with advanced features and priority access.",
                 style = LigayaTypography.body,
                 color = LigayaTheme.colors.taupe,
-                modifier = Modifier.padding(top = 6.dp),
+                modifier = Modifier.padding(top = 10.dp),
             )
 
-            Spacer(Modifier.height(18.dp))
+            Spacer(Modifier.height(LigayaSpacing.xl))
 
             if (isSubscribed) {
                 Text(
@@ -199,7 +199,7 @@ fun PaywallScreen(
             } else {
                 FeatureChecklist()
 
-                Spacer(Modifier.height(20.dp))
+                Spacer(Modifier.height(LigayaSpacing.xl))
 
                 PricingCard(
                     title = "Monthly",
@@ -211,7 +211,7 @@ fun PaywallScreen(
                     onSubscribe = { subscribe(SubscriptionTier.MONTHLY) },
                     buttonModifier = Modifier.testTag("paywallSubscribeMonthly"),
                 )
-                Spacer(Modifier.height(12.dp))
+                Spacer(Modifier.height(LigayaSpacing.md))
                 PricingCard(
                     title = "Yearly",
                     price = "₱999",
@@ -223,7 +223,7 @@ fun PaywallScreen(
                     buttonModifier = Modifier.testTag("paywallSubscribeYearly"),
                 )
 
-                Spacer(Modifier.height(14.dp))
+                Spacer(Modifier.height(LigayaSpacing.lg))
                 Text(
                     text = "Cancel anytime. No hidden fees.",
                     style = LigayaTypography.chatStatus,
@@ -280,20 +280,20 @@ private fun FeatureChecklist() {
         "Location sharing with your circle",
         "Family emergency alerts",
     )
-    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+    Column(verticalArrangement = Arrangement.spacedBy(LigayaSpacing.md)) {
         items.forEach { item ->
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(
                     imageVector = LigayaIcons.confirmed,
                     contentDescription = null,
                     tint = LigayaTheme.colors.berry,
-                    modifier = Modifier.size(18.dp),
+                    modifier = Modifier.size(19.dp),
                 )
                 Text(
                     text = item,
                     style = LigayaTypography.settingsRow,
                     color = LigayaTheme.colors.cocoaInk,
-                    modifier = Modifier.padding(start = 10.dp),
+                    modifier = Modifier.padding(start = 14.dp),
                 )
             }
         }
@@ -323,7 +323,7 @@ private fun PricingCard(
                 color = if (emphasized) LigayaTheme.colors.berry else LigayaTheme.colors.shellEdge,
                 shape = RoundedCornerShape(22.dp),
             )
-            .padding(LigayaSpacing.md),
+            .padding(horizontal = 20.dp, vertical = LigayaSpacing.lg),
     ) {
         // The reference hangs the highlighted plan's badge on the left and the saving on the right.
         Box(
@@ -337,10 +337,10 @@ private fun PricingCard(
                 modifier = Modifier
                     .clip(LigayaShapes.pill)
                     .background(if (emphasized) LigayaTheme.colors.berry else LigayaTheme.colors.blush)
-                    .padding(horizontal = 10.dp, vertical = 3.dp),
+                    .padding(horizontal = 12.dp, vertical = 5.dp),
             )
         }
-        Spacer(Modifier.height(10.dp))
+        Spacer(Modifier.height(LigayaSpacing.md))
         Row(verticalAlignment = Alignment.CenterVertically) {
             Column(modifier = Modifier.weight(1f)) {
                 Text(
@@ -348,7 +348,7 @@ private fun PricingCard(
                     style = LigayaTypography.settingsRow.copy(fontWeight = FontWeight.SemiBold),
                     color = LigayaTheme.colors.cocoaInk,
                 )
-                Row(verticalAlignment = Alignment.Bottom, modifier = Modifier.padding(top = 2.dp)) {
+                Row(verticalAlignment = Alignment.Bottom, modifier = Modifier.padding(top = 5.dp)) {
                     Text(
                         text = price,
                         style = LigayaTypography.settingsRow.copy(fontWeight = FontWeight.Bold),
@@ -384,7 +384,7 @@ private fun SubscribeButton(busy: Boolean, emphasized: Boolean, onClick: () -> U
                 }
             }
             .clickable(enabled = !busy, role = Role.Button, onClick = onClick)
-            .padding(horizontal = 18.dp, vertical = 10.dp),
+            .padding(horizontal = 22.dp, vertical = 13.dp),
         horizontalArrangement = Arrangement.Center,
         verticalAlignment = Alignment.CenterVertically,
     ) {
