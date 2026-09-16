@@ -31,6 +31,7 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.ligaya.core.data.profile.EmergencyContact
 import com.ligaya.designsystem.ligayaButtonElevation
@@ -38,6 +39,7 @@ import com.ligaya.designsystem.ligayaElevation
 import com.ligaya.designsystem.LigayaIcons
 import com.ligaya.designsystem.LigayaTheme
 import com.ligaya.designsystem.LigayaTypography
+import com.ligaya.designsystem.components.LigayaBackButton
 import com.ligaya.designsystem.components.LigayaTab
 import com.ligaya.designsystem.components.LigayaTabBar
 
@@ -69,6 +71,7 @@ fun SafetyCircleHomeScreen(
     onEditContacts: () -> Unit,
     onOpenQuickActions: () -> Unit,
     onOpenLigayaPlus: () -> Unit,
+    onBack: () -> Unit = {},
     onSos: () -> Unit = {},
     onSelectTab: (LigayaTab) -> Unit = {},
     modifier: Modifier = Modifier,
@@ -80,12 +83,18 @@ fun SafetyCircleHomeScreen(
             .statusBarsPadding()
             .navigationBarsPadding(),
     ) {
-        Text(
-            text = "Safety Circle",
-            style = LigayaTypography.chatTitle,
-            color = LigayaTheme.colors.cocoaInk,
-            modifier = Modifier.padding(start = 18.dp, top = 16.dp, bottom = 12.dp),
-        )
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(start = 6.dp, end = 16.dp, top = 8.dp, bottom = 8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            LigayaBackButton(onClick = onBack)
+            Text(
+                text = "Safety Circle",
+                style = LigayaTypography.chatTitle,
+                color = LigayaTheme.colors.cocoaInk,
+                modifier = Modifier.padding(start = 4.dp),
+            )
+        }
 
         Column(
             modifier = Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(horizontal = 18.dp),
@@ -202,14 +211,18 @@ private fun IntroRow() {
         modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        IconBadge(LigayaIcons.ligayaPlus)
-        Column(modifier = Modifier.weight(1f).padding(start = 14.dp)) {
-            Text("Your safety matters", style = LigayaTypography.settingsRow, color = LigayaTheme.colors.cocoaInk)
+        IconBadge(LigayaIcons.ligayaPlus, size = 36.dp)
+        Column(modifier = Modifier.weight(1f).padding(start = 12.dp)) {
+            Text(
+                text = "Your safety matters",
+                style = LigayaTypography.label,
+                color = LigayaTheme.colors.cocoaInk,
+            )
             Text(
                 text = "Set up your circle for faster help in emergencies.",
                 style = LigayaTypography.chatStatus,
                 color = LigayaTheme.colors.taupe,
-                modifier = Modifier.padding(top = 2.dp),
+                modifier = Modifier.padding(top = 1.dp),
             )
         }
     }
@@ -217,16 +230,16 @@ private fun IntroRow() {
 
 /** The reference's circular tinted icon chip, used for every row that leads somewhere. */
 @Composable
-private fun IconBadge(icon: ImageVector) {
+private fun IconBadge(icon: ImageVector, size: Dp = 40.dp) {
     Box(
-        modifier = Modifier.size(44.dp).clip(CircleShape).background(LigayaTheme.colors.blush),
+        modifier = Modifier.size(size).clip(CircleShape).background(LigayaTheme.colors.blush),
         contentAlignment = Alignment.Center,
     ) {
         Icon(
             imageVector = icon,
             contentDescription = null,
             tint = LigayaTheme.colors.berry,
-            modifier = Modifier.size(21.dp),
+            modifier = Modifier.size(size * 0.46f),
         )
     }
 }
@@ -284,7 +297,7 @@ private fun ContactRow(contact: EmergencyContact) {
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Box(
-            modifier = Modifier.size(44.dp).clip(CircleShape).background(LigayaTheme.colors.blush),
+            modifier = Modifier.size(40.dp).clip(CircleShape).background(LigayaTheme.colors.blush),
             contentAlignment = Alignment.Center,
         ) {
             Text(

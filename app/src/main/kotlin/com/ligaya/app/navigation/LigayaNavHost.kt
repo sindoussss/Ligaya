@@ -652,6 +652,7 @@ fun LigayaNavHost(
                 onEditContacts = openProfile,
                 onOpenQuickActions = { navController.navigate(LigayaDestination.QuickActions.route) },
                 onOpenLigayaPlus = { navController.navigate(LigayaDestination.Paywall.route) },
+                onBack = { navController.popBackStack() },
                 onSos = triggerSosAndGo,
                 onSelectTab = { tab ->
                     when (tab) {
@@ -683,7 +684,21 @@ fun LigayaNavHost(
             )
         }
         composable(LigayaDestination.Paywall.route) {
-            PaywallScreen(entitlementRepository = entitlementRepository, onBack = { navController.popBackStack() })
+            PaywallScreen(
+                entitlementRepository = entitlementRepository,
+                onBack = { navController.popBackStack() },
+                onSelectTab = { tab ->
+                    when (tab) {
+                        LigayaTab.Home -> if (!navController.popBackStack(LigayaDestination.Home.route, inclusive = false)) {
+                            navController.navigate(LigayaDestination.Home.route)
+                        }
+                        LigayaTab.Chat -> openChat()
+                        LigayaTab.Circle -> navController.popBackStack()
+                        LigayaTab.Profile -> openSettings()
+                    }
+                },
+                onSos = triggerSosAndGo,
+            )
         }
         composable(LigayaDestination.Onboarding.route) {
             // Visual design screen 2. Both exits pop back for now: the real hand-off into the
