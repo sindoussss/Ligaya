@@ -1,14 +1,15 @@
 package com.ligaya.designsystem.components
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -24,9 +25,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.unit.dp
 import com.ligaya.designsystem.LigayaTheme
 import com.ligaya.designsystem.LigayaSpacing
 import com.ligaya.designsystem.LigayaTypography
+import com.ligaya.designsystem.ligayaElevation
 
 /**
  * Section 27's screen inventory names several of these by role: "911 status card
@@ -38,20 +41,24 @@ import com.ligaya.designsystem.LigayaTypography
  * non-Neutral tone shows an icon alongside its color, and [contentDescription] states the tone in
  * words for TalkBack — color is never the only signal.
  *
- * [StatusTone.Neutral] uses [MaterialTheme]'s own surface roles (so it adapts to light/dark
- * automatically); the other three use [LigayaColors]' fixed semantic tokens, same reasoning as
- * [SosControl] — a "failed" card should look the same regardless of system theme.
+ * Repainted from a solid tone-coloured block (this card's own shape until the app's visual design
+ * pass reached it — see git history: it predates every other screen's cream/shell language) to
+ * the same soft card every other status row in the app uses: a [LigayaTheme.colors.shell] surface
+ * that never changes colour, with the tone carried by a small accent disc instead — the pattern
+ * already established by Home's contact rows and screen 6's own outcome cards. The card's own
+ * text stays [LigayaTheme.colors.cocoaInk]/[LigayaTheme.colors.taupe] regardless of tone (already
+ * proven AA by DarkPaletteContrastTest), so only the disc's icon carries the saturated colour.
  */
 enum class StatusTone { Neutral, Pending, Success, Failure }
 
-private data class ToneStyle(val container: Color, val onContainer: Color, val icon: ImageVector?)
+private data class ToneStyle(val discBackground: Color, val iconTint: Color, val icon: ImageVector?)
 
 @Composable
 private fun toneStyle(tone: StatusTone): ToneStyle = when (tone) {
-    StatusTone.Neutral -> ToneStyle(MaterialTheme.colorScheme.surfaceVariant, MaterialTheme.colorScheme.onSurfaceVariant, null)
-    StatusTone.Pending -> ToneStyle(LigayaTheme.colors.colorStatusPending, LigayaTheme.colors.onStatusPending, Icons.Filled.Schedule)
-    StatusTone.Success -> ToneStyle(LigayaTheme.colors.colorStatusConfirmed, LigayaTheme.colors.onStatusConfirmed, Icons.Filled.CheckCircle)
-    StatusTone.Failure -> ToneStyle(LigayaTheme.colors.colorStatusFailed, LigayaTheme.colors.onStatusFailed, Icons.Filled.ErrorOutline)
+    StatusTone.Neutral -> ToneStyle(LigayaTheme.colors.shellEdge, LigayaTheme.colors.taupe, null)
+    StatusTone.Pending -> ToneStyle(LigayaTheme.colors.colorStatusPending.copy(alpha = 0.18f), LigayaTheme.colors.colorStatusPending, Icons.Filled.Schedule)
+    StatusTone.Success -> ToneStyle(LigayaTheme.colors.colorStatusConfirmed.copy(alpha = 0.18f), LigayaTheme.colors.colorStatusConfirmed, Icons.Filled.CheckCircle)
+    StatusTone.Failure -> ToneStyle(LigayaTheme.colors.colorStatusFailed.copy(alpha = 0.18f), LigayaTheme.colors.colorStatusFailed, Icons.Filled.ErrorOutline)
 }
 
 @Composable
@@ -62,22 +69,28 @@ fun StatusCard(
     modifier: Modifier = Modifier,
 ) {
     val style = toneStyle(tone)
-    Card(
-        modifier = modifier.semantics { contentDescription = "$title: $message" },
-        colors = CardDefaults.cardColors(containerColor = style.container, contentColor = style.onContainer),
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .ligayaElevation(shape = RoundedCornerShape(22.dp))
+            .clip(RoundedCornerShape(22.dp))
+            .background(LigayaTheme.colors.shell)
+            .border(1.dp, LigayaTheme.colors.shellEdge, RoundedCornerShape(22.dp))
+            .padding(LigayaSpacing.md)
+            .semantics { contentDescription = "$title: $message" },
+        verticalAlignment = Alignment.CenterVertically,
     ) {
-        Row(
-            modifier = Modifier.padding(LigayaSpacing.md),
-            verticalAlignment = Alignment.CenterVertically,
+        Box(
+            modifier = Modifier.size(36.dp).clip(CircleShape).background(style.discBackground),
+            contentAlignment = Alignment.Center,
         ) {
-            style.icon?.let {
-                Icon(imageVector = it, contentDescription = null, tint = style.onContainer)
-                Spacer(Modifier.width(LigayaSpacing.sm))
+            if (style.icon != null) {
+                Icon(imageVector = style.icon, contentDescription = null, tint = style.iconTint, modifier = Modifier.size(20.dp))
             }
-            Column {
-                Text(text = title, style = LigayaTypography.headline, color = style.onContainer)
-                Text(text = message, style = LigayaTypography.body, color = style.onContainer)
-            }
+        }
+        Column(modifier = Modifier.padding(start = LigayaSpacing.sm)) {
+            Text(text = title, style = LigayaTypography.headline, color = LigayaTheme.colors.cocoaInk)
+            Text(text = message, style = LigayaTypography.body, color = LigayaTheme.colors.taupe)
         }
     }
 }
@@ -92,7 +105,8 @@ fun StatusChip(
     Row(
         modifier = modifier
             .clip(RoundedCornerShape(percent = 50))
-            .background(style.container)
+            .background(LigayaTheme.colors.shell)
+            .border(1.dp, LigayaTheme.colors.shellEdge, RoundedCornerShape(percent = 50))
             .padding(horizontal = LigayaSpacing.md, vertical = LigayaSpacing.xs)
             .semantics { contentDescription = text },
         verticalAlignment = Alignment.CenterVertically,
@@ -101,11 +115,11 @@ fun StatusChip(
             Icon(
                 imageVector = it,
                 contentDescription = null,
-                tint = style.onContainer,
-                modifier = Modifier.padding(end = LigayaSpacing.xs),
+                tint = style.iconTint,
+                modifier = Modifier.padding(end = LigayaSpacing.xs).size(16.dp),
             )
         }
-        Text(text = text, style = LigayaTypography.label, color = style.onContainer)
+        Text(text = text, style = LigayaTypography.label, color = LigayaTheme.colors.cocoaInk)
     }
 }
 

@@ -1,17 +1,20 @@
 package com.ligaya.feature.emergencyactive
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -20,8 +23,11 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.unit.dp
 import com.ligaya.core.emergencyengine.ConcurrentSubsystemStates
 import com.ligaya.core.emergencyengine.EmergencyServiceFlowState
 import com.ligaya.core.emergencyengine.LocationFlowState
@@ -31,6 +37,8 @@ import com.ligaya.core.uistate.EmergencyController
 import com.ligaya.core.voice.VoicePipelinePhase
 import com.ligaya.core.uistate.PresentationTone
 import com.ligaya.core.uistate.toPresentation
+import com.ligaya.designsystem.LigayaIcons
+import com.ligaya.designsystem.LigayaShapes
 import com.ligaya.designsystem.LigayaTheme
 import com.ligaya.designsystem.LigayaDeliveryState
 import com.ligaya.designsystem.LigayaSpacing
@@ -45,6 +53,8 @@ import com.ligaya.designsystem.components.OfflineDegradedBanner
 import com.ligaya.designsystem.components.StatusCard
 import com.ligaya.designsystem.components.StatusTone
 import com.ligaya.designsystem.components.VoiceStateIndicator
+import com.ligaya.designsystem.ligayaButtonElevation
+import com.ligaya.designsystem.ligayaElevation
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -107,7 +117,7 @@ fun EmergencyActiveScreen(
     val nearestService by emergencyServiceResult.collectAsState()
     val scope = rememberCoroutineScope()
 
-    Column(modifier = modifier.fillMaxSize()) {
+    Column(modifier = modifier.fillMaxSize().background(LigayaTheme.colors.cream)) {
         Column(
             modifier = Modifier
                 .weight(1f)
@@ -194,14 +204,33 @@ fun EmergencyActiveScreen(
 @Composable
 private fun StatusBanner(presentationLabel: String, tone: PresentationTone?) {
     val resolvedTone = tone ?: PresentationTone.NEUTRAL
-    Box(
+    // The one card on this screen still allowed to be a solid coloured block: the single line that has to
+    // read as unmistakably urgent the instant this screen opens. Rounded into the page rather than run
+    // edge to edge, like every other card here, so it reads as this app's own alert, not a system dialog
+    // pasted on top of it — but its colour is untouched: whatever colorEmergencyActive/colorStatusFailed
+    // already mean everywhere else in the app (the SOS pill included) is exactly what it means here too.
+    Row(
         modifier = Modifier
             .fillMaxWidth()
+            .ligayaElevation(elevation = 10.dp, shape = RoundedCornerShape(26.dp))
+            .clip(RoundedCornerShape(26.dp))
             .background(resolvedTone.containerColor())
             .padding(LigayaSpacing.md)
             .semantics { contentDescription = "Emergency status: $presentationLabel" },
+        verticalAlignment = Alignment.CenterVertically,
     ) {
-        Text(text = presentationLabel, style = LigayaTypography.display, color = resolvedTone.contentColor())
+        Icon(
+            imageVector = LigayaIcons.emergency,
+            contentDescription = null,
+            tint = resolvedTone.contentColor(),
+            modifier = Modifier.size(28.dp),
+        )
+        Text(
+            text = presentationLabel,
+            style = LigayaTypography.headline,
+            color = resolvedTone.contentColor(),
+            modifier = Modifier.padding(start = LigayaSpacing.sm),
+        )
     }
 }
 
@@ -219,7 +248,7 @@ private fun ActivityLine(subsystems: ConcurrentSubsystemStates) {
     Text(
         text = inProgressLabel ?: "Ligaya is monitoring your emergency",
         style = LigayaTypography.body,
-        color = LigayaTheme.colors.onSurface,
+        color = LigayaTheme.colors.cocoaInk,
         modifier = Modifier.semantics { contentDescription = "Current activity: ${inProgressLabel ?: "monitoring"}" },
     )
 }
@@ -227,13 +256,13 @@ private fun ActivityLine(subsystems: ConcurrentSubsystemStates) {
 @Composable
 private fun SafetyCircleSection(members: List<MemberDeliveryStatus>) {
     Column(verticalArrangement = Arrangement.spacedBy(LigayaSpacing.sm)) {
-        Text(text = "Safety Circle", style = LigayaTypography.headline, color = LigayaTheme.colors.onSurface)
+        Text(text = "Safety Circle", style = LigayaTypography.headline, color = LigayaTheme.colors.cocoaInk)
         if (members.isEmpty()) {
-            Text(text = "No Safety Circle members to notify", style = LigayaTypography.body, color = LigayaTheme.colors.onSurface)
+            Text(text = "No Safety Circle members to notify", style = LigayaTypography.body, color = LigayaTheme.colors.taupe)
         } else {
             members.forEach { member ->
                 Column(modifier = Modifier.padding(vertical = LigayaSpacing.xs)) {
-                    Text(text = member.memberName, style = LigayaTypography.label, color = LigayaTheme.colors.onSurface)
+                    Text(text = member.memberName, style = LigayaTypography.label, color = LigayaTheme.colors.cocoaInk)
                     Column(verticalArrangement = Arrangement.spacedBy(LigayaSpacing.xs)) {
                         member.channelStatuses.filter { it.state == LigayaDeliveryState.FAILED }.forEach { channel ->
                             DeliveryFailedCard(channelLabel = channel.channelLabel)
@@ -252,18 +281,25 @@ private fun SafetyCircleSection(members: List<MemberDeliveryStatus>) {
 
 @Composable
 private fun ImSafeButton(onClick: () -> Unit) {
-    Button(
-        onClick = onClick,
+    // The one persistent action on this screen (see this file's own top doc comment on why it
+    // sits outside the scroll), so it gets the same full-pill shape and lift as every other
+    // primary action in the app (LigayaPrimaryButton) rather than a default Material button's
+    // square corners -- still its own colour, since "I'm safe" is a confirm action, not the
+    // brand's own rose CTA.
+    Row(
         modifier = Modifier
             .fillMaxWidth()
             .padding(LigayaSpacing.md)
+            .height(LigayaShapes.primaryButtonHeight)
+            .ligayaButtonElevation(elevation = 6.dp)
+            .clip(LigayaShapes.pill)
+            .background(LigayaTheme.colors.colorStatusConfirmed)
+            .clickable(role = Role.Button, onClick = onClick)
             .semantics { contentDescription = "I'm safe" },
-        colors = ButtonDefaults.buttonColors(
-            containerColor = LigayaTheme.colors.colorStatusConfirmed,
-            contentColor = LigayaTheme.colors.onStatusConfirmed,
-        ),
+        horizontalArrangement = Arrangement.Center,
+        verticalAlignment = Alignment.CenterVertically,
     ) {
-        Text(text = "I'm safe", style = LigayaTypography.headline)
+        Text(text = "I'm safe", style = LigayaTypography.label, color = LigayaTheme.colors.onStatusConfirmed)
     }
 }
 
