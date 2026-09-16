@@ -70,9 +70,17 @@ fun CreateAccountScreen(
     authRepository: AuthRepository,
     onAuthenticated: (userId: String) -> Unit,
     onBack: () -> Unit,
+    // ACCOUNT_ACTIONS_NEEDED.md item 6. Defaulted so every existing caller of this screen — this
+    // module's own tests included — keeps compiling unchanged; only LigayaNavHost's real call site
+    // needs to pass the live Credential Manager flow.
+    onGoogleSignIn: suspend () -> AuthResult = { AuthResult.Failure(GOOGLE_UNAVAILABLE) },
+    googleSignInAvailable: Boolean = false,
+    // Welcome's "I already have an account" link opens straight into log-in mode rather than
+    // making a returning user switch it themselves; every other caller still opens on sign-up.
+    initialMode: AccountMode = AccountMode.SIGN_UP,
     modifier: Modifier = Modifier,
 ) {
-    var mode by remember { mutableStateOf(AccountMode.SIGN_UP) }
+    var mode by remember { mutableStateOf(initialMode) }
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
@@ -81,6 +89,31 @@ fun CreateAccountScreen(
     var formError by remember { mutableStateOf<String?>(null) }
     var submitting by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
+
+    // Real once googleSignInAvailable is true (ACCOUNT_ACTIONS_NEEDED.md item 6) — the button still
+    // says plainly it is not set up otherwise, rather than launching a picker guaranteed to fail.
+    fun signInWithGoogle() {
+        if (!googleSignInAvailable) {
+            formError = GOOGLE_UNAVAILABLE
+            return
+        }
+        formError = null
+        submitting = true
+        scope.launch {
+            when (val result = onGoogleSignIn()) {
+                is AuthResult.Success -> {
+                    submitting = false
+                    onAuthenticated(result.userId)
+                }
+                is AuthResult.Failure -> {
+                    submitting = false
+                    // An empty message means the person closed the picker themselves — not
+                    // something to show as an error.
+                    if (result.message.isNotBlank()) formError = result.message
+                }
+            }
+        }
+    }
 
     fun submit() {
         emailError = validateEmail(email)
@@ -158,7 +191,7 @@ fun CreateAccountScreen(
         // design the moment credentials landed.
         LigayaSecondaryButton(
             text = "Continue with Google",
-            onClick = { formError = GOOGLE_UNAVAILABLE },
+            onClick = ::signInWithGoogle,
         )
         Spacer(modifier = Modifier.height(LigayaSpacing.sm))
         LigayaSecondaryButton(
@@ -291,7 +324,9 @@ private fun OrDivider(modifier: Modifier = Modifier) {
     }
 }
 
-private enum class AccountMode { SIGN_UP, LOG_IN }
+/** Public so callers outside this module (LigayaNavHost) can pass [CreateAccountScreen.initialMode] —
+ *  Welcome's "I already have an account" link opens straight into [LOG_IN]. */
+enum class AccountMode { SIGN_UP, LOG_IN }
 
 /**
  * Deliberately permissive: this is a formatting sanity check to save a pointless round trip, not an

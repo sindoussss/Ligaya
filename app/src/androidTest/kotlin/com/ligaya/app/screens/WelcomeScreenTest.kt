@@ -25,6 +25,7 @@ class WelcomeScreenTest {
         composeTestRule.onNodeWithText("Ligaya").assertExists()
         composeTestRule.onNodeWithText("More than an assistant.\nA kaibigan, always.").assertExists()
         composeTestRule.onNodeWithText("Get Started").assertExists()
+        composeTestRule.onNodeWithText("I already have an account").assertExists()
     }
 
     @Test
@@ -37,5 +38,21 @@ class WelcomeScreenTest {
         composeTestRule.onNodeWithText("Get Started").performClick()
 
         assertTrue("Get Started must hand off to the next screen", started)
+    }
+
+    @Test
+    fun iAlreadyHaveAnAccountHandsOffSeparatelyFromGetStartedAndIsAComfortableTouchTarget() {
+        var started = false
+        var loggedIn = false
+        composeTestRule.setContent {
+            WelcomeScreen(onGetStarted = { started = true }, onLogIn = { loggedIn = true })
+        }
+
+        composeTestRule.onNodeWithText("I already have an account")
+            .assertHeightIsAtLeast(LigayaSpacing.minTouchTarget)
+            .performClick()
+
+        assertTrue("the log-in link must hand off through its own callback", loggedIn)
+        assertTrue("tapping the log-in link must never also report Get Started", !started)
     }
 }

@@ -3,6 +3,7 @@ package com.ligaya.core.backend.auth
 import android.content.Context
 import android.content.SharedPreferences
 import android.util.Base64
+import org.json.JSONObject
 import java.security.MessageDigest
 import java.security.SecureRandom
 import java.util.UUID
@@ -48,7 +49,7 @@ class LocalAuthRepository(context: Context) : AuthRepository {
         val salt = ByteArray(SALT_LENGTH_BYTES).also { SecureRandom().nextBytes(it) }
         val userId = UUID.randomUUID().toString()
         preferences.edit()
-            .putString(accountKey(normalised), encodeRecord(salt, derive(password, salt), userId))
+            .putString(accountKey(normalised), encodeRecord(PROVIDER_LOCAL, salt, derive(password, salt), userId))
             .putString(SESSION_KEY, userId)
             .putString(SESSION_EMAIL_KEY, normalised)
             .apply()
@@ -60,14 +61,67 @@ class LocalAuthRepository(context: Context) : AuthRepository {
             // Deliberately the same message as a wrong password below: telling an unauthenticated
             // caller which of the two was wrong tells them whether an email is registered.
             ?: return AuthResult.Failure(INVALID_CREDENTIALS)
-        val (salt, storedHash, userId) = decodeRecord(record) ?: return AuthResult.Failure(INVALID_CREDENTIALS)
+        val decoded = decodeRecord(record) ?: return AuthResult.Failure(INVALID_CREDENTIALS)
+        if (decoded.provider == PROVIDER_GOOGLE) {
+            // No password was ever set for this account (see signInWithGoogle) — the stored hash is
+            // random and deliberately unmatchable, so this check exists to give an honest message
+            // instead of a generic "wrong password" for something that was never set to begin with.
+            return AuthResult.Failure("This account uses Google sign-in. Continue with Google instead.")
+        }
 
-        if (!MessageDigest.isEqual(derive(password, salt), storedHash)) {
+        if (!MessageDigest.isEqual(derive(password, decoded.salt), decoded.hash)) {
             return AuthResult.Failure(INVALID_CREDENTIALS)
         }
         preferences.edit()
-            .putString(SESSION_KEY, userId)
+            .putString(SESSION_KEY, decoded.userId)
             .putString(SESSION_EMAIL_KEY, normalise(email))
+            .apply()
+        return AuthResult.Success(decoded.userId)
+    }
+
+    /**
+     * ACCOUNT_ACTIONS_NEEDED.md item 6. [googleIdToken] already came from the device's own Google
+     * account picker (Credential Manager, at the composition root) — the user genuinely chose a
+     * real Google account to get here. What this method does *not* do: cryptographically verify
+     * the token's signature against Google's rotating public keys, which needs either a backend
+     * (Firebase does this — see [FirebaseAuthRepository]'s own implementation) or a JWT-verification
+     * library neither of which this on-device fallback has. It does check the token is well-formed
+     * and unexpired, and reads the account's real email from it — not a fabricated one.
+     *
+     * A returning Google account logs back into its own local account; a new one creates one. An
+     * email that already has a *password* account is refused rather than silently taken over — this
+     * repository has no way to confirm the person tapping "Continue with Google" also owns that
+     * password, so linking them would mean trusting the Google picker to authorize access to an
+     * account it was never used to create.
+     */
+    override suspend fun signInWithGoogle(googleIdToken: String): AuthResult {
+        val claims = decodeGoogleIdTokenClaims(googleIdToken)
+            ?: return AuthResult.Failure("That didn't look like a valid Google sign-in. Please try again.")
+        val email = claims.email
+            ?: return AuthResult.Failure("Your Google account has no email address to sign in with.")
+        val normalised = normalise(email)
+
+        val existing = preferences.getString(accountKey(normalised), null)?.let(::decodeRecord)
+        if (existing != null) {
+            if (existing.provider != PROVIDER_GOOGLE) {
+                return AuthResult.Failure(
+                    "This email already has a password-based Ligaya account. Log in with your password instead.",
+                )
+            }
+            preferences.edit().putString(SESSION_KEY, existing.userId).putString(SESSION_EMAIL_KEY, normalised).apply()
+            return AuthResult.Success(existing.userId)
+        }
+
+        // A brand-new account. No password was ever set, so what's stored here can never be derived
+        // from or compared against one — logIn() below refuses password attempts on a Google account
+        // before this value is ever read.
+        val userId = UUID.randomUUID().toString()
+        val placeholderSalt = ByteArray(SALT_LENGTH_BYTES).also { SecureRandom().nextBytes(it) }
+        val placeholderHash = ByteArray(KEY_LENGTH_BITS / 8).also { SecureRandom().nextBytes(it) }
+        preferences.edit()
+            .putString(accountKey(normalised), encodeRecord(PROVIDER_GOOGLE, placeholderSalt, placeholderHash, userId))
+            .putString(SESSION_KEY, userId)
+            .putString(SESSION_EMAIL_KEY, normalised)
             .apply()
         return AuthResult.Success(userId)
     }
@@ -95,18 +149,45 @@ class LocalAuthRepository(context: Context) : AuthRepository {
 
     private fun accountKey(normalisedEmail: String) = "$ACCOUNT_KEY_PREFIX$normalisedEmail"
 
-    private fun encodeRecord(salt: ByteArray, hash: ByteArray, userId: String): String =
-        listOf(encode(salt), encode(hash), userId).joinToString(RECORD_SEPARATOR)
+    /** [provider] omitted (three-field records) means [PROVIDER_LOCAL] — every account created before
+     *  Google sign-in existed, read back exactly as it always was. */
+    private fun encodeRecord(provider: String, salt: ByteArray, hash: ByteArray, userId: String): String =
+        listOf(provider, encode(salt), encode(hash), userId).joinToString(RECORD_SEPARATOR)
 
-    private fun decodeRecord(record: String): Triple<ByteArray, ByteArray, String>? {
+    private fun decodeRecord(record: String): AccountRecord? {
         val parts = record.split(RECORD_SEPARATOR)
-        if (parts.size != 3) return null
-        return Triple(decode(parts[0]), decode(parts[1]), parts[2])
+        return when (parts.size) {
+            3 -> AccountRecord(PROVIDER_LOCAL, decode(parts[0]), decode(parts[1]), parts[2])
+            4 -> AccountRecord(parts[0], decode(parts[1]), decode(parts[2]), parts[3])
+            else -> null
+        }
     }
 
     private fun encode(bytes: ByteArray) = Base64.encodeToString(bytes, Base64.NO_WRAP)
 
     private fun decode(value: String): ByteArray = Base64.decode(value, Base64.NO_WRAP)
+
+    private data class AccountRecord(val provider: String, val salt: ByteArray, val hash: ByteArray, val userId: String)
+
+    /** Reads the two claims this repository actually needs, without verifying the token's signature
+     *  (see [signInWithGoogle]'s own doc comment on why not). Malformed input, an unparseable
+     *  payload, or a token whose `exp` has already passed all return null alike — none of them is a
+     *  real sign-in attempt worth a more specific message. */
+    private fun decodeGoogleIdTokenClaims(idToken: String): GoogleIdTokenClaims? {
+        val segments = idToken.split(".")
+        if (segments.size != 3) return null
+        return try {
+            val payload = Base64.decode(segments[1], Base64.URL_SAFE or Base64.NO_PADDING or Base64.NO_WRAP)
+            val json = JSONObject(String(payload, Charsets.UTF_8))
+            val expiresAtEpochSeconds = json.optLong("exp", -1L)
+            if (expiresAtEpochSeconds in 0..(System.currentTimeMillis() / 1000)) return null
+            GoogleIdTokenClaims(email = json.optString("email", "").takeIf { it.isNotBlank() })
+        } catch (_: Exception) {
+            null
+        }
+    }
+
+    private data class GoogleIdTokenClaims(val email: String?)
 
     private companion object {
         const val PREFERENCES_NAME = "ligaya_local_auth"
@@ -117,6 +198,8 @@ class LocalAuthRepository(context: Context) : AuthRepository {
          *  are keyed BY email, so there is otherwise no way to find it without scanning them all. */
         const val SESSION_EMAIL_KEY = "session_email"
         const val RECORD_SEPARATOR = ":"
+        const val PROVIDER_LOCAL = "local"
+        const val PROVIDER_GOOGLE = "google"
         const val ALGORITHM = "PBKDF2WithHmacSHA256"
         const val ITERATIONS = 120_000
         const val KEY_LENGTH_BITS = 256

@@ -45,6 +45,14 @@ val geminiApiKey: String = localOrEnvProperty(localProperties, "GEMINI_API_KEY")
 // (Places) flow entirely rather than firing a request guaranteed to fail on an empty key.
 val placesApiKey: String = localOrEnvProperty(localProperties, "PLACES_API_KEY")
 
+// ACCOUNT_ACTIONS_NEEDED.md item 6: same never-hardcoded, never-required-to-build pattern as
+// geminiApiKey/placesApiKey above. This is a Google Cloud OAuth 2.0 *Web* client ID (Credentials
+// page — "Web application" type), not an Android client ID and not a Firebase API key; Credential
+// Manager's GetGoogleIdOption needs it as the audience the returned ID token is issued for. Absent,
+// the "Continue with Google" button says plainly that it is not set up rather than launching a
+// picker guaranteed to fail.
+val googleWebClientId: String = localOrEnvProperty(localProperties, "GOOGLE_WEB_CLIENT_ID")
+
 android {
     namespace = "com.ligaya.app"
     compileSdk = libs.versions.compileSdk.get().toInt()
@@ -58,6 +66,7 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         buildConfigField("String", "GEMINI_API_KEY", "\"$geminiApiKey\"")
         buildConfigField("String", "PLACES_API_KEY", "\"$placesApiKey\"")
+        buildConfigField("String", "GOOGLE_WEB_CLIENT_ID", "\"$googleWebClientId\"")
     }
 
     buildFeatures {
@@ -89,6 +98,11 @@ dependencies {
     // Visual design screen 3: AuthRepository, so the composition root can choose which
     // implementation backs account creation (see MainActivity).
     implementation(project(":core-backend"))
+    // ACCOUNT_ACTIONS_NEEDED.md item 6: Credential Manager, the current (non-deprecated) way to get
+    // a real Google ID token from the device's own Google account picker.
+    implementation(libs.androidx.credentials)
+    implementation(libs.androidx.credentials.play.services.auth)
+    implementation(libs.googleid)
     // Real STT/TTS/Gemini/permission wiring for the coordinator MainActivity now assembles.
     implementation(project(":core-ai"))
     implementation(project(":core-voice"))

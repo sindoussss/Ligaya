@@ -20,10 +20,18 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.core.view.WindowCompat
+import androidx.credentials.CredentialManager
+import androidx.credentials.CustomCredential
+import androidx.credentials.GetCredentialRequest
+import androidx.credentials.exceptions.GetCredentialCancellationException
+import androidx.credentials.exceptions.GetCredentialException
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import com.google.android.gms.location.LocationServices
+import com.google.android.libraries.identity.googleid.GetGoogleIdOption
+import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
+import com.google.android.libraries.identity.googleid.GoogleIdTokenParsingException
 import com.ligaya.app.navigation.LigayaNavHost
 import com.ligaya.app.screens.settings.LigayaSettings
 import com.ligaya.core.ai.AndroidNetworkStatus
@@ -38,8 +46,9 @@ import com.ligaya.core.ai.TimingCompanionResponseProvider
 import com.ligaya.core.ai.TimingIntentProvider
 import com.ligaya.core.ai.VoiceInterpretationOutcome
 import com.ligaya.core.backend.auth.AuthRepository
-import com.ligaya.core.billing.RevenueCatEntitlementRepository
+import com.ligaya.core.backend.auth.AuthResult
 import com.ligaya.core.backend.auth.LocalAuthRepository
+import com.ligaya.core.billing.RevenueCatEntitlementRepository
 import com.ligaya.core.data.LigayaDatabase
 import com.ligaya.core.data.engine.DefaultEmergencyController
 import com.ligaya.core.data.engine.VoiceIntentResult
@@ -203,6 +212,45 @@ class MainActivity : ComponentActivity() {
         // real rejection of duplicates and wrong passwords — so onboarding can be built and used
         // end to end now, and swaps to Firebase by changing this one expression later.
         val authRepository: AuthRepository = LocalAuthRepository(applicationContext)
+
+        // ACCOUNT_ACTIONS_NEEDED.md item 6: "Continue with Google", the real thing this time. Credential
+        // Manager is the current (non-deprecated) way to get a Google ID token — it replaces the old
+        // GoogleSignInClient API — and needs an Activity to show the account picker, so this whole flow
+        // (not just constructing the credential manager) lives here at the composition root, exactly
+        // like every other Android-specific seam in this file. authRepository.signInWithGoogle(...)
+        // itself is what actually creates or logs into the local account (or, once Firebase is
+        // configured, exchanges the token there instead) — this lambda's only job is getting a real
+        // token to hand it.
+        val credentialManager = CredentialManager.create(this)
+        val signInWithGoogle: suspend () -> AuthResult = signInWithGoogle@{
+            if (BuildConfig.GOOGLE_WEB_CLIENT_ID.isBlank()) {
+                return@signInWithGoogle AuthResult.Failure(
+                    "Google sign-in isn't set up yet. Use your email and password for now.",
+                )
+            }
+            try {
+                val googleIdOption = GetGoogleIdOption.Builder()
+                    .setFilterByAuthorizedAccounts(false)
+                    .setServerClientId(BuildConfig.GOOGLE_WEB_CLIENT_ID)
+                    .build()
+                val request = GetCredentialRequest.Builder().addCredentialOption(googleIdOption).build()
+                val response = credentialManager.getCredential(this@MainActivity, request)
+                val credential = response.credential
+                if (credential is CustomCredential && credential.type == GoogleIdTokenCredential.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL) {
+                    val googleIdTokenCredential = GoogleIdTokenCredential.createFrom(credential.data)
+                    authRepository.signInWithGoogle(googleIdTokenCredential.idToken)
+                } else {
+                    AuthResult.Failure("That wasn't a Google sign-in credential.")
+                }
+            } catch (e: GetCredentialCancellationException) {
+                // The person closed the picker themselves — not a failure worth a message.
+                AuthResult.Failure("")
+            } catch (e: GetCredentialException) {
+                AuthResult.Failure(e.message ?: "Google sign-in didn't go through. Please try again.")
+            } catch (e: GoogleIdTokenParsingException) {
+                AuthResult.Failure("Couldn't read that Google credential.")
+            }
+        }
 
         // Visual design screen 5: the same Room-backed repository the emergency profile has been
         // stored in since Step 5 — this screen is the first thing to actually write to it.
@@ -479,6 +527,8 @@ class MainActivity : ComponentActivity() {
                         voicePhase = voiceActivationCoordinator.phase,
                         voiceAiUnavailable = aiUnavailableNotice.asStateFlow(),
                         authRepository = authRepository,
+                        onGoogleSignIn = signInWithGoogle,
+                        googleSignInAvailable = BuildConfig.GOOGLE_WEB_CLIENT_ID.isNotBlank(),
                         profileRepository = profileRepository,
                         locationPermissionState = locationPermissionState.asStateFlow(),
                         onRequestLocationPermission = {

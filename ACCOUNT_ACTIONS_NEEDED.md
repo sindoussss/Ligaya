@@ -53,18 +53,33 @@ Running checklist of everything in the Ligaya build that's blocked on your own a
 
 **Tell me once this is done** — if the report flags anything, send it back and I'll fix whatever's fixable on my end (most categories are); only findings about the Play Console listing itself would come back to you again.
 
-## 6. Google / Apple sign-in (blocks: the two social buttons on the account screen)
+## 6. Google sign-in (blocks: the "Continue with Google" button actually doing anything) — Apple below
 
-**Why it's blocked:** the account screen (visual design screen 3) shows "Continue with Google" and "Continue with Apple", per the design. Neither can do anything without OAuth clients registered under your own accounts — Google Sign-In needs a client ID from the Firebase/Google Cloud console (so it also depends on item 1), and Sign in with Apple on Android is a web OAuth flow needing an Apple Developer account and a registered Services ID.
+**Update: the code is now fully built and tested, both for today's on-device store and for real Firebase once item 1 lands. Google sign-in is one Google Cloud step away from working — it does *not* need the full Firebase project first.**
 
-Rather than hide the buttons or leave them dead, tapping either currently says plainly that it isn't set up yet and points at email/password — which **does** fully work.
+**What's built:** tapping "Continue with Google" launches Android's real Credential Manager account picker (the current, non-deprecated Google Sign-In API), gets back a real signed ID token for whichever Google account you pick, and hands it to `AuthRepository.signInWithGoogle(...)`:
+- `LocalAuthRepository` (what the app runs on today, no Firebase needed) reads the token's own email claim, checks it hasn't expired, and creates or logs into a local account keyed by that email — a genuinely different account from a password-based one for the same address, so Google sign-in can never silently take over a password account it didn't create. It does *not* cryptographically verify the token's signature against Google's rotating public keys (that needs a backend, which this path deliberately doesn't have) — worth knowing, not a blocker for using it.
+- `FirebaseAuthRepository` exchanges the token with Firebase the standard way (`GoogleAuthProvider.getCredential` + `signInWithCredential`) — ready for the day item 1 is done and the composition root switches to it, no further code change needed there either.
+
+**Why it's still blocked:** Credential Manager needs a Google Cloud **OAuth 2.0 Web client ID** (not an Android client ID, not a Firebase API key) as the audience it requests a token for — that has to exist under your own Google Cloud project before the picker can issue a real token.
+
+**What to do (the light path — no Firebase project required for this alone):**
+1. In the [Google Cloud Console](https://console.cloud.google.com) → APIs & Services → Credentials, create an OAuth 2.0 Client ID of type **Web application** (not Android). You don't need to add any redirect URIs for this use — Credential Manager doesn't use them.
+2. Also create (or reuse, if you already made one for item 1) an OAuth 2.0 Client ID of type **Android**, with this app's package name (`com.ligaya.app`) and its signing certificate's SHA-1 fingerprint (get the debug one with `keytool -list -v -keystore ~/.android/debug.keystore -alias androiddebugkey -storepass android -keypass android`, or your release keystore's for a release build). Google Cloud requires this one to exist in the same project even though the app's own code never reads its ID directly — Credential Manager checks it behind the scenes.
+3. Add the **Web** client ID (from step 1) to `local.properties` as `GOOGLE_WEB_CLIENT_ID=...` (already gitignored, already wired — `app/build.gradle.kts` reads it into `BuildConfig.GOOGLE_WEB_CLIENT_ID` automatically, no further code change needed). That's it — the button starts working the next time you build.
+
+**If you'd rather go straight to real Firebase Auth instead of the on-device store:** finish item 1 first, then in the Firebase console enable **Google** under Authentication → Sign-in method (Firebase generates the same kind of Web client ID as step 1 above as part of that) and switch `MainActivity`'s one-line `authRepository` expression to `FirebaseAuthRepository` — tell me once item 1 is done and I'll make that switch.
+
+## 6b. Apple sign-in (blocks: the "Continue with Apple" button)
+
+**Why it's blocked:** Sign in with Apple on Android is a web OAuth flow, not an on-device picker like Google's — it genuinely needs a backend to complete (there is no local-only version of this one), so it depends on item 1 (Firebase) either way.
 
 **What to do:**
-1. Finish item 1 (Firebase project), then in the Firebase console enable **Google** under Authentication → Sign-in method, and send me the resulting web client ID.
-2. For Apple: an Apple Developer Program membership (~$99/yr), a Services ID configured for "Sign in with Apple", and its redirect URL pointed at your Firebase handler. Enable **Apple** in the same sign-in-method list.
-3. Tell me once either is done and I'll wire that provider up. They're independent — Google alone is a perfectly reasonable place to stop.
+1. Finish item 1 (Firebase project).
+2. Get an Apple Developer Program membership (~$99/yr), configure a Services ID for "Sign in with Apple", and point its redirect URL at your Firebase handler.
+3. Enable **Apple** in Firebase's sign-in-method list and tell me — I'll wire that provider up. It's independent of item 6 above; Google alone is a perfectly reasonable place to stop.
 
-**Worth knowing:** email/password sign-up and log-in already work today with none of this, against an on-device store (`LocalAuthRepository`) using PBKDF2-hashed credentials with per-account salts. Once item 1 lands, switching the app to real Firebase Auth is a one-line change at the composition root in `MainActivity` — nothing else in the app knows which implementation it has.
+**Worth knowing:** email/password sign-up and log-in already work today with none of this, against an on-device store (`LocalAuthRepository`) using PBKDF2-hashed credentials with per-account salts.
 
 ---
 *Nothing else is currently blocked on your account — everything else flagged as a "limitation" in step reports so far has been either fixed directly or is a design/architecture decision waiting on your input, not an account action. This file will grow as later roadmap steps surface more.*

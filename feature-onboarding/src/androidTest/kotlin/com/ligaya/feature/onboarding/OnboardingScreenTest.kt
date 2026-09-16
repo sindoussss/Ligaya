@@ -34,6 +34,7 @@ class OnboardingScreenTest {
     private class FakeAuthRepository : AuthRepository {
         override suspend fun signUp(email: String, password: String): AuthResult = AuthResult.Success("test-user-id")
         override suspend fun logIn(email: String, password: String): AuthResult = AuthResult.Success("test-user-id")
+        override suspend fun signInWithGoogle(googleIdToken: String): AuthResult = AuthResult.Success("test-user-id")
         override fun logOut() = Unit
         override fun currentUserId(): String? = null
         override fun currentUserEmail(): String? = null

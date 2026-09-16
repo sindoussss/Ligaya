@@ -51,6 +51,8 @@ class CreateAccountScreenTest {
             return result
         }
 
+        override suspend fun signInWithGoogle(googleIdToken: String): AuthResult = result
+
         override fun logOut() = Unit
         override fun currentUserId(): String? = null
         override fun currentUserEmail(): String? = null
@@ -226,5 +228,81 @@ class CreateAccountScreenTest {
         composeTestRule.onNodeWithText("Google sign-in isn't set up yet. Use your email and password for now.")
             .assertExists()
         assertTrue("an unconfigured provider must not reach the email/password path", auth.signUpCalls == 0)
+    }
+
+    @Test
+    fun initialModeOpensDirectlyOnLogInForWelcomesIAlreadyHaveAnAccountLink() {
+        composeTestRule.setContent {
+            CreateAccountScreen(
+                authRepository = RecordingAuthRepository(),
+                onAuthenticated = {},
+                onBack = {},
+                initialMode = AccountMode.LOG_IN,
+            )
+        }
+
+        composeTestRule.onNodeWithText("Welcome back").assertExists()
+        composeTestRule.onNodeWithText("Log in").assertExists()
+    }
+
+    @Test
+    fun aConfiguredGoogleSignInThatSucceedsReportsTheAuthenticatedUserWithoutTouchingEmailPassword() {
+        val auth = RecordingAuthRepository()
+        var authenticatedUserId: String? = null
+
+        composeTestRule.setContent {
+            CreateAccountScreen(
+                authRepository = auth,
+                onAuthenticated = { authenticatedUserId = it },
+                onBack = {},
+                onGoogleSignIn = { AuthResult.Success("google-user-1") },
+                googleSignInAvailable = true,
+            )
+        }
+
+        tapButton("Continue with Google")
+        composeTestRule.waitForIdle()
+
+        assertEquals("google-user-1", authenticatedUserId)
+        assertEquals(0, auth.signUpCalls)
+        assertEquals(0, auth.logInCalls)
+    }
+
+    @Test
+    fun aConfiguredGoogleSignInThatFailsShowsTheRealMessageRatherThanTheUnconfiguredOne() {
+        composeTestRule.setContent {
+            CreateAccountScreen(
+                authRepository = RecordingAuthRepository(),
+                onAuthenticated = {},
+                onBack = {},
+                onGoogleSignIn = { AuthResult.Failure("Google sign-in didn't go through. Please try again.") },
+                googleSignInAvailable = true,
+            )
+        }
+
+        tapButton("Continue with Google")
+        composeTestRule.waitForIdle()
+
+        composeTestRule.onNodeWithText("Google sign-in didn't go through. Please try again.").assertExists()
+    }
+
+    @Test
+    fun cancellingTheGooglePickerShowsNoErrorAtAll() {
+        // An empty failure message means the person closed the picker themselves — not a real error.
+        composeTestRule.setContent {
+            CreateAccountScreen(
+                authRepository = RecordingAuthRepository(),
+                onAuthenticated = {},
+                onBack = {},
+                onGoogleSignIn = { AuthResult.Failure("") },
+                googleSignInAvailable = true,
+            )
+        }
+
+        tapButton("Continue with Google")
+        composeTestRule.waitForIdle()
+
+        composeTestRule.onNodeWithText("Google sign-in isn't set up yet. Use your email and password for now.")
+            .assertDoesNotExist()
     }
 }

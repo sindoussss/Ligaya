@@ -1,9 +1,11 @@
 package com.ligaya.core.backend.auth
 
 import android.content.Context
+import android.util.Base64
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import kotlinx.coroutines.test.runTest
+import org.json.JSONObject
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertNull
@@ -133,5 +135,115 @@ class LocalAuthRepositoryTest {
         // Per-account salting: identical passwords must not produce identical stored records, or a
         // single cracked hash would unlock every account that shares that password.
         assertNotEquals(maria, juan)
+    }
+
+
+    /** A structurally real Google ID token: header.payload.signature, base64url, the two claims
+     *  this repository actually reads. The signature segment is never checked (see
+     *  LocalAuthRepository.signInWithGoogle's own doc comment on why), so any bytes there prove
+     *  the same thing a real one would for this class's purposes. */
+    private fun fakeGoogleIdToken(email: String?, expiresInSeconds: Long = 3600): String {
+        fun segment(json: String) = Base64.encodeToString(
+            json.toByteArray(),
+            Base64.URL_SAFE or Base64.NO_PADDING or Base64.NO_WRAP,
+        )
+        val header = segment("""{"alg":"RS256","typ":"JWT"}""")
+        val payload = JSONObject().apply {
+            if (email != null) put("email", email)
+            put("exp", System.currentTimeMillis() / 1000 + expiresInSeconds)
+        }
+        return "$header.${segment(payload.toString())}.signature"
+    }
+
+    @Test
+    fun signInWithGoogleCreatesAnAccountAndStartsASession() = runTest {
+        val repository = newRepository()
+
+        val result = repository.signInWithGoogle(fakeGoogleIdToken("maria@example.com"))
+
+        assertTrue(result is AuthResult.Success)
+        assertEquals((result as AuthResult.Success).userId, repository.currentUserId())
+        assertEquals("maria@example.com", repository.currentUserEmail())
+    }
+
+    @Test
+    fun signingInWithGoogleTwiceReturnsTheSameAccountRatherThanCreatingASecondOne() = runTest {
+        val repository = newRepository()
+        val first = repository.signInWithGoogle(fakeGoogleIdToken("maria@example.com")) as AuthResult.Success
+
+        repository.logOut()
+        val second = repository.signInWithGoogle(fakeGoogleIdToken("maria@example.com"))
+
+        assertEquals(first.userId, (second as AuthResult.Success).userId)
+    }
+
+    @Test
+    fun googleSignInIsCaseAndWhitespaceInsensitiveOnEmailLikeEveryOtherPath() = runTest {
+        val repository = newRepository()
+        val first = repository.signInWithGoogle(fakeGoogleIdToken("maria@example.com")) as AuthResult.Success
+
+        val second = repository.signInWithGoogle(fakeGoogleIdToken("  MARIA@Example.com  "))
+
+        assertEquals(first.userId, (second as AuthResult.Success).userId)
+    }
+
+    @Test
+    fun googleSignInRefusesToTakeOverAnExistingPasswordAccount() = runTest {
+        val repository = newRepository()
+        repository.signUp("maria@example.com", "correcthorsebatterystaple")
+
+        val result = repository.signInWithGoogle(fakeGoogleIdToken("maria@example.com"))
+
+        assertTrue("a password account must never be silently linked to Google", result is AuthResult.Failure)
+        // And the password account itself is untouched: it can still log in normally.
+        val stillWorks = repository.logIn("maria@example.com", "correcthorsebatterystaple")
+        assertTrue(stillWorks is AuthResult.Success)
+    }
+
+    @Test
+    fun aPasswordAttemptAgainstAGoogleAccountIsRefusedWithAnHonestMessageNotAGenericWrongPassword() = runTest {
+        val repository = newRepository()
+        repository.signInWithGoogle(fakeGoogleIdToken("maria@example.com"))
+
+        val result = repository.logIn("maria@example.com", "anything") as AuthResult.Failure
+
+        assertTrue(result.message.contains("Google", ignoreCase = true))
+    }
+
+    @Test
+    fun anExpiredGoogleTokenIsRejected() = runTest {
+        val repository = newRepository()
+
+        val result = repository.signInWithGoogle(fakeGoogleIdToken("maria@example.com", expiresInSeconds = -60))
+
+        assertTrue(result is AuthResult.Failure)
+        assertNull(repository.currentUserId())
+    }
+
+    @Test
+    fun aTokenWithNoEmailClaimIsRejected() = runTest {
+        val repository = newRepository()
+
+        val result = repository.signInWithGoogle(fakeGoogleIdToken(email = null))
+
+        assertTrue(result is AuthResult.Failure)
+    }
+
+    @Test
+    fun aMalformedTokenIsRejectedRatherThanCrashing() = runTest {
+        val repository = newRepository()
+
+        val result = repository.signInWithGoogle("not-a-real-token")
+
+        assertTrue(result is AuthResult.Failure)
+    }
+
+    @Test
+    fun googleSignInSurvivesANewRepositoryInstance() = runTest {
+        val created = newRepository().signInWithGoogle(fakeGoogleIdToken("maria@example.com")) as AuthResult.Success
+
+        val result = newRepository().signInWithGoogle(fakeGoogleIdToken("maria@example.com"))
+
+        assertEquals(created.userId, (result as AuthResult.Success).userId)
     }
 }

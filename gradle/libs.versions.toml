@@ -26,6 +26,10 @@ androidxLifecycleRuntimeKtx = "2.8.7"
 androidxNavigationCompose = "2.8.3"
 playServicesLocation = "21.3.0"
 revenueCatPurchases = "10.15.1"
+# Real "Continue with Google" (ACCOUNT_ACTIONS_NEEDED.md item 6): Credential Manager is the current,
+# non-deprecated way to get a Google ID token on Android, replacing the old GoogleSignInClient API.
+androidxCredentials = "1.3.0"
+googleid = "1.1.1"
 # LigayaMascot (design-system) hosts the Gemini mascot rig in a WebView; WebViewAssetLoader needs this.
 webkit = "1.17.0"
 
@@ -72,6 +76,9 @@ androidx-activity-compose = { group = "androidx.activity", name = "activity-comp
 androidx-lifecycle-runtime-ktx = { group = "androidx.lifecycle", name = "lifecycle-runtime-ktx", version.ref = "androidxLifecycleRuntimeKtx" }
 androidx-navigation-compose = { group = "androidx.navigation", name = "navigation-compose", version.ref = "androidxNavigationCompose" }
 play-services-location = { group = "com.google.android.gms", name = "play-services-location", version.ref = "playServicesLocation" }
+androidx-credentials = { group = "androidx.credentials", name = "credentials", version.ref = "androidxCredentials" }
+androidx-credentials-play-services-auth = { group = "androidx.credentials", name = "credentials-play-services-auth", version.ref = "androidxCredentials" }
+googleid = { group = "com.google.android.libraries.identity.googleid", name = "googleid", version.ref = "googleid" }
 androidx-compose-material-icons-extended = { group = "androidx.compose.material", name = "material-icons-extended" }
 androidx-lifecycle-runtime-compose = { group = "androidx.lifecycle", name = "lifecycle-runtime-compose", version.ref = "androidxLifecycleRuntimeKtx" }
 androidx-webkit = { group = "androidx.webkit", name = "webkit", version.ref = "webkit" }

@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
@@ -40,6 +41,7 @@ import androidx.compose.ui.unit.dp
 import com.ligaya.designsystem.LigayaTheme
 import com.ligaya.designsystem.LigayaLogo
 import com.ligaya.designsystem.LigayaMotion
+import com.ligaya.designsystem.LigayaSpacing
 import com.ligaya.designsystem.LigayaTypography
 import com.ligaya.designsystem.rememberIsReduceMotionEnabled
 
@@ -56,6 +58,9 @@ import com.ligaya.designsystem.rememberIsReduceMotionEnabled
 @Composable
 fun WelcomeScreen(
     onGetStarted: () -> Unit,
+    // Reference screen 1's own second affordance, for a returning user. Defaulted so a caller
+    // that has nowhere to send this yet (none currently do) doesn't need to change first.
+    onLogIn: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     val reduceMotion = rememberIsReduceMotionEnabled()
@@ -95,16 +100,32 @@ fun WelcomeScreen(
             )
         }
 
-        GetStartedPill(
-            onClick = onGetStarted,
+        Column(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
                 .navigationBarsPadding()
                 .padding(bottom = screenHeight * BUTTON_BOTTOM_FRACTION)
                 .fillMaxWidth(BUTTON_WIDTH_FRACTION)
-                .height(BUTTON_HEIGHT)
                 .rise(slice(t, 0.55f, 1f)),
-        )
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            GetStartedPill(onClick = onGetStarted, modifier = Modifier.fillMaxWidth().height(BUTTON_HEIGHT))
+            Box(
+                // A 48dp target on a small line of text: padding alone measured a few dp short of the
+                // floor (text metrics aren't the nominal line height), so the height is pinned directly.
+                modifier = Modifier
+                    .heightIn(min = LigayaSpacing.minTouchTarget)
+                    .clip(CircleShape)
+                    .clickable(role = Role.Button, onClick = onLogIn),
+                contentAlignment = Alignment.Center,
+            ) {
+                Text(
+                    text = "I already have an account",
+                    style = LigayaTypography.label,
+                    color = LigayaTheme.colors.taupe,
+                )
+            }
+        }
     }
 }
 

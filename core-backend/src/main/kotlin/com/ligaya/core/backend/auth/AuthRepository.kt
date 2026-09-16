@@ -9,6 +9,18 @@ package com.ligaya.core.backend.auth
 interface AuthRepository {
     suspend fun signUp(email: String, password: String): AuthResult
     suspend fun logIn(email: String, password: String): AuthResult
+
+    /**
+     * ACCOUNT_ACTIONS_NEEDED.md item 6: "Continue with Google". [googleIdToken] is a real ID token
+     * already obtained from the device's own Google account picker (Credential Manager, at the
+     * composition root — this interface only ever sees the token, never anything Android-specific,
+     * same separation as every other provider here) — this call never fabricates one. What it does
+     * with that token differs by implementation: [com.ligaya.core.backend.auth.FirebaseAuthRepository]
+     * exchanges it with Firebase; [com.ligaya.core.backend.auth.LocalAuthRepository] reads its own
+     * claims locally, since it has no backend to exchange it with.
+     */
+    suspend fun signInWithGoogle(googleIdToken: String): AuthResult
+
     fun logOut()
     fun currentUserId(): String?
 

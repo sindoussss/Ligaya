@@ -1,6 +1,7 @@
 package com.ligaya.core.backend.auth
 
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.GoogleAuthProvider
 import kotlinx.coroutines.tasks.await
 
 class FirebaseAuthRepository(private val auth: FirebaseAuth) : AuthRepository {
@@ -19,6 +20,17 @@ class FirebaseAuthRepository(private val auth: FirebaseAuth) : AuthRepository {
             AuthResult.Success(result.user?.uid.orEmpty())
         } catch (e: Exception) {
             AuthResult.Failure(e.message ?: "Log in failed")
+        }
+
+    /** The standard Firebase exchange: a Google ID token becomes a Firebase credential, which either
+     *  signs in an existing linked user or creates one — Firebase's own job, not this class's. */
+    override suspend fun signInWithGoogle(googleIdToken: String): AuthResult =
+        try {
+            val credential = GoogleAuthProvider.getCredential(googleIdToken, null)
+            val result = auth.signInWithCredential(credential).await()
+            AuthResult.Success(result.user?.uid.orEmpty())
+        } catch (e: Exception) {
+            AuthResult.Failure(e.message ?: "Google sign-in failed")
         }
 
     override fun logOut() = auth.signOut()

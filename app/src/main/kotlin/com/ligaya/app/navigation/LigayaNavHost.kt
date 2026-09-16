@@ -35,6 +35,7 @@ import com.ligaya.designsystem.rememberIsReduceMotionEnabled
 import com.ligaya.designsystem.LigayaThemeMode
 import com.ligaya.designsystem.components.LigayaTab
 import com.ligaya.core.backend.auth.AuthRepository
+import com.ligaya.core.backend.auth.AuthResult
 import com.ligaya.core.data.profile.EmergencyProfileRepository
 import com.ligaya.core.places.EmergencyServiceLookupResult
 import com.ligaya.feature.safetycircle.SafetyCircleHomeScreen
@@ -61,6 +62,7 @@ import com.ligaya.feature.emergencyactive.EmergencyActiveScreen
 import com.ligaya.feature.emergencyactive.EmergencyResolvedScreen
 import com.ligaya.feature.home.HomeScreen
 import com.ligaya.feature.home.NavigableDestination
+import com.ligaya.feature.onboarding.AccountMode
 import com.ligaya.feature.onboarding.CreateAccountScreen
 import com.ligaya.feature.onboarding.EmergencyProfileScreen
 import com.ligaya.feature.onboarding.LocationPermissionScreen
@@ -95,6 +97,12 @@ fun LigayaNavHost(
     voicePhase: StateFlow<VoicePipelinePhase>,
     voiceAiUnavailable: StateFlow<Boolean>,
     authRepository: AuthRepository,
+    /** ACCOUNT_ACTIONS_NEEDED.md item 6: launches the real Credential Manager Google picker and signs in
+     *  through [authRepository] — Android-specific, so it is built at the composition root and handed down
+     *  as a plain callback, same as every other Android seam here. */
+    onGoogleSignIn: suspend () -> AuthResult,
+    /** Whether a Google OAuth Web client ID is actually configured; see [onGoogleSignIn]'s own doc. */
+    googleSignInAvailable: Boolean,
     profileRepository: EmergencyProfileRepository,
     locationPermissionState: StateFlow<PermissionState>,
     onRequestLocationPermission: () -> Unit,
@@ -154,6 +162,10 @@ fun LigayaNavHost(
         val signedIn = authRepository.currentUserId() != null
         navController.navigate(if (signedIn) LigayaDestination.EmergencyProfile.route else LigayaDestination.CreateAccount.route)
     }
+    // Welcome's "I already have an account" link: set true right before navigating to
+    // CreateAccount, consumed once on success to decide where authentication actually leads
+    // (Home directly, skipping the new-account onboarding steps a returning user already did).
+    var loggingIntoExistingAccount by rememberSaveable { mutableStateOf(false) }
     val openSafetyCircle = {
         navController.navigate(LigayaDestination.SafetyCircle.route) { launchSingleTop = true }
     }
@@ -179,6 +191,10 @@ fun LigayaNavHost(
                         // Not returnable-to: the first Back press from Home exits the app.
                         popUpTo(LigayaDestination.Welcome.route) { inclusive = true }
                     }
+                },
+                onLogIn = {
+                    loggingIntoExistingAccount = true
+                    navController.navigate(LigayaDestination.CreateAccount.route)
                 },
             )
         }
@@ -649,10 +665,29 @@ fun LigayaNavHost(
             // and routing into them half-designed would be worse than stopping here.
             CreateAccountScreen(
                 authRepository = authRepository,
-                // Screen 4 is the next step of §3's onboarding order, so an authenticated user
-                // continues into the location primer rather than being dropped back at Home.
-                onAuthenticated = { navController.navigate(LigayaDestination.LocationPermission.route) },
-                onBack = { navController.popBackStack() },
+                // Screen 4 is the next step of §3's onboarding order for a new account, so a
+                // fresh sign-up continues into the location primer rather than being dropped
+                // back at Home — but a returning user who came from Welcome's "I already have an
+                // account" link already did that setup, so logging in goes straight to Home,
+                // matching Get Started's own "not returnable-to" welcome hand-off.
+                onAuthenticated = {
+                    if (loggingIntoExistingAccount) {
+                        loggingIntoExistingAccount = false
+                        onWelcomeCompleted()
+                        navController.navigate(LigayaDestination.Home.route) {
+                            popUpTo(LigayaDestination.Welcome.route) { inclusive = true }
+                        }
+                    } else {
+                        navController.navigate(LigayaDestination.LocationPermission.route)
+                    }
+                },
+                onBack = {
+                    loggingIntoExistingAccount = false
+                    navController.popBackStack()
+                },
+                onGoogleSignIn = onGoogleSignIn,
+                googleSignInAvailable = googleSignInAvailable,
+                initialMode = if (loggingIntoExistingAccount) AccountMode.LOG_IN else AccountMode.SIGN_UP,
             )
         }
         composable(LigayaDestination.LocationPermission.route) {
