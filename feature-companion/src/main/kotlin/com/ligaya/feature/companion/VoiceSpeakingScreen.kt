@@ -39,6 +39,8 @@ import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.ligaya.designsystem.ligayaButtonElevation
+import com.ligaya.designsystem.ligayaElevation
 import com.ligaya.designsystem.LigayaTheme
 import com.ligaya.designsystem.LigayaLogo
 import com.ligaya.designsystem.LigayaTypography
@@ -142,6 +144,7 @@ fun VoiceSpeakingScreen(
                         .fillMaxWidth()
                         .padding(top = 20.dp)
                         .padding(horizontal = 24.dp)
+                        .ligayaElevation(shape = RoundedCornerShape(22.dp))
                         .clip(RoundedCornerShape(22.dp))
                         .background(LigayaTheme.colors.shell)
                         .border(1.dp, LigayaTheme.colors.shellEdge, RoundedCornerShape(22.dp))

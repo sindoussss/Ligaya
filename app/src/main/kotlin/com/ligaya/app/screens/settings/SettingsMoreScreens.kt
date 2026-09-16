@@ -23,6 +23,8 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
+import com.ligaya.designsystem.ligayaButtonElevation
+import com.ligaya.designsystem.ligayaElevation
 import com.ligaya.designsystem.LigayaTheme
 import com.ligaya.designsystem.LigayaTypography
 import com.ligaya.designsystem.components.LigayaEmotion
@@ -222,6 +224,7 @@ fun CharacterSettingsScreen(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(240.dp)
+                .ligayaElevation(shape = RoundedCornerShape(28.dp))
                 .clip(RoundedCornerShape(28.dp))
                 .background(LigayaTheme.colors.blush),
         ) {

@@ -30,6 +30,8 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
+import com.ligaya.designsystem.ligayaButtonElevation
+import com.ligaya.designsystem.ligayaElevation
 import com.ligaya.designsystem.LigayaIcons
 import com.ligaya.designsystem.LigayaTheme
 import com.ligaya.designsystem.LigayaTypography
@@ -90,6 +92,7 @@ fun SettingsScreen(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .ligayaElevation(shape = RoundedCornerShape(24.dp))
                     .clip(RoundedCornerShape(24.dp))
                     .background(LigayaTheme.colors.shell)
                     .border(1.dp, LigayaTheme.colors.shellEdge, RoundedCornerShape(24.dp)),
@@ -126,6 +129,7 @@ private fun ProfileCard(userName: String?, userEmail: String?, onClick: () -> Un
     Row(
         modifier = Modifier
             .fillMaxWidth()
+            .ligayaElevation(shape = RoundedCornerShape(24.dp))
             .clip(RoundedCornerShape(24.dp))
             .background(LigayaTheme.colors.shell)
             .border(1.dp, LigayaTheme.colors.shellEdge, RoundedCornerShape(24.dp))

@@ -63,6 +63,8 @@ import androidx.compose.ui.unit.dp
 import com.ligaya.core.uistate.EmergencyController
 import com.ligaya.core.uistate.SosResult
 import com.ligaya.core.voice.VoicePipelinePhase
+import com.ligaya.designsystem.ligayaButtonElevation
+import com.ligaya.designsystem.ligayaElevation
 import com.ligaya.designsystem.LigayaTheme
 import com.ligaya.designsystem.LigayaIcons
 import com.ligaya.designsystem.LigayaLogo
@@ -305,6 +307,7 @@ private fun SosPill(emergencyController: EmergencyController, onSosActivated: ()
         Row(
             modifier = Modifier
                 .height(34.dp)
+                .ligayaButtonElevation(shape = CircleShape)
                 .clip(CircleShape)
                 .background(LigayaTheme.colors.colorEmergencyActive)
                 .padding(horizontal = 12.dp),
@@ -396,6 +399,7 @@ private fun ShortcutChip(icon: ImageVector, label: String, modifier: Modifier, o
     Row(
         modifier = modifier
             .height(LigayaSpacing.minTouchTarget)
+            .ligayaElevation(elevation = 4.dp, shape = RoundedCornerShape(24.dp))
             .clip(RoundedCornerShape(24.dp))
             .background(LigayaTheme.colors.shell)
             .border(1.dp, LigayaTheme.colors.shellEdge, RoundedCornerShape(24.dp))

@@ -26,6 +26,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import com.ligaya.designsystem.LigayaMotion
+import com.ligaya.designsystem.ligayaButtonElevation
 import com.ligaya.designsystem.LigayaShapes
 import com.ligaya.designsystem.LigayaTheme
 import com.ligaya.designsystem.LigayaTypography
@@ -81,6 +82,7 @@ fun LigayaPrimaryButton(
                 scaleX = scale
                 scaleY = scale
             }
+            .ligayaButtonElevation(elevation = 6.dp)
             .clip(LigayaShapes.pill)
             .background(container)
             .selectable(

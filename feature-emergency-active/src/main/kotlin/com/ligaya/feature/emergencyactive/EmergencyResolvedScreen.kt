@@ -41,6 +41,8 @@ import com.ligaya.core.emergencyengine.EmergencyState
 import com.ligaya.core.emergencyengine.FamilyAlertFlowState
 import com.ligaya.core.emergencyengine.Unified911FlowState
 import com.ligaya.core.uistate.EmergencyController
+import com.ligaya.designsystem.ligayaButtonElevation
+import com.ligaya.designsystem.ligayaElevation
 import com.ligaya.designsystem.LigayaTheme
 import com.ligaya.designsystem.LigayaIcons
 import com.ligaya.designsystem.LigayaLogo
@@ -162,6 +164,7 @@ private fun OutcomeCard(outcome: Outcome) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
+            .ligayaElevation(shape = RoundedCornerShape(22.dp))
             .clip(RoundedCornerShape(22.dp))
             .background(LigayaTheme.colors.shell)
             .border(1.dp, LigayaTheme.colors.shellEdge, RoundedCornerShape(22.dp))

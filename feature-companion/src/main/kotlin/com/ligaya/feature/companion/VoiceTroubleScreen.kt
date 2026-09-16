@@ -33,6 +33,8 @@ import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.ligaya.designsystem.ligayaButtonElevation
+import com.ligaya.designsystem.ligayaElevation
 import com.ligaya.designsystem.LigayaTheme
 import com.ligaya.designsystem.LigayaIcons
 import com.ligaya.designsystem.LigayaLogo
@@ -135,6 +137,7 @@ private fun TroubleCard(title: String, detail: String, onTryAgain: () -> Unit) {
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 20.dp)
+            .ligayaElevation(shape = RoundedCornerShape(26.dp))
             .clip(RoundedCornerShape(26.dp))
             .background(LigayaTheme.colors.shell)
             .border(1.dp, LigayaTheme.colors.shellEdge, RoundedCornerShape(26.dp))
@@ -157,6 +160,7 @@ private fun TroubleCard(title: String, detail: String, onTryAgain: () -> Unit) {
                 .padding(top = 16.dp)
                 .fillMaxWidth()
                 .heightIn(min = 52.dp)
+                .ligayaButtonElevation(shape = RoundedCornerShape(26.dp))
                 .clip(RoundedCornerShape(26.dp))
                 .background(LigayaTheme.colors.berry)
                 .clickable(role = Role.Button, onClick = onTryAgain),

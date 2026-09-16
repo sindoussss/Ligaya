@@ -327,6 +327,7 @@ private fun UserMessage(text: String, time: String?, answered: Boolean) {
                 style = LigayaTypography.bubble,
                 color = LigayaTheme.colors.cocoaInk,
                 modifier = Modifier
+                    .shadow(2.dp, BubbleShape, ambientColor = LigayaTheme.colors.cocoa.copy(alpha = 0.15f), spotColor = LigayaTheme.colors.cocoa.copy(alpha = 0.15f))
                     .clip(BubbleShape)
                     .background(LigayaTheme.colors.bubbleUser)
                     .padding(horizontal = 16.dp, vertical = 12.dp),
@@ -360,6 +361,7 @@ private fun TypingIndicator() {
         Row(
             modifier = Modifier
                 .padding(start = 10.dp)
+                .shadow(2.dp, BubbleShape, ambientColor = LigayaTheme.colors.cocoa.copy(alpha = 0.15f), spotColor = LigayaTheme.colors.cocoa.copy(alpha = 0.15f))
                 .clip(BubbleShape)
                 .background(LigayaTheme.colors.bubbleLigaya)
                 .border(1.dp, LigayaTheme.colors.bubbleLigayaEdge, BubbleShape)
