@@ -9,6 +9,7 @@ import com.ligaya.core.permissions.PermissionChecker
 import com.ligaya.core.permissions.PermissionState
 import com.ligaya.core.voice.EmergencyStatusMessage
 import com.ligaya.core.voice.SpeechOutput
+import com.ligaya.core.voice.SpeechResult
 import com.ligaya.core.voice.SpeechTranscriber
 import com.ligaya.core.voice.TranscriptionEvent
 import com.ligaya.core.voice.TranscriptionFailureReason
@@ -36,8 +37,8 @@ class EmergencyCompanionCoordinatorPhaseTest {
     }
 
     private class RecordingSpeechOutput : SpeechOutput {
-        override suspend fun speak(message: EmergencyStatusMessage) {}
-        override suspend fun speak(speech: ValidatedSpeech) {}
+        override suspend fun speak(message: EmergencyStatusMessage) = SpeechResult.SPOKEN
+        override suspend fun speak(speech: ValidatedSpeech) = SpeechResult.SPOKEN
     }
 
     private fun transcriberEmitting(vararg events: TranscriptionEvent) = SpeechTranscriber { flowOf(*events) }

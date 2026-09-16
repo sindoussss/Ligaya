@@ -5,6 +5,7 @@ import com.ligaya.core.ai.CompanionTurn
 import com.ligaya.core.ai.ResponseValidator
 import com.ligaya.core.ai.toValidatedSpeechOrNull
 import com.ligaya.core.voice.SpeechOutput
+import com.ligaya.core.voice.SpeechResult
 import com.ligaya.core.voice.TranscriptionEvent
 import com.ligaya.core.voice.VoiceCaptureCoordinator
 import com.ligaya.core.voice.VoicePipelinePhase
@@ -145,9 +146,9 @@ class EmergencyCompanionCoordinator(
         _transcript.value = _transcript.value + CompanionTurn(CompanionTurn.Speaker.LIGAYA, speech.text)
         _turnTimes.value = _turnTimes.value + clock()
         _phase.value = VoicePipelinePhase.SPEAKING
-        speechOutput.speak(speech)
+        val spoken = speechOutput.speak(speech)
 
-        return CompanionTurnResult.Spoken(speech.text)
+        return CompanionTurnResult.Spoken(speech.text, aloud = spoken == SpeechResult.SPOKEN)
     }
 
     private companion object {

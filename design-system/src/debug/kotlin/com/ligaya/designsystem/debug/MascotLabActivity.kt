@@ -25,7 +25,12 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import android.content.Context
+import android.util.Base64
+import android.util.Log
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
+import java.io.File
 import androidx.compose.ui.unit.dp
 import com.ligaya.designsystem.components.LigayaCameraView
 import com.ligaya.designsystem.components.LigayaEmotion
@@ -41,7 +46,11 @@ import com.ligaya.designsystem.components.rememberLigayaMascotController
  *   adb shell am start -n com.ligaya.app/com.ligaya.designsystem.debug.MascotLabActivity --es cmd "emotion:happy,listen:on"
  *
  * Commands: emotion:<name> listen:on|off speak:on|off camera:front|left|right frame:bust|portrait|head
- * motion:system|calm|still speed:<0.5-2.0> depth:<0-1> dark:on|off blink smile reset
+ * motion:system|calm|still speed:<0.5-2.0> depth:<0-1> dark:on|off blink smile reset poster:<width>
+ *
+ * poster:<width> re-bakes layers/poster.png from the engine itself (api.debug.snapshot), writing it to this
+ * app's external files dir for `adb pull`. The poster is the still shown before the canvas starts, so it has to
+ * be re-baked whenever her artwork changes or she visibly pops from the old art to the new on every load.
  */
 class MascotLabActivity : ComponentActivity() {
     private val pending = mutableStateOf<List<String>>(emptyList())
@@ -61,10 +70,36 @@ class MascotLabActivity : ComponentActivity() {
         intent?.getStringExtra("cmd")?.split(',')?.map { it.trim() }?.filter { it.isNotEmpty() }.orEmpty()
 }
 
+/**
+ * Asks the engine for a still of her current pose at [width] px wide (the full 1008x740 artwork frame) and writes
+ * it where adb can fetch it. Only the engine can produce this: the mouth and eyelids are drawn, not painted, so a
+ * poster composited from the layer PNGs alone would have no mouth.
+ */
+private fun LigayaMascotController.bakePoster(context: Context, width: Int) {
+    val view = viewForLifecycle()
+    if (view == null) {
+        Log.w("MascotLab", "poster: no WebView yet")
+        return
+    }
+    view.evaluateJavascript("(window.ligaya.debug ? window.ligaya.debug.snapshot($width) : '')") { result ->
+        val dataUrl = result.orEmpty().trim('"')
+        val marker = dataUrl.indexOf("base64,")
+        if (marker < 0) {
+            Log.w("MascotLab", "poster: engine returned no image (debug hooks off?)")
+            return@evaluateJavascript
+        }
+        val bytes = Base64.decode(dataUrl.substring(marker + 7), Base64.DEFAULT)
+        val out = File(context.getExternalFilesDir(null), "poster_$width.png")
+        out.writeBytes(bytes)
+        Log.i("MascotLab", "poster: wrote ${bytes.size} bytes to ${out.absolutePath}")
+    }
+}
+
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun Lab(pending: androidx.compose.runtime.MutableState<List<String>>) {
     val controller = rememberLigayaMascotController()
+    val context = LocalContext.current
     var frame by remember { mutableStateOf(LigayaFrame.Bust) }
     var motion by remember { mutableStateOf(LigayaMotionMode.System) }
     var dark by remember { mutableStateOf(false) }
@@ -81,6 +116,7 @@ private fun Lab(pending: androidx.compose.runtime.MutableState<List<String>>) {
             "emotion" -> LigayaEmotion.entries.firstOrNull { it.name.equals(value, true) }?.let { emotion = it; c.setEmotion(it) }
             "speed" -> value?.toFloatOrNull()?.let { speed = it.coerceIn(0.5f, 2f); c.setAnimationSpeed(speed) }
             "depth" -> value?.toFloatOrNull()?.let { depth = it.coerceIn(0f, 1f); c.setDepthStrength(depth) }
+            "poster" -> c.bakePoster(context, value?.toIntOrNull() ?: 1008)
             "listen" -> { listening = value == "on"; speaking = speaking && !listening; if (listening) c.startListening() else c.stopListening() }
             "speak" -> { speaking = value == "on"; listening = listening && !speaking; if (speaking) c.startSpeaking() else c.stopSpeaking() }
             "camera" -> {

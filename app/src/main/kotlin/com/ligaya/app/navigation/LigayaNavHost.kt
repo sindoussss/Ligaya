@@ -33,7 +33,9 @@ import com.ligaya.feature.companion.CompanionTurnResult
 import com.ligaya.feature.companion.EmergencyCompanionCoordinator
 import com.ligaya.feature.companion.EmergencyCompanionScreen
 import com.ligaya.feature.companion.ListeningState
+import com.ligaya.core.ai.CompanionTurn
 import com.ligaya.feature.companion.VoiceListeningScreen
+import com.ligaya.feature.companion.VoiceSpeakingScreen
 import com.ligaya.feature.companion.VoiceThinkingScreen
 import com.ligaya.feature.emergencyactive.EmergencyActiveScreen
 import com.ligaya.feature.emergencyactive.EmergencyResolvedScreen
@@ -351,6 +353,36 @@ fun LigayaNavHost(
                 },
             )
         }
+        composable(LigayaDestination.Speaking.route) {
+            // Visual design screen 7. The reply itself comes from the transcript — it is appended just before she
+            // starts speaking — but whether the phone actually said it out loud is only known once the turn ends.
+            // So this shows "Speaking..." while playback runs, and if the engine reports nothing was audible it
+            // stays put showing the words instead of quietly moving on (section 23).
+            val phase by companionCoordinator.phase.collectAsState()
+            val transcript by companionCoordinator.transcript.collectAsState()
+            val lastResult by companionCoordinator.lastResult.collectAsState()
+            val reply = transcript.lastOrNull { it.speaker == CompanionTurn.Speaker.LIGAYA }?.text.orEmpty()
+            val finishedSilent = phase != VoicePipelinePhase.SPEAKING &&
+                (lastResult as? CompanionTurnResult.Spoken)?.aloud == false
+            var leaving by remember { mutableStateOf(false) }
+            val openChatOnce = {
+                if (!leaving) {
+                    leaving = true
+                    navController.navigate(LigayaDestination.EmergencyCompanion.route) {
+                        popUpTo(LigayaDestination.Speaking.route) { inclusive = true }
+                        launchSingleTop = true
+                    }
+                }
+            }
+            LaunchedEffect(phase, lastResult) {
+                if (phase == VoicePipelinePhase.SPEAKING) return@LaunchedEffect
+                val result = lastResult ?: return@LaunchedEffect
+                // Heard: the conversation carries on in Chat. Not heard: stay, so the reply can be read.
+                if (result !is CompanionTurnResult.Spoken || result.aloud) openChatOnce()
+            }
+            BackHandler { openChatOnce() }
+            VoiceSpeakingScreen(reply = reply, aloud = !finishedSilent)
+        }
         composable(LigayaDestination.Thinking.route) {
             // Visual design screen 5, shown while her reply is being worked out. As soon as the turn moves on (she
             // starts speaking, or it ended without a reply) the conversation continues in Chat, where the reply or
@@ -361,7 +393,14 @@ fun LigayaNavHost(
             LaunchedEffect(phase) {
                 if (phase != VoicePipelinePhase.PROCESSING && !leaving) {
                     leaving = true
-                    navController.navigate(LigayaDestination.EmergencyCompanion.route) {
+                    // She has an answer: screen 7 reads it out. Anything else (blocked, or an ended turn with no
+                    // reply) goes straight to Chat, where the reason is written.
+                    val next = if (phase == VoicePipelinePhase.SPEAKING) {
+                        LigayaDestination.Speaking.route
+                    } else {
+                        LigayaDestination.EmergencyCompanion.route
+                    }
+                    navController.navigate(next) {
                         popUpTo(LigayaDestination.Thinking.route) { inclusive = true }
                         launchSingleTop = true
                     }

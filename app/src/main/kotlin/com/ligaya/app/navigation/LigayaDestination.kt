@@ -47,6 +47,9 @@ sealed class LigayaDestination(val route: String, val title: String) {
      * [EmergencyActive]'s "I'm safe", never on its own, so it is excluded from [all].
      */
     data object Resolved : LigayaDestination("resolved", "Resolved")
+
+    /** Visual design screen 7: her reply being read out loud. Follows [Thinking]; excluded from [all]. */
+    data object Speaking : LigayaDestination("speaking", "Speaking")
     data object Sos : LigayaDestination("sos", "SOS")
     data object EmergencyActive : LigayaDestination("emergency_active", "Emergency Active")
     data object EmergencyCompanion : LigayaDestination("companion", "Emergency Companion")

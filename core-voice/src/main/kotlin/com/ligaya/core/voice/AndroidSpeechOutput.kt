@@ -31,9 +31,9 @@ class AndroidSpeechOutput(context: Context) : SpeechOutput {
         ready.complete(status == TextToSpeech.SUCCESS)
     }
 
-    override suspend fun speak(message: EmergencyStatusMessage) = speakText(message.spokenText)
+    override suspend fun speak(message: EmergencyStatusMessage): SpeechResult = speakText(message.spokenText)
 
-    override suspend fun speak(speech: ValidatedSpeech) = speakText(speech.text)
+    override suspend fun speak(speech: ValidatedSpeech): SpeechResult = speakText(speech.text)
 
     /**
      * Step 51's own finding, from building its field-testing latency instrumentation: neither
@@ -57,9 +57,9 @@ class AndroidSpeechOutput(context: Context) : SpeechOutput {
      * non-fatal, silent-from-the-engine's-perspective outcome; a timeout is the same outcome via
      * a different cause, not a new contract.
      */
-    private suspend fun speakText(text: String) {
+    private suspend fun speakText(text: String): SpeechResult {
         val ready = withTimeoutOrNull(ENGINE_READY_TIMEOUT_MILLIS) { ready.await() }
-        if (ready != true) return
+        if (ready != true) return SpeechResult.UNAVAILABLE
 
         val locale = Locale.forLanguageTag("fil-PH")
         if (tts.isLanguageAvailable(locale) >= TextToSpeech.LANG_AVAILABLE) {
@@ -68,27 +68,30 @@ class AndroidSpeechOutput(context: Context) : SpeechOutput {
         // Otherwise: leave the engine's own current/default language as-is, per this class's own
         // doc comment — there is no better on-device fallback for Tagalog specifically.
 
+        // Each ending reports itself: only onDone means the words were actually heard. An error callback, or the
+        // whole utterance timing out, is silence — and the UI must be able to tell those apart.
         val utteranceId = UUID.randomUUID().toString()
-        withTimeoutOrNull(UTTERANCE_TIMEOUT_MILLIS) {
-            suspendCancellableCoroutine<Unit> { continuation ->
+        val spoken = withTimeoutOrNull(UTTERANCE_TIMEOUT_MILLIS) {
+            suspendCancellableCoroutine<SpeechResult> { continuation ->
                 tts.setOnUtteranceProgressListener(object : UtteranceProgressListener() {
                     override fun onStart(utteranceId: String?) = Unit
                     override fun onDone(utteranceId: String?) {
-                        if (continuation.isActive) continuation.resume(Unit)
+                        if (continuation.isActive) continuation.resume(SpeechResult.SPOKEN)
                     }
 
                     @Deprecated("Deprecated in Java")
                     override fun onError(utteranceId: String?) {
-                        if (continuation.isActive) continuation.resume(Unit)
+                        if (continuation.isActive) continuation.resume(SpeechResult.UNAVAILABLE)
                     }
 
                     override fun onError(utteranceId: String?, errorCode: Int) {
-                        if (continuation.isActive) continuation.resume(Unit)
+                        if (continuation.isActive) continuation.resume(SpeechResult.UNAVAILABLE)
                     }
                 })
                 tts.speak(text, TextToSpeech.QUEUE_ADD, null, utteranceId)
             }
         }
+        return spoken ?: SpeechResult.UNAVAILABLE
     }
 
     private companion object {

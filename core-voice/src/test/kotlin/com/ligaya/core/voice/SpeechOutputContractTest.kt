@@ -22,12 +22,14 @@ class SpeechOutputContractTest {
         val statusMessages = mutableListOf<EmergencyStatusMessage>()
         val validatedSpeech = mutableListOf<ValidatedSpeech>()
 
-        override suspend fun speak(message: EmergencyStatusMessage) {
+        override suspend fun speak(message: EmergencyStatusMessage): SpeechResult {
             statusMessages += message
+            return SpeechResult.SPOKEN
         }
 
-        override suspend fun speak(speech: ValidatedSpeech) {
+        override suspend fun speak(speech: ValidatedSpeech): SpeechResult {
             validatedSpeech += speech
+            return SpeechResult.SPOKEN
         }
     }
 

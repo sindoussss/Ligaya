@@ -15,9 +15,9 @@ import com.ligaya.core.ai.ValidatedSpeech
 class TimingSpeechOutput(
     private val delegate: SpeechOutput,
 ) : SpeechOutput {
-    override suspend fun speak(message: EmergencyStatusMessage) =
+    override suspend fun speak(message: EmergencyStatusMessage): SpeechResult =
         PipelineLatencyLog.measure("tts_status") { delegate.speak(message) }
 
-    override suspend fun speak(speech: ValidatedSpeech) =
+    override suspend fun speak(speech: ValidatedSpeech): SpeechResult =
         PipelineLatencyLog.measure("tts_companion") { delegate.speak(speech) }
 }
