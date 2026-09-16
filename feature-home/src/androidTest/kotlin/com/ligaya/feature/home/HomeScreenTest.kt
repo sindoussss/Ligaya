@@ -75,7 +75,7 @@ class HomeScreenTest {
         userName: String? = null,
         onAskText: (String) -> Unit = {},
         onStartVoice: () -> Unit = {},
-        onNavigateToTools: () -> Unit = {},
+        onNavigateToSafetyCircleTab: () -> Unit = {},
         onNavigateToProfile: () -> Unit = {},
     ) {
         composeTestRule.setContent {
@@ -91,7 +91,7 @@ class HomeScreenTest {
                 userName = userName,
                 onAskText = onAskText,
                 onStartVoice = onStartVoice,
-                onNavigateToTools = onNavigateToTools,
+                onNavigateToSafetyCircleTab = onNavigateToSafetyCircleTab,
                 onNavigateToProfile = onNavigateToProfile,
             )
         }
@@ -148,15 +148,17 @@ class HomeScreenTest {
     }
 
     @Test
-    fun toolsAndProfileTabsNavigate() {
-        var tools = false
+    fun safetyCircleAndProfileTabsNavigate() {
+        var circle = false
         var profile = false
-        setHome(onNavigateToTools = { tools = true }, onNavigateToProfile = { profile = true })
+        setHome(onNavigateToSafetyCircleTab = { circle = true }, onNavigateToProfile = { profile = true })
 
-        composeTestRule.onNodeWithText("Tools").performClick()
+        // "Circle", not "Tools": the architecture's UX layer has no Tools surface, and this tab is the
+        // Safety Circle of sections 6 and 8.
+        composeTestRule.onNodeWithText("Circle").performClick()
         composeTestRule.onNodeWithText("Profile").performClick()
 
-        assertTrue(tools)
+        assertTrue(circle)
         assertTrue(profile)
     }
 
@@ -268,7 +270,7 @@ class HomeScreenTest {
 
         composeTestRule.onNodeWithContentDescription("Send SOS emergency alert").assertHeightIsAtLeast(LigayaSpacing.minTouchTarget)
         composeTestRule.onNodeWithContentDescription("Talk to Ligaya").assertHeightIsAtLeast(LigayaSpacing.minTouchTarget)
-        listOf("Voice", "Text", "Home", "Chat", "Tools", "Profile").forEach {
+        listOf("Voice", "Text", "Home", "Chat", "Circle", "Profile").forEach {
             composeTestRule.onNodeWithText(it).assertHeightIsAtLeast(LigayaSpacing.minTouchTarget)
         }
     }

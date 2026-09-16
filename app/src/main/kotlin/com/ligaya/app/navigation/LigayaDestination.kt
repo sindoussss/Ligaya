@@ -31,10 +31,13 @@ sealed class LigayaDestination(val route: String, val title: String) {
     /** Visual design screen 5. Excluded from [all] for the same reason as [CreateAccount]. */
     data object EmergencyProfile : LigayaDestination("emergency_profile", "Emergency Profile")
     /**
-     * Home's Tools tab (visual design, screen 2). A placeholder until the Tools screen is designed.
+     * REMOVED: a "Tools" tab. The architecture's own UX layer (sections 1 and 4) has no such surface —
+     * it lists Home, SOS, voice activation, the companion, Safety Circle, safety status, location sharing,
+     * profile and Ligaya+. The reference's Tools tile offered a study helper and a home assistant, which are
+     * not part of this product, plus an Emergency card duplicating SOS. The tab slot went to Safety Circle,
+     * which the architecture does ask for (sections 6 and 8).
      * Excluded from [all]: it is reached from Home's tab bar, not the menu of destinations.
      */
-    data object Tools : LigayaDestination("tools", "Tools")
 
     /** Visual design screen 4: a voice turn with Ligaya. Opened from the mic buttons; excluded from [all]. */
     data object Listening : LigayaDestination("listening", "Listening")

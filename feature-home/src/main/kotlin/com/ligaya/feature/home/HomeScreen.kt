@@ -82,7 +82,7 @@ import java.time.LocalTime
 
 /**
  * Visual design, screen 2: Home. The brand header, a greeting, Ligaya herself, the "Ask me anything"
- * bar with Voice/Text shortcuts, and the Home / Chat / Tools / Profile tab bar.
+ * bar with Voice/Text shortcuts, and the Home / Chat / Circle / Profile tab bar.
  *
  * How it keeps section 4's requirements inside that design:
  *  - SOS is always on screen as the red pill in the header — one tap straight into
@@ -108,7 +108,7 @@ fun HomeScreen(
     userName: String? = null,
     onAskText: (String) -> Unit = {},
     onStartVoice: () -> Unit = {},
-    onNavigateToTools: () -> Unit = {},
+    onNavigateToSafetyCircleTab: () -> Unit = {},
     onNavigateToProfile: () -> Unit = {},
     onToggleTheme: () -> Unit = {},
     /** Whether the app is currently painted dark, so the header's button shows the theme in force. */
@@ -198,7 +198,7 @@ fun HomeScreen(
                 onSelect = { tab ->
                     when (tab) {
                         LigayaTab.Chat -> onNavigateToCompanion()
-                        LigayaTab.Tools -> onNavigateToTools()
+                        LigayaTab.Circle -> onNavigateToSafetyCircleTab()
                         LigayaTab.Profile -> onNavigateToProfile()
                         LigayaTab.Home -> Unit
                     }

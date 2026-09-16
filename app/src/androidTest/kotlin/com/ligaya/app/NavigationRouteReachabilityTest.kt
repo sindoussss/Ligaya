@@ -92,7 +92,14 @@ class NavigationRouteReachabilityTest {
                 // route now renders the real OnboardingIntroScreen, which by design shows neither
                 // the literal title text "Onboarding" nor a "Back" control (its exits are "Skip"
                 // and the primary CTA). OnboardingIntroScreenTest covers it directly instead.
-                it != LigayaDestination.Onboarding
+                it != LigayaDestination.Onboarding &&
+                // Excluded for the same reason as the rest, and for a better one: both routes now render
+                // their real screens instead of a placeholder. Safety Circle is a tab destination with the
+                // tab bar as its way out, and the paywall's exits are its own buy/restore controls — neither
+                // has a "Back" button for this generic loop to press. SafetyCircleHomeScreenTest and the
+                // paywall's own tests cover them directly.
+                it != LigayaDestination.SafetyCircle &&
+                it != LigayaDestination.Paywall
         }
 
         for (destination in destinations) {

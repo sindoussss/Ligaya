@@ -27,12 +27,14 @@ import com.ligaya.designsystem.LigayaTypography
 enum class LigayaTab(val label: String) {
     Home("Home"),
     Chat("Chat"),
-    Tools("Tools"),
+    /** Section 6 of the architecture: the household the user is protected by. Labelled "Circle" because
+     *  "Safety Circle" does not fit a quarter of a phone's width; the screen itself says the full name. */
+    Circle("Circle"),
     Profile("Profile"),
 }
 
 /**
- * The Home / Chat / Tools / Profile tab bar shared by the main screens. Tapping the tab you're already on does
+ * The Home / Chat / Circle / Profile tab bar shared by the main screens. Tapping the tab you're already on does
  * nothing; every tab is a full 56dp-tall touch target.
  */
 @Composable
@@ -69,6 +71,6 @@ fun LigayaTabBar(
 private fun LigayaTab.icon(selected: Boolean): ImageVector = when (this) {
     LigayaTab.Home -> if (selected) LigayaIcons.homeSelected else LigayaIcons.home
     LigayaTab.Chat -> if (selected) LigayaIcons.chatSelected else LigayaIcons.chat
-    LigayaTab.Tools -> if (selected) LigayaIcons.toolsSelected else LigayaIcons.tools
+    LigayaTab.Circle -> if (selected) LigayaIcons.circleSelected else LigayaIcons.circle
     LigayaTab.Profile -> if (selected) LigayaIcons.profileSelected else LigayaIcons.profile
 }

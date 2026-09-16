@@ -38,6 +38,7 @@ import com.ligaya.core.ai.TimingCompanionResponseProvider
 import com.ligaya.core.ai.TimingIntentProvider
 import com.ligaya.core.ai.VoiceInterpretationOutcome
 import com.ligaya.core.backend.auth.AuthRepository
+import com.ligaya.core.billing.RevenueCatEntitlementRepository
 import com.ligaya.core.backend.auth.LocalAuthRepository
 import com.ligaya.core.data.LigayaDatabase
 import com.ligaya.core.data.engine.DefaultEmergencyController
@@ -459,6 +460,9 @@ class MainActivity : ComponentActivity() {
                         onSetThemeMode = setThemeMode,
                         settings = settings,
                         appVersionName = BuildConfig.VERSION_NAME,
+                        // Safe to construct unconfigured: every call reports "not subscribed" or a failure
+                        // outcome rather than throwing (see RevenueCatEntitlementRepository's own doc).
+                        entitlementRepository = RevenueCatEntitlementRepository(LIGAYA_PLUS_ENTITLEMENT),
                         emergencyController = emergencyController,
                         companionCoordinator = companionCoordinator,
                         voicePhase = voiceActivationCoordinator.phase,
@@ -578,6 +582,9 @@ class MainActivity : ComponentActivity() {
     }
 
     private companion object {
+        /** The RevenueCat dashboard's entitlement id. Nothing is configured for it yet — see
+         *  ACCOUNT_ACTIONS_NEEDED.md — which the paywall itself reports rather than hiding. */
+        const val LIGAYA_PLUS_ENTITLEMENT = "ligaya_plus"
         const val APP_PREFERENCES = "ligaya_app"
         const val KEY_WELCOME_COMPLETED = "welcome_completed"
         const val KEY_THEME_MODE = "theme_mode"

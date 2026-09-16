@@ -2,47 +2,49 @@ package com.ligaya.designsystem
 
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBackIos
 import androidx.compose.material.icons.automirrored.filled.HelpOutline
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.automirrored.filled.VolumeUp
+import androidx.compose.material.icons.automirrored.outlined.ArrowForward
+import androidx.compose.material.icons.automirrored.outlined.ArrowForwardIos
 import androidx.compose.material.icons.filled.ChatBubble
-import androidx.compose.material.icons.automirrored.filled.ArrowBackIos
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.DoneAll
-import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Emergency
 import androidx.compose.material.icons.filled.ErrorOutline
 import androidx.compose.material.icons.filled.GraphicEq
 import androidx.compose.material.icons.filled.GridView
+import androidx.compose.material.icons.filled.Group
 import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.Menu
-import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.PriorityHigh
-import androidx.compose.material.icons.outlined.ChatBubbleOutline
-import androidx.compose.material.icons.outlined.GridView
-import androidx.compose.material.icons.outlined.Home
-import androidx.compose.material.icons.automirrored.outlined.ArrowForward
-import androidx.compose.material.icons.automirrored.outlined.ArrowForwardIos
-import androidx.compose.material.icons.outlined.DarkMode
-import androidx.compose.material.icons.outlined.Face
-import androidx.compose.material.icons.outlined.Info
-import androidx.compose.material.icons.outlined.Lock
-import androidx.compose.material.icons.outlined.Palette
-import androidx.compose.material.icons.outlined.RecordVoiceOver
-import androidx.compose.material.icons.outlined.Tune
-import androidx.compose.material.icons.outlined.LightMode
-import androidx.compose.material.icons.outlined.Person
-import androidx.compose.material.icons.outlined.Sms
 import androidx.compose.material.icons.filled.LocalFireDepartment
 import androidx.compose.material.icons.filled.LocalPolice
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.MedicalServices
+import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material.icons.filled.MicNone
+import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.PriorityHigh
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.Sync
+import androidx.compose.material.icons.outlined.ChatBubbleOutline
+import androidx.compose.material.icons.outlined.DarkMode
+import androidx.compose.material.icons.outlined.Face
+import androidx.compose.material.icons.outlined.GridView
+import androidx.compose.material.icons.outlined.Group
+import androidx.compose.material.icons.outlined.Home
+import androidx.compose.material.icons.outlined.Info
+import androidx.compose.material.icons.outlined.LightMode
+import androidx.compose.material.icons.outlined.Lock
+import androidx.compose.material.icons.outlined.Palette
+import androidx.compose.material.icons.outlined.Person
+import androidx.compose.material.icons.outlined.RecordVoiceOver
+import androidx.compose.material.icons.outlined.Sms
+import androidx.compose.material.icons.outlined.Tune
 import androidx.compose.ui.graphics.vector.ImageVector
 
 /**
@@ -95,8 +97,9 @@ object LigayaIcons {
     val home: ImageVector = Icons.Outlined.Home
     val chatSelected: ImageVector = Icons.Filled.ChatBubble
     val chat: ImageVector = Icons.Outlined.ChatBubbleOutline
-    val toolsSelected: ImageVector = Icons.Filled.GridView
-    val tools: ImageVector = Icons.Outlined.GridView
+    /** The Safety Circle tab: the people around you, not a grid of features. */
+    val circleSelected: ImageVector = Icons.Filled.Group
+    val circle: ImageVector = Icons.Outlined.Group
     val profileSelected: ImageVector = Icons.Filled.Person
     val profile: ImageVector = Icons.Outlined.Person
 

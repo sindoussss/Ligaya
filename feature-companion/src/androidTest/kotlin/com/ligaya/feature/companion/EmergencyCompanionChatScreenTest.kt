@@ -162,7 +162,7 @@ class EmergencyCompanionChatScreenTest {
         composeTestRule.onNodeWithContentDescription("Back").performClick()
         composeTestRule.onNodeWithText("Home").performClick()
         composeTestRule.onNodeWithText("Chat").performClick()
-        composeTestRule.onNodeWithText("Tools").performClick()
+        composeTestRule.onNodeWithText("Circle").performClick()
         composeTestRule.onNodeWithText("Profile").performClick()
 
         composeTestRule.onNodeWithContentDescription("More options").performClick()
@@ -172,7 +172,7 @@ class EmergencyCompanionChatScreenTest {
 
         assertEquals(1, back)
         // Chat is the current tab, so tapping it does nothing.
-        assertEquals(listOf(LigayaTab.Home, LigayaTab.Tools, LigayaTab.Profile), tabs)
+        assertEquals(listOf(LigayaTab.Home, LigayaTab.Circle, LigayaTab.Profile), tabs)
         assertEquals(1, voice)
         assertTrue(sos == 1)
     }

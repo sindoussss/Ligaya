@@ -36,6 +36,10 @@ import com.ligaya.designsystem.LigayaThemeMode
 import com.ligaya.designsystem.components.LigayaTab
 import com.ligaya.core.backend.auth.AuthRepository
 import com.ligaya.core.data.profile.EmergencyProfileRepository
+import com.ligaya.feature.safetycircle.SafetyCircleHomeScreen
+import com.ligaya.feature.paywall.PaywallScreen
+import com.ligaya.core.data.profile.EmergencyContact
+import com.ligaya.core.billing.EntitlementRepository
 import com.ligaya.core.emergencyengine.EmergencyState
 import com.ligaya.core.permissions.PermissionState
 import com.ligaya.core.uistate.EmergencyController
@@ -118,6 +122,8 @@ fun LigayaNavHost(
     settings: LigayaSettings,
     /** Shown on About. The real one, read from the build, not a number typed into the screen. */
     appVersionName: String,
+    /** Ligaya+ entitlement. Reports "not subscribed" rather than crashing when RevenueCat is unconfigured. */
+    entitlementRepository: EntitlementRepository,
     navController: NavHostController = rememberNavController(),
 ) {
     val scope = rememberCoroutineScope()
@@ -143,6 +149,9 @@ fun LigayaNavHost(
     val openProfile = {
         val signedIn = authRepository.currentUserId() != null
         navController.navigate(if (signedIn) LigayaDestination.EmergencyProfile.route else LigayaDestination.CreateAccount.route)
+    }
+    val openSafetyCircle = {
+        navController.navigate(LigayaDestination.SafetyCircle.route) { launchSingleTop = true }
     }
     val openSettings = {
         navController.navigate(LigayaDestination.Settings.route) { launchSingleTop = true }
@@ -220,16 +229,13 @@ fun LigayaNavHost(
                 },
                 // The Listening screen starts (and owns) the voice turn.
                 onStartVoice = openListening,
-                onNavigateToTools = { navController.navigate(LigayaDestination.Tools.route) },
+                onNavigateToSafetyCircleTab = openSafetyCircle,
                 // The Profile tab opens Settings (screen 9); the profile card there leads on to the profile
                 // itself, or to signing in when there is no account yet.
                 onNavigateToProfile = openSettings,
                 onToggleTheme = onToggleTheme,
                 isDarkTheme = isDarkTheme,
             )
-        }
-        composable(LigayaDestination.Tools.route) {
-            PlaceholderScreen(destination = LigayaDestination.Tools, onBack = { navController.popBackStack() })
         }
         composable(LigayaDestination.Sos.route) {
             SosScreen(
@@ -280,7 +286,7 @@ fun LigayaNavHost(
                             navController.navigate(LigayaDestination.Home.route)
                         }
                         LigayaTab.Chat -> Unit
-                        LigayaTab.Tools -> navController.navigate(LigayaDestination.Tools.route)
+                        LigayaTab.Circle -> openSafetyCircle()
                         LigayaTab.Profile -> openSettings()
                     }
                 },
@@ -382,7 +388,7 @@ fun LigayaNavHost(
                     when (tab) {
                         LigayaTab.Home -> goHome()
                         LigayaTab.Chat -> openChat()
-                        LigayaTab.Tools -> navController.navigate(LigayaDestination.Tools.route)
+                        LigayaTab.Circle -> openSafetyCircle()
                         LigayaTab.Profile -> openSettings()
                     }
                 },
@@ -515,7 +521,7 @@ fun LigayaNavHost(
                             navController.navigate(LigayaDestination.Home.route)
                         }
                         LigayaTab.Chat -> openChat()
-                        LigayaTab.Tools -> navController.navigate(LigayaDestination.Tools.route)
+                        LigayaTab.Circle -> openSafetyCircle()
                         LigayaTab.Profile -> Unit
                     }
                 },
@@ -587,6 +593,41 @@ fun LigayaNavHost(
                 onBack = { navController.popBackStack() },
             )
         }
+        // Architecture sections 6 and 8. The screen is deliberately explicit about the half of the Safety
+        // Circle this build cannot do: family alerts need the backend project, and section 23 forbids a
+        // screen that implies someone would be alerted when nobody would be.
+        composable(LigayaDestination.SafetyCircle.route) {
+            val userId = authRepository.currentUserId()
+            val contacts by produceState(initialValue = emptyList<EmergencyContact>(), userId) {
+                value = userId
+                    ?.let { runCatching { profileRepository.getProfile(it) }.getOrNull() }
+                    ?.contacts
+                    .orEmpty()
+            }
+            SafetyCircleHomeScreen(
+                signedIn = userId != null,
+                contacts = contacts,
+                // FirestoreSafetyCircleRepository needs a Firebase project; this build has none (see
+                // MainActivity's own comment on why auth runs locally), so households cannot exist yet.
+                householdBackendConfigured = false,
+                onSignIn = { navController.navigate(LigayaDestination.CreateAccount.route) },
+                onEditContacts = openProfile,
+                onOpenLigayaPlus = { navController.navigate(LigayaDestination.Paywall.route) },
+                onSelectTab = { tab ->
+                    when (tab) {
+                        LigayaTab.Home -> if (!navController.popBackStack(LigayaDestination.Home.route, inclusive = false)) {
+                            navController.navigate(LigayaDestination.Home.route)
+                        }
+                        LigayaTab.Chat -> openChat()
+                        LigayaTab.Circle -> Unit
+                        LigayaTab.Profile -> openSettings()
+                    }
+                },
+            )
+        }
+        composable(LigayaDestination.Paywall.route) {
+            PaywallScreen(entitlementRepository = entitlementRepository)
+        }
         composable(LigayaDestination.Onboarding.route) {
             // Visual design screen 2. Both exits pop back for now: the real hand-off into the
             // account/profile setup flow (feature-onboarding's own OnboardingScreen — reference
@@ -645,8 +686,12 @@ fun LigayaNavHost(
                     it != LigayaDestination.EmergencyActive &&
                     it != LigayaDestination.EmergencyCompanion &&
                     // Visual design screen 2: has a real screen now, so it must drop out of the
-                    // placeholder fallback or the route would be registered twice.
-                    it != LigayaDestination.Onboarding
+                    // placeholder fallback or the route would be registered twice — and the placeholder,
+                    // registered second, is the one that wins. Confirmed on device: the Safety Circle tab
+                    // showed "Route: safety_circle" until these two were excluded as well.
+                    it != LigayaDestination.Onboarding &&
+                    it != LigayaDestination.SafetyCircle &&
+                    it != LigayaDestination.Paywall
             }
             .forEach { destination ->
                 composable(destination.route) {

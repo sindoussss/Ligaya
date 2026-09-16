@@ -98,6 +98,12 @@ dependencies {
     // comment and DefaultEmergencyController's reportLocationFlow/reportEmergencyServiceFlow.
     implementation(project(":core-location"))
     implementation(project(":core-places"))
+    // Architecture sections 6, 7 and 8. These three modules were built and tested but never depended on
+    // here, which is why their routes showed a generic placeholder: the Safety Circle tab (which replaced
+    // a "Tools" tab the architecture never asks for) and Ligaya+ are reachable from the app now.
+    implementation(project(":feature-safetycircle"))
+    implementation(project(":feature-paywall"))
+    implementation(project(":core-billing"))
     implementation(libs.play.services.location)
 
     implementation(platform(libs.androidx.compose.bom))
