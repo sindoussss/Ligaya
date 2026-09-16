@@ -44,6 +44,15 @@ class DarkPaletteContrastTest {
         Triple("taupe (unselected tab) on shell", dark.taupe, dark.shell),
         // Home's header icons sit straight on the page.
         Triple("cocoa (header icons) on cream", dark.cocoa, dark.cream),
+        // Screen 11: the Voice/Text chip icons and the listening chip's microphone are accents drawn
+        // straight onto the dark page. Berry, the light theme's accent, is 2.25:1 there -- which is why
+        // accentInk exists at all, and why it is pinned in both themes here.
+        Triple("accentInk (chip icons) on cream", dark.accentInk, dark.cream),
+        Triple("accentInk (chip icons) on shell", dark.accentInk, dark.shell),
+        Triple("light accentInk on light cream", LigayaLightPalette.accentInk, LigayaLightPalette.cream),
+        Triple("light accentInk on light shell", LigayaLightPalette.accentInk, LigayaLightPalette.shell),
+        // The in-progress badge is a filled chip: its own text has to hold up against its fill.
+        Triple("onIdlePrimary on idlePrimary", dark.onIdlePrimary, dark.idlePrimary),
     )
 
     @Test

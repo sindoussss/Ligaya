@@ -78,6 +78,7 @@ import com.ligaya.designsystem.components.VoiceStateIndicator
 import com.ligaya.designsystem.components.rememberLigayaMascotController
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import java.time.LocalTime
 
 /**
  * Visual design, screen 2: Home. The brand header, a greeting, Ligaya herself, the "Ask me anything"
@@ -112,7 +113,11 @@ fun HomeScreen(
     onToggleTheme: () -> Unit = {},
     /** Whether the app is currently painted dark, so the header's button shows the theme in force. */
     isDarkTheme: Boolean = false,
+    /** The hour the greeting is chosen for. A parameter only so tests can hold it still. */
+    greetingAt: LocalTime = LocalTime.now(),
 ) {
+    // Screens 2 and 11: the same Home, greeting by the phone's own clock — good day, or good evening.
+    val greeting = remember(greetingAt) { homeGreetingFor(greetingAt) }
     val phase by voicePhase.collectAsState()
     val aiUnavailable by voiceAiUnavailable.collectAsState()
     val ligaya = rememberLigayaMascotController()
@@ -136,14 +141,18 @@ fun HomeScreen(
             )
 
             Column(modifier = Modifier.fillMaxWidth().padding(horizontal = LigayaSpacing.lg).padding(top = 26.dp)) {
-                Text(text = "Magandang araw,", style = LigayaTypography.homeGreeting, color = LigayaTheme.colors.cocoaInk)
+                Text(
+                    text = greeting.salutation,
+                    style = LigayaTypography.homeGreeting,
+                    color = LigayaTheme.colors.cocoaInk,
+                )
                 Text(
                     text = "${userName?.trim()?.takeIf { it.isNotEmpty() } ?: "kaibigan"}!",
                     style = LigayaTypography.homeName,
                     color = LigayaTheme.colors.cocoaInk,
                 )
                 Text(
-                    text = "I'm Ligaya. I'm here to help, answer your questions, and make your day a little easier.",
+                    text = greeting.intro,
                     style = LigayaTypography.homeIntro,
                     color = LigayaTheme.colors.taupe,
                     modifier = Modifier.padding(top = 8.dp).widthIn(max = 222.dp),
@@ -394,7 +403,7 @@ private fun ShortcutChip(icon: ImageVector, label: String, modifier: Modifier, o
         horizontalArrangement = Arrangement.Center,
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Icon(icon, contentDescription = null, tint = LigayaTheme.colors.berry, modifier = Modifier.size(20.dp))
+        Icon(icon, contentDescription = null, tint = LigayaTheme.colors.accentInk, modifier = Modifier.size(20.dp))
         Text(label, style = LigayaTypography.chipLabel, color = LigayaTheme.colors.cocoaInk, modifier = Modifier.padding(start = 8.dp))
     }
 }

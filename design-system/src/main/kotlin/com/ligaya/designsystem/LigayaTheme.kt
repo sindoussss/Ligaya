@@ -51,6 +51,11 @@ fun LigayaTheme(
             onBackground = palette.cocoaInk,
             surface = palette.shell,
             onSurface = palette.cocoaInk,
+            // Mapped, not left to Material: unmapped, these fall back to Material's own blue-greys, which
+            // is where the voice chip's blue microphone came from on the dark Home.
+            surfaceVariant = palette.shell,
+            onSurfaceVariant = palette.cocoaInk,
+            outline = palette.shellEdge,
             error = palette.colorStatusFailed,
         )
     } else {
@@ -61,6 +66,11 @@ fun LigayaTheme(
             onBackground = palette.cocoaInk,
             surface = palette.shell,
             onSurface = palette.cocoaInk,
+            // Mapped, not left to Material: unmapped, these fall back to Material's own blue-greys, which
+            // is where the voice chip's blue microphone came from on the dark Home.
+            surfaceVariant = palette.shell,
+            onSurfaceVariant = palette.cocoaInk,
+            outline = palette.shellEdge,
             error = palette.colorStatusFailed,
         )
     }

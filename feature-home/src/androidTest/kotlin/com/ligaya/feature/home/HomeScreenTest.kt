@@ -189,10 +189,12 @@ class HomeScreenTest {
                 voicePhase = idleVoicePhase,
                 voiceAiUnavailable = noAiUnavailableNotice,
                 userName = current,
+                // Held at mid-morning: this test is about the name, not the hour (HomeGreetingTest owns that).
+                greetingAt = java.time.LocalTime.of(9, 0),
             )
         }
 
-        composeTestRule.onNodeWithText("Magandang araw,").assertExists()
+        composeTestRule.onNodeWithText("Magandang umaga,").assertExists()
         composeTestRule.onNodeWithText("kaibigan!").assertExists()
 
         name.value = "John Daniel"
@@ -295,6 +297,32 @@ class HomeScreenTest {
         composeTestRule.waitForIdle()
         composeTestRule.onNodeWithText(bannerText).assertDoesNotExist()
     }
+    @Test
+    fun theEveningHomeGreetsTheNightAndSaysGoodnight() {
+        // Visual design screen 11: the same Home after six, which is the only thing that separates it from
+        // screen 2 besides the dark palette.
+        composeTestRule.setContent {
+            HomeScreen(
+                emergencyController = FakeEmergencyController(SosResult.Activated(EmergencyState.EMERGENCY_ACTIVE)),
+                otherDestinations = emptyList(),
+                onSosActivated = {},
+                onNavigateToSafetyCircle = {},
+                onNavigateToCompanion = {},
+                onNavigateToRoute = {},
+                voicePhase = idleVoicePhase,
+                voiceAiUnavailable = noAiUnavailableNotice,
+                userName = "John Daniel",
+                greetingAt = java.time.LocalTime.of(20, 15),
+            )
+        }
+
+        composeTestRule.onNodeWithText("Magandang gabi,").assertExists()
+        composeTestRule.onNodeWithText("John Daniel!").assertExists()
+        composeTestRule.onNodeWithText("Rest well. I'm always here when you need me.").assertExists()
+        // SOS is on screen at night exactly as it is by day.
+        composeTestRule.onNodeWithText("SOS").assertExists()
+    }
+
 }
 
 @Composable

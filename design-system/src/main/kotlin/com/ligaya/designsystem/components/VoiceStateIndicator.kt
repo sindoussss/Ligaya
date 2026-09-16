@@ -35,7 +35,7 @@ import com.ligaya.designsystem.rememberIsReduceMotionEnabled
  * whatever later step actually drives this from VoiceCaptureCoordinator/EmergencyCompanionState
  * decides when each one applies.
  *
- * Uses [MaterialTheme]'s surface roles as its base (this indicator sits in normal UI chrome, not
+ * Painted from [LigayaTheme]'s own surface tokens (this indicator sits in normal UI chrome, not
  * a fixed safety color like [SosControl]/[StatusCard]'s failure tone), with [listening]'s pulse
  * as the one state that visibly moves — [LigayaMotion.durationStateTransition] paced, matching the
  * brief's "slower/deliberate" guidance for anything more than instant feedback.
@@ -81,14 +81,17 @@ fun VoiceStateIndicator(
             .size(LigayaSpacing.xxl)
             .scale(pulse)
             .clip(CircleShape)
-            .background(MaterialTheme.colorScheme.surfaceVariant)
+            .background(LigayaTheme.colors.shell)
             .semantics { contentDescription = description },
         contentAlignment = Alignment.Center,
     ) {
         Icon(
             imageVector = requireNotNull(LigayaIcons.voiceState[state]) { "no icon mapped for $state" },
             contentDescription = null,
-            tint = if (state == LigayaVoiceState.IDLE) MaterialTheme.colorScheme.onSurfaceVariant else LigayaTheme.colors.idlePrimary,
+            // Her own accent when she is doing something, and plain ink when she is not. It used to be
+            // idlePrimary, a blue that belongs to no part of this design and read as a system icon on the
+            // dark Home.
+            tint = if (state == LigayaVoiceState.IDLE) LigayaTheme.colors.taupe else LigayaTheme.colors.accentInk,
         )
     }
 }
