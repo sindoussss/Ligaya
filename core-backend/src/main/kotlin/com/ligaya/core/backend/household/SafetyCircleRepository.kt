@@ -3,6 +3,8 @@ package com.ligaya.core.backend.household
 import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.SetOptions
+import com.google.firebase.functions.FirebaseFunctions
+import com.google.firebase.functions.FirebaseFunctionsException
 import com.ligaya.core.data.entity.FamilyMemberEntity
 import com.ligaya.core.data.entity.FamilyMemberStatus
 import com.ligaya.core.data.entity.HouseholdEntity
@@ -19,8 +21,31 @@ import kotlinx.coroutines.tasks.await
  */
 interface SafetyCircleRepository {
     suspend fun createHousehold(ownerId: String): String
+
+    /**
+     * The household this user owns, created the first time they need one.
+     *
+     * The id is kept on the user's own document rather than found by querying households for
+     * `owner_id == ownerId`, because firestore.rules deliberately grants no `list` permission on
+     * the households collection — a query cannot prove in advance that every possible result is
+     * readable, so Firestore rejects it outright. `users/{userId}` is readable and writable by
+     * that user alone, which is exactly the scope this needs.
+     */
+    suspend fun getOrCreateOwnedHousehold(ownerId: String): String
     suspend fun getHousehold(householdId: String): HouseholdEntity?
     suspend fun inviteMember(householdId: String, memberUserId: String, relationship: String)
+
+    /**
+     * Invite by the email the person signed up with, which is the only identifier an owner
+     * actually knows. Runs through the `inviteToSafetyCircle` Cloud Function rather than writing
+     * the member document from here: turning an email into a user id needs the Admin SDK, since
+     * neither firestore.rules nor Firebase Auth will let one client look up another account (see
+     * backend/functions/household-invites.js).
+     *
+     * Returns the invited user's id on success, or a [InviteFailure] carrying a message written
+     * for the person reading it.
+     */
+    suspend fun inviteMemberByEmail(householdId: String, email: String, relationship: String): InviteResult
     suspend fun acceptInvite(householdId: String, memberUserId: String)
     suspend fun removeMember(householdId: String, memberUserId: String)
     suspend fun getMember(householdId: String, memberUserId: String): FamilyMemberEntity?
@@ -35,9 +60,47 @@ interface SafetyCircleRepository {
     suspend fun getMembers(householdId: String): List<FamilyMemberEntity>
 }
 
+sealed interface InviteResult {
+    data class Invited(val memberUserId: String) : InviteResult
+
+    /** [message] is already fit to show: the function returns sentences for the owner to read. */
+    data class Failed(val message: String) : InviteResult
+}
+
+private const val HOUSEHOLD_ID_FIELD = "household_id"
+
 class FirestoreSafetyCircleRepository(
     private val firestore: FirebaseFirestore,
+    private val functions: FirebaseFunctions? = null,
 ) : SafetyCircleRepository {
+
+    override suspend fun inviteMemberByEmail(
+        householdId: String,
+        email: String,
+        relationship: String,
+    ): InviteResult {
+        val callable = functions
+            ?: return InviteResult.Failed("Inviting people needs a connection to Ligaya. Try again in a moment.")
+        return runCatching {
+            val response = callable.getHttpsCallable("inviteToSafetyCircle")
+                .call(mapOf("householdId" to householdId, "email" to email.trim(), "relationship" to relationship))
+                .await()
+
+            @Suppress("UNCHECKED_CAST")
+            val data = response.getData() as? Map<String, Any?>
+            val memberUserId = data?.get("memberUserId") as? String
+                ?: return InviteResult.Failed("That invite did not go through. Please try again.")
+            InviteResult.Invited(memberUserId)
+        }.getOrElse { error ->
+            // The function raises failed-precondition with a sentence meant for the owner ("Nobody
+            // is using Ligaya with that email yet"), so that message is shown as-is when there is
+            // one. Anything else gets a plain fallback instead of a raw exception string.
+            InviteResult.Failed(
+                (error as? FirebaseFunctionsException)?.message?.takeIf { it.isNotBlank() }
+                    ?: "That invite did not go through. Please try again.",
+            )
+        }
+    }
 
     private fun householdDoc(householdId: String) = firestore.collection("households").document(householdId)
     private fun memberDoc(householdId: String, memberUserId: String) =
@@ -59,6 +122,14 @@ class FirestoreSafetyCircleRepository(
             ),
         ).await()
         return ref.id
+    }
+
+    override suspend fun getOrCreateOwnedHousehold(ownerId: String): String {
+        val userDoc = firestore.collection("users").document(ownerId)
+        userDoc.get().await().getString(HOUSEHOLD_ID_FIELD)?.let { return it }
+        val householdId = createHousehold(ownerId)
+        userDoc.set(mapOf(HOUSEHOLD_ID_FIELD to householdId), SetOptions.merge()).await()
+        return householdId
     }
 
     override suspend fun getHousehold(householdId: String): HouseholdEntity? {

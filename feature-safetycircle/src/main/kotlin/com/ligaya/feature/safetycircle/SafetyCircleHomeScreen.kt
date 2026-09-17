@@ -71,6 +71,8 @@ fun SafetyCircleHomeScreen(
     onEditContacts: () -> Unit,
     onOpenQuickActions: () -> Unit,
     onOpenLigayaPlus: () -> Unit,
+    /** The roster. Only ever reached when [householdBackendConfigured] is true. */
+    onOpenCircleMembers: () -> Unit = {},
     onBack: () -> Unit = {},
     onSos: () -> Unit = {},
     onSelectTab: (LigayaTab) -> Unit = {},
@@ -164,6 +166,17 @@ fun SafetyCircleHomeScreen(
 
             SectionHeading("Family alerts")
             CircleCard {
+                // Only a real control once there is a circle to manage. Section 23: with no account
+                // behind it there is nobody to invite, so there is no row to tap.
+                if (householdBackendConfigured) {
+                    CircleAction(
+                        icon = LigayaIcons.circle,
+                        label = "Who is in your circle",
+                        detail = "Invite family, accept an invite, or leave a circle.",
+                        onClick = onOpenCircleMembers,
+                    )
+                    CircleDivider()
+                }
                 CircleFact(
                     label = if (householdBackendConfigured) "Ready" else "Not available yet",
                     value = if (householdBackendConfigured) {

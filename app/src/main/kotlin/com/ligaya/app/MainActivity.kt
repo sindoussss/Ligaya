@@ -45,6 +45,7 @@ import com.ligaya.core.ai.NullIntentProvider
 import com.ligaya.core.ai.TimingCompanionResponseProvider
 import com.ligaya.core.ai.TimingIntentProvider
 import com.ligaya.core.ai.VoiceInterpretationOutcome
+import com.ligaya.core.backend.LigayaBackend
 import com.ligaya.core.backend.auth.AuthRepository
 import com.ligaya.core.backend.auth.AuthResult
 import com.ligaya.core.backend.auth.LocalAuthRepository
@@ -205,13 +206,19 @@ class MainActivity : ComponentActivity() {
         // Visual design screen 3: which auth backend the account screen gets is decided here and
         // nowhere else — CreateAccountScreen only ever sees the AuthRepository interface.
         //
-        // FirebaseAuthRepository is the intended production implementation, but constructing it
-        // requires a google-services.json this repo does not have (ACCOUNT_ACTIONS_NEEDED.md item
-        // 1); doing so anyway crashes at launch. LocalAuthRepository is a genuine working
-        // implementation rather than a stub — real PBKDF2-hashed credentials, real persistence,
-        // real rejection of duplicates and wrong passwords — so onboarding can be built and used
-        // end to end now, and swaps to Firebase by changing this one expression later.
-        val authRepository: AuthRepository = LocalAuthRepository(applicationContext)
+        // With a Firebase project configured (ACCOUNT_ACTIONS_NEEDED.md item 1) this is the real
+        // backend: Firebase Auth, and a Safety Circle whose members exist across phones. Without
+        // one, LocalAuthRepository is a genuine working implementation rather than a stub — real
+        // PBKDF2-hashed credentials, real persistence, real rejection of duplicates and wrong
+        // passwords — so onboarding works end to end on this phone, and the Circle screen says
+        // plainly that inviting family needs an account. Nothing here changes when the project is
+        // added; LigayaBackend.resolve just starts returning Available.
+        val backend = LigayaBackend.resolve(applicationContext)
+        val authRepository: AuthRepository = when (backend) {
+            is LigayaBackend.Available -> backend.authRepository
+            LigayaBackend.Unavailable -> LocalAuthRepository(applicationContext)
+        }
+        val safetyCircleRepository = (backend as? LigayaBackend.Available)?.safetyCircleRepository
 
         // ACCOUNT_ACTIONS_NEEDED.md item 6: "Continue with Google", the real thing this time. Credential
         // Manager is the current (non-deprecated) way to get a Google ID token — it replaces the old
@@ -562,6 +569,7 @@ class MainActivity : ComponentActivity() {
                         onOpenAppSettings = ::openAppSettings,
                         emergencyServiceResult = emergencyServiceResult.asStateFlow(),
                         onShareLocation = shareCurrentLocation,
+                        safetyCircleRepository = safetyCircleRepository,
                     )
                   }
                 }

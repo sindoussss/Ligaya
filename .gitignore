@@ -11,3 +11,7 @@ captures/
 *.apk
 *.aab
 .claude/
+
+# Firebase config: contains project API keys, and is specific to whoever set the project up.
+# See ACCOUNT_ACTIONS_NEEDED.md item 1 for how to create your own.
+app/google-services.json

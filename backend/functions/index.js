@@ -1,4 +1,5 @@
 import { initializeApp } from 'firebase-admin/app';
+import { getAuth } from 'firebase-admin/auth';
 import { getFirestore } from 'firebase-admin/firestore';
 import { getMessaging } from 'firebase-admin/messaging';
 import { onDocumentWritten } from 'firebase-functions/v2/firestore';
@@ -12,6 +13,7 @@ import {
 import { createTwilioSmsGateway, isValidTwilioSignature } from './twilio-sms-gateway.js';
 import { computeFamilyEmergencyView } from './family-emergency-view.js';
 import { updateMemberCount } from './household-membership.js';
+import { inviteMemberByEmail } from './household-invites.js';
 
 initializeApp();
 
@@ -116,6 +118,35 @@ export const getFamilyEmergencyView = onCall(async (request) => {
     return await computeFamilyEmergencyView({ db: getFirestore(), eventId, callerUserId });
   } catch (error) {
     throw new HttpsError('permission-denied', String(error?.message ?? error));
+  }
+});
+
+/**
+ * Invite someone to a Safety Circle by email (see household-invites.js for why the email-to-UID
+ * lookup cannot happen on the phone).
+ */
+export const inviteToSafetyCircle = onCall(async (request) => {
+  const callerUserId = request.auth?.uid;
+  if (!callerUserId) {
+    throw new HttpsError('unauthenticated', 'Sign-in required.');
+  }
+
+  const { householdId, email, relationship } = request.data ?? {};
+  if (!householdId || !email || !relationship) {
+    throw new HttpsError('invalid-argument', 'householdId, email and relationship are required.');
+  }
+
+  try {
+    return await inviteMemberByEmail({
+      db: getFirestore(),
+      auth: getAuth(),
+      householdId,
+      email,
+      relationship,
+      callerUserId,
+    });
+  } catch (error) {
+    throw new HttpsError('failed-precondition', String(error?.message ?? error));
   }
 });
 

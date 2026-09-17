@@ -25,6 +25,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import com.ligaya.core.backend.household.InviteResult
 import com.ligaya.core.backend.household.SafetyCircleRepository
 import com.ligaya.core.data.entity.FamilyMemberEntity
 import com.ligaya.core.data.entity.FamilyMemberStatus
@@ -62,6 +63,8 @@ fun SafetyCircleScreen(
     var members by remember { mutableStateOf<List<FamilyMemberEntity>>(emptyList()) }
     var ownMembership by remember { mutableStateOf<FamilyMemberEntity?>(null) }
     var isLoading by remember { mutableStateOf(true) }
+    var inviting by remember { mutableStateOf(false) }
+    var inviteStatus by remember { mutableStateOf<String?>(null) }
     val scope = rememberCoroutineScope()
 
     suspend fun refresh() {
@@ -95,8 +98,21 @@ fun SafetyCircleScreen(
             )
             HorizontalDivider()
             InviteSection(
-                onInvite = { userId, relationship ->
-                    scope.launch { repository.inviteMember(householdId, userId, relationship); refresh() }
+                inviting = inviting,
+                inviteStatus = inviteStatus,
+                onInvite = { email, relationship ->
+                    inviting = true
+                    inviteStatus = null
+                    scope.launch {
+                        when (val result = repository.inviteMemberByEmail(householdId, email, relationship)) {
+                            is InviteResult.Invited -> {
+                                inviteStatus = "Invited. They will see it when they next open Ligaya."
+                                refresh()
+                            }
+                            is InviteResult.Failed -> inviteStatus = result.message
+                        }
+                        inviting = false
+                    }
                 },
             )
         } else {
@@ -144,37 +160,57 @@ private fun RosterSection(members: List<FamilyMemberEntity>, onRemove: (userId: 
     }
 }
 
+/**
+ * Invites go by email, which is the only thing an owner actually knows about the person they want
+ * to add — a Firebase user id is not something anyone can read off their own phone, let alone tell
+ * someone else. The lookup happens in the `inviteToSafetyCircle` Cloud Function, so [inviteStatus]
+ * carries back whatever it said, including "nobody is using Ligaya with that email yet".
+ */
 @Composable
-private fun InviteSection(onInvite: (userId: String, relationship: String) -> Unit) {
-    var userId by remember { mutableStateOf("") }
+private fun InviteSection(
+    inviting: Boolean,
+    inviteStatus: String?,
+    onInvite: (email: String, relationship: String) -> Unit,
+) {
+    var email by remember { mutableStateOf("") }
     var relationship by remember { mutableStateOf("") }
 
     Column(verticalArrangement = Arrangement.spacedBy(LigayaSpacing.sm)) {
         Text(text = "Invite a member", style = LigayaTypography.label, color = LigayaTheme.colors.onSurface)
         OutlinedTextField(
-            value = userId,
-            onValueChange = { userId = it },
-            label = { Text("Member's user ID") },
+            value = email,
+            onValueChange = { email = it },
+            label = { Text("Their email address") },
             singleLine = true,
-            modifier = Modifier.fillMaxWidth().testTag("safetyCircleInviteUserId"),
+            enabled = !inviting,
+            modifier = Modifier.fillMaxWidth().testTag("safetyCircleInviteEmail"),
         )
         OutlinedTextField(
             value = relationship,
             onValueChange = { relationship = it },
             label = { Text("Relationship (e.g. Mother, Friend)") },
             singleLine = true,
+            enabled = !inviting,
             modifier = Modifier.fillMaxWidth().testTag("safetyCircleInviteRelationship"),
         )
         Button(
-            enabled = userId.isNotBlank() && relationship.isNotBlank(),
+            enabled = !inviting && email.isNotBlank() && relationship.isNotBlank(),
             modifier = Modifier.testTag("safetyCircleSendInvite"),
             onClick = {
-                onInvite(userId, relationship)
-                userId = ""
+                onInvite(email, relationship)
+                email = ""
                 relationship = ""
             },
         ) {
-            Text("Send Invite")
+            Text(if (inviting) "Sending…" else "Send Invite")
+        }
+        if (inviteStatus != null) {
+            Text(
+                text = inviteStatus,
+                style = LigayaTypography.body,
+                color = LigayaTheme.colors.onSurface,
+                modifier = Modifier.semantics { contentDescription = "Invite: $inviteStatus" },
+            )
         }
     }
 }

@@ -163,6 +163,50 @@ class SafetyCircleHomeScreenTest {
     }
 
     @Test
+    fun theRosterRowOnlyExistsOnceThereIsABackendBehindIt() {
+        var opened = 0
+        composeTestRule.setContent {
+            LigayaTheme(mode = LigayaThemeMode.Light) {
+                SafetyCircleHomeScreen(
+                    signedIn = true,
+                    contacts = contacts,
+                    householdBackendConfigured = true,
+                    onSignIn = {},
+                    onEditContacts = {},
+                    onOpenQuickActions = {},
+                    onOpenLigayaPlus = {},
+                    onOpenCircleMembers = { opened++ },
+                )
+            }
+        }
+
+        composeTestRule.onNodeWithText("Who is in your circle").performScrollTo().performClick()
+
+        assertTrue(opened == 1)
+    }
+
+    @Test
+    fun withoutABackendThereIsNoRosterRowToTap() {
+        // Section 23 again: a row leading to an empty roster nobody could be added to would be a
+        // control that cannot do anything.
+        composeTestRule.setContent {
+            LigayaTheme(mode = LigayaThemeMode.Light) {
+                SafetyCircleHomeScreen(
+                    signedIn = true,
+                    contacts = contacts,
+                    householdBackendConfigured = false,
+                    onSignIn = {},
+                    onEditContacts = {},
+                    onOpenQuickActions = {},
+                    onOpenLigayaPlus = {},
+                )
+            }
+        }
+
+        composeTestRule.onNodeWithText("Who is in your circle").assertDoesNotExist()
+    }
+
+    @Test
     fun quickActionsRowHandsOff() {
         var opened = false
         composeTestRule.setContent {

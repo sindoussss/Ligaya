@@ -40,8 +40,10 @@ import com.ligaya.core.data.profile.EmergencyProfileRepository
 import com.ligaya.core.places.EmergencyServiceLookupResult
 import com.ligaya.feature.safetycircle.QuickActionsScreen
 import com.ligaya.feature.safetycircle.SafetyCircleHomeScreen
+import com.ligaya.feature.safetycircle.SafetyCircleScreen
 import com.ligaya.feature.paywall.PaywallScreen
 import com.ligaya.core.data.profile.EmergencyContact
+import com.ligaya.core.backend.household.SafetyCircleRepository
 import com.ligaya.core.billing.EntitlementRepository
 import com.ligaya.core.emergencyengine.EmergencyState
 import com.ligaya.core.permissions.PermissionState
@@ -140,6 +142,10 @@ fun LigayaNavHost(
     /** Safety Circle > Quick actions: real, needs no backend — see MainActivity's own doc comment. Returns
      *  whether a location was actually found and shared. */
     onShareLocation: suspend () -> Boolean,
+    /** The Safety Circle backend, or null when no Firebase project is configured for this build
+     *  (ACCOUNT_ACTIONS_NEEDED.md item 1). Null is what makes the Circle screen say that inviting
+     *  family needs an account, instead of showing a roster nobody could actually be added to. */
+    safetyCircleRepository: SafetyCircleRepository? = null,
     navController: NavHostController = rememberNavController(),
 ) {
     val scope = rememberCoroutineScope()
@@ -645,9 +651,8 @@ fun LigayaNavHost(
             SafetyCircleHomeScreen(
                 signedIn = userId != null,
                 contacts = contacts,
-                // FirestoreSafetyCircleRepository needs a Firebase project; this build has none (see
-                // MainActivity's own comment on why auth runs locally), so households cannot exist yet.
-                householdBackendConfigured = false,
+                householdBackendConfigured = safetyCircleRepository != null,
+                onOpenCircleMembers = { navController.navigate(LigayaDestination.CircleMembers.route) },
                 onSignIn = { navController.navigate(LigayaDestination.CreateAccount.route) },
                 onEditContacts = openProfile,
                 onOpenQuickActions = { navController.navigate(LigayaDestination.QuickActions.route) },
@@ -665,6 +670,25 @@ fun LigayaNavHost(
                     }
                 },
             )
+        }
+        composable(LigayaDestination.CircleMembers.route) {
+            // The household id is looked up (and created on first use) rather than passed around:
+            // firestore.rules grants no list permission on households, so the only way to find your
+            // own is the pointer stored on your own user document. See
+            // SafetyCircleRepository.getOrCreateOwnedHousehold.
+            val repository = safetyCircleRepository
+            val userId = authRepository.currentUserId()
+            val householdId by produceState<String?>(initialValue = null, repository, userId) {
+                value = if (repository == null || userId == null) {
+                    null
+                } else {
+                    runCatching { repository.getOrCreateOwnedHousehold(userId) }.getOrNull()
+                }
+            }
+            val id = householdId
+            if (repository != null && userId != null && id != null) {
+                SafetyCircleScreen(householdId = id, currentUserId = userId, repository = repository)
+            }
         }
         composable(LigayaDestination.QuickActions.route) {
             QuickActionsScreen(

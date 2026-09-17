@@ -61,6 +61,10 @@ sealed class LigayaDestination(val route: String, val title: String) {
     data object EmergencyCompanion : LigayaDestination("companion", "Emergency Companion")
     data object SafetyCircle : LigayaDestination("safety_circle", "Safety Circle")
     data object QuickActions : LigayaDestination("quick_actions", "Quick actions")
+
+    /** The roster: who is in your circle, inviting them, accepting an invite, leaving. Only
+     *  reachable with a Firebase project configured, since membership lives there. */
+    data object CircleMembers : LigayaDestination("circle_members", "Your circle")
     data object FamilyEmergency : LigayaDestination("family_emergency", "Family Emergency")
     data object Paywall : LigayaDestination("paywall", "Ligaya+")
 

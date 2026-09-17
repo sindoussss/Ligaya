@@ -58,5 +58,8 @@ dependencies {
     androidTestImplementation(platform(libs.firebase.bom))
     androidTestImplementation(libs.firebase.auth.ktx)
     androidTestImplementation(libs.firebase.firestore.ktx)
+    // FirestoreSafetyCircleRepository's constructor takes a FirebaseFunctions (for invite-by-email),
+    // so the type has to resolve here even though these tests pass null for it.
+    androidTestImplementation(libs.firebase.functions.ktx)
     androidTestImplementation(libs.kotlinx.coroutines.play.services)
 }

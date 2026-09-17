@@ -2,17 +2,23 @@
 
 Running checklist of everything in the Ligaya build that's blocked on your own account/credentials — nothing here needs doing until you're ready; I'll keep implementing everything else and adding to this list as more come up.
 
-## 1. Real Firebase project (blocks: real sign-up/login, real Firestore/FCM sync)
+## 1. Real Firebase project (blocks: the Safety Circle roster, invites, and real sign-up/login)
 
-**Why it's blocked:** there is no `google-services.json` and no Google Services Gradle plugin anywhere in this repo — `FirebaseApp` is only ever initialized in test code (against the local Firebase emulator). `FirebaseAuthRepository`/`FirestoreUserProfileRepository`/notifications sync all compile and are tested, but have never been wired into the real `:app` build because doing so without a real project would crash the app at launch.
+**Status: everything on my side is done.** The app now detects a Firebase project at runtime and switches to it with no code change — `LigayaBackend.resolve()` reads the config the `google-services` plugin generates, and that plugin applies only when `app/google-services.json` exists (see `app/build.gradle.kts`), so the repo still builds and runs for anyone who has not done this yet. Drop the file in and the Circle tab gains a real roster; leave it out and the tab says so plainly.
+
+**What you get once this is done:** sign-up/login through Firebase Auth instead of this phone's local store, a Safety Circle whose members exist across phones, invites by email with accept/decline, and family alerts with per-member sent/delivered/failed receipts.
 
 **What to do:**
 1. Go to the [Firebase console](https://console.firebase.google.com) and create a new project.
 2. Add an Android app to it with package name `com.ligaya.app`.
-3. Download the generated `google-services.json` and place it at `app/google-services.json` (this file is safe to commit only if you're OK with it being public — it's not a secret, but you can also gitignore it and hand it to me directly).
-4. In the Firebase console, enable **Email/Password** as a sign-in method (Authentication → Sign-in method).
-5. Enable **Firestore** (Build → Firestore Database) — the security rules already written in `backend/firestore.rules` are ready to deploy once the project exists (`firebase deploy --only firestore:rules` from `backend/`, using the Firebase CLI logged into your account).
-6. Tell me once this is done — I'll add the Google Services Gradle plugin to the build and wire `FirebaseAuthRepository`/`RoomEmergencyProfileRepository` into `MainActivity` so Onboarding (Step 42) actually works end to end, plus anything else that was waiting on this.
+3. Download the generated `google-services.json` and put it at `app/google-services.json`. It is gitignored, so it stays on your machine.
+4. Authentication → Sign-in method: enable **Email/Password**. (Enable **Google** too if you have done item 6.)
+5. Build → Firestore Database: create the database.
+6. Install the Firebase CLI (`npm install -g firebase-tools`), then `firebase login`.
+7. From `backend/`: `firebase deploy --only firestore:rules,functions` — this deploys the already-written rules and the Cloud Functions, including `inviteToSafetyCircle`, which is what turns an invited person's email address into their account. Invites do not work without it.
+8. Tell me once it is deployed and I will run the Safety Circle tests against the real project rather than the emulator.
+
+**One thing worth knowing:** inviting someone only works if they already have a Ligaya account, because an invite attaches to a real user. The app says exactly that when the email is not found, rather than pretending the invite was sent.
 
 ## 2. Gemini API quota (blocks: live Gemini responses in the Emergency Companion and voice-intent interpretation)
 

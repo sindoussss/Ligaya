@@ -196,7 +196,7 @@ class HomeScreenTest {
             )
         }
 
-        composeTestRule.onNodeWithText("Good morning,").assertExists()
+        composeTestRule.onNodeWithText("Hello,").assertExists()
         composeTestRule.onNodeWithText("kaibigan!").assertExists()
 
         name.value = "John Daniel"
@@ -318,9 +318,9 @@ class HomeScreenTest {
             )
         }
 
-        composeTestRule.onNodeWithText("Good evening,").assertExists()
+        composeTestRule.onNodeWithText("Hello,").assertExists()
         composeTestRule.onNodeWithText("John Daniel!").assertExists()
-        composeTestRule.onNodeWithText("Rest well. I'm always here when you need me.").assertExists()
+        composeTestRule.onNodeWithText("I'm Ligaya. Rest well, I'm always here when you need me.").assertExists()
         // SOS is on screen at night exactly as it is by day. Asked for by the header pill's own
         // description rather than the word "SOS", which the tab bar's SOS button also shows.
         composeTestRule.onNodeWithContentDescription("Send SOS emergency alert").assertExists()

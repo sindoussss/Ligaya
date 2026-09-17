@@ -27,6 +27,17 @@ plugins {
     alias(libs.plugins.kotlin.compose)
 }
 
+// Applied only when a google-services.json is actually present. The plugin fails the build
+// outright if the file is missing, so applying it unconditionally would mean nobody could build
+// this repo without first creating a Firebase project. With this, the app builds and runs either
+// way, and dropping the file in is the whole switch: it generates the Firebase config resources,
+// FirebaseApp.initializeApp() then returns non-null, and MainActivity wires the real backend.
+// See ACCOUNT_ACTIONS_NEEDED.md item 1.
+val googleServicesConfig = rootProject.file("app/google-services.json")
+if (googleServicesConfig.exists()) {
+    apply(plugin = "com.google.gms.google-services")
+}
+
 private fun localOrEnvProperty(properties: Properties, name: String): String =
     properties.getProperty(name) ?: System.getenv(name) ?: ""
 
